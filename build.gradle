@@ -40,18 +40,18 @@ subprojects {
 
     repositories {
         mavenCentral()
+        mavenLocal()
         maven {
             name = 'Sponge / Mixin'
             url = 'https://repo.spongepowered.org/repository/maven-public/'
         }
         maven {
-            name = 'BlameJared Maven (JEI / CraftTweaker / Bookshelf)'
-            url = 'https://maven.blamejared.com'
+            name = 'Parchment'
+            url = 'https://maven.parchmentmc.org'
         }
     }
 
     tasks.withType(JavaCompile).configureEach {
-    
         it.options.encoding = 'UTF-8'
         it.options.getRelease().set(17)
     }
@@ -59,7 +59,7 @@ subprojects {
     processResources {
         def expandProps = [
                 "version": version,
-                "group": project.group, //Else we target the task's group.
+                "group": project.group,
                 "minecraft_version": minecraft_version,
                 "forge_version": forge_version,
                 "forge_loader_version_range": forge_loader_version_range,
