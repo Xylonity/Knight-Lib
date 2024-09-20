@@ -12,7 +12,7 @@ public class KnightLibServices {
         final T loadedService = ServiceLoader.load(clazz)
                 .findFirst()
                 .orElseThrow(() -> new NullPointerException("Failed to load service for " + clazz.getName()));
-        KnightLibConstants.LOG.debug("Loaded {} for service {}", loadedService, clazz);
+        KnightLibCommon.LOGGER.debug("Loaded {} for service {}", loadedService, clazz);
 
         return loadedService;
     }
