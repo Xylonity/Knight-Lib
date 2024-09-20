@@ -12,6 +12,8 @@ import net.minecraft.world.entity.player.Player;
  * Utility class for handling various chat-related tasks, including
  * sending messages to players, translating messages, and formatting
  * position data.
+ *
+ * @author Xylonity
  */
 public class ChatUtil {
 
