@@ -58,7 +58,7 @@ public class EntityUtil {
      * Teleports an entity to the highest solid block at its current X and Z coordinates.
      *
      * @param entity The entity to teleport.
-     * @param level The server level (world) in which the entity resides.
+     * @param level The server level in which the entity resides.
      */
     public static void teleportToHighestSolidBlock(Entity entity, ServerLevel level) {
         BlockPos currentPos = entity.blockPosition();

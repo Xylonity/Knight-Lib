@@ -8,7 +8,5 @@ public class KnightLibCommon {
     public static final String MOD_ID = "knightlib";
     public static final Logger LOGGER = LoggerFactory.getLogger("Knight Lib");
 
-    public static void init() {
-
-    }
+    public static void init() { ;; }
 }

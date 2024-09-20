@@ -1,5 +1,6 @@
-package dev.xylonity.knightlib;
+package dev.xylonity.knightlib.platform;
 
+import dev.xylonity.knightlib.KnightLibCommon;
 import dev.xylonity.knightlib.platform.services.IPlatformHelper;
 
 import java.util.ServiceLoader;
