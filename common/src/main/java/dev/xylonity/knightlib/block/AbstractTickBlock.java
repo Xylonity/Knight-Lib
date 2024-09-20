@@ -47,7 +47,7 @@ public abstract class AbstractTickBlock extends Block implements ITickBlockTrack
         super.onRemove(blockState, level, blockPos, newState, movedByPiston);
     }
 
-    private void scheduleTick(Level pLevel, BlockPos pPos) {
+    public void scheduleTick(Level pLevel, BlockPos pPos) {
         if (pLevel instanceof ServerLevel serverLevel) {
             serverLevel.scheduleTick(pPos, this, 1);
         }
