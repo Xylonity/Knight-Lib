@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib;
 
+import dev.xylonity.knightlib.compat.config.KnightLibConfig;
 import dev.xylonity.knightlib.compat.datagen.KnightLibLootModifier;
 import dev.xylonity.knightlib.compat.particle.StarsetParticle;
 import dev.xylonity.knightlib.compat.registry.KnightLibBlocks;
@@ -16,7 +17,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
-import net.xylonity.knightquest.config.KnightQuestCommonConfigs;
 
 @Mod(KnightLibCommon.MOD_ID)
 public class KnightLib {
@@ -34,7 +34,7 @@ public class KnightLib {
 
         ITEMS.register(modEventBus);
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, KnightQuestCommonConfigs.SPEC, "knightlib.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, KnightLibConfig.SPEC, "knightlib.toml");
 
         KnightLibCommon.init();
     }

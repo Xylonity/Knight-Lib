@@ -7,6 +7,9 @@ import net.xylonity.knightquest.config.values.KQConfigValues;
 import net.xylonity.knightquest.registry.KnightQuestEntities;
 import net.xylonity.knightquest.registry.KnightQuestItems;
 
+/**
+ * Bridge to avoid crashes when specific mods are not present and some internal classes is called.
+ */
 public class KnightQuestIntegration {
 
     public static Item getRadiantEssence() {

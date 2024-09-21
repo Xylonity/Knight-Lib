@@ -2,14 +2,19 @@ package dev.xylonity.knightlib.compat.datagen;
 
 import dev.xylonity.knightlib.KnightLibCommon;
 import dev.xylonity.knightlib.compat.registry.KnightLibItems;
+import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraftforge.common.data.GlobalLootModifierProvider;
 import net.minecraftforge.common.loot.LootTableIdCondition;
+import net.minecraftforge.data.event.GatherDataEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
-public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider{
+public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
+
     public KnightLibLootModifierGenerator(PackOutput output) {
         super(output, KnightLibCommon.MOD_ID);
     }
@@ -55,6 +60,25 @@ public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider{
             add(mobId.getPath() + "_small_essence", new KnightLibAddItemModifier(new LootItemCondition[]{
                     new LootTableIdCondition.Builder(mobId).build(),
             }, new ItemStack(KnightLibItems.SMALL_ESSENCE.get()).getItem(), 0.5F));
+        }
+
+    }
+
+    @Mod.EventBusSubscriber(modid = KnightLibCommon.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+    public static class KnightLibRecipeGenerator {
+
+        /**
+         * Recipe json generator for certain mobs defined on the array MOB_IDS.
+         *
+         * @see KnightLibLootModifierGenerator
+         */
+
+        @SubscribeEvent
+        public static void gatherData(GatherDataEvent event) {
+            DataGenerator generator = event.getGenerator();
+            PackOutput packOutput = generator.getPackOutput();
+
+            generator.addProvider(event.includeServer(), new KnightLibLootModifierGenerator(packOutput));
         }
 
     }
