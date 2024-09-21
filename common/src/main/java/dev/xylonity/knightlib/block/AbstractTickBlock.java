@@ -33,7 +33,7 @@ public abstract class AbstractTickBlock extends Block implements ITickBlockTrack
     @Override
     public void onPlace(@NotNull BlockState blockState, @NotNull Level level, @NotNull BlockPos blockPos, @NotNull BlockState newState, boolean b) {
         if (!level.isClientSide) {
-            removeTickBlock(blockPos);
+            addTickBlock(blockPos, this);
             scheduleTick(level, blockPos);
         }
     }
