@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.knightquest.compat;
+package dev.xylonity.knightlib.compat.integration;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;

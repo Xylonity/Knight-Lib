@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "knightlib:great_essence"
+    }
+  ],
+  "result": {
+    "item": "knightlib:small_essence",
+    "count": 4
+  }
+}

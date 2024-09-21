@@ -1,8 +1,8 @@
-package dev.xylonity.knightlib.knightquest.registry;
+package dev.xylonity.knightlib.compat.registry;
 
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.KnightLibCommon;
-import dev.xylonity.knightlib.knightquest.block.ChaliceBlock;
+import dev.xylonity.knightlib.compat.block.ChaliceBlock;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;

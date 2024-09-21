@@ -1,8 +1,8 @@
-package dev.xylonity.knightlib.knightquest.particle;
+package dev.xylonity.knightlib.compat.particle;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import dev.xylonity.knightlib.knightquest.block.ChaliceBlock;
-import dev.xylonity.knightlib.knightquest.registry.KnightLibBlocks;
+import dev.xylonity.knightlib.compat.block.ChaliceBlock;
+import dev.xylonity.knightlib.compat.registry.KnightLibBlocks;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;

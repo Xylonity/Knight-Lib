@@ -1,15 +1,11 @@
-package dev.xylonity.knightlib.knightquest.registry;
+package dev.xylonity.knightlib.compat.registry;
 
 import dev.xylonity.knightlib.KnightLibCommon;
-import net.minecraft.client.particle.Particle;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-
-import java.util.function.Supplier;
 
 public class KnightLibParticles {
 

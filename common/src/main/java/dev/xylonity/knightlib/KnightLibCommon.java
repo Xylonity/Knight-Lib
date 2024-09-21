@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib;
 
-import dev.xylonity.knightlib.knightquest.registry.KnightLibItems;
+import dev.xylonity.knightlib.compat.registry.KnightLibItems;
 import dev.xylonity.knightlib.platform.KnightLibPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

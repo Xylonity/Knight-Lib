@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.knightquest.registry;
+package dev.xylonity.knightlib.compat.registry;
 
 import dev.xylonity.knightlib.KnightLibCommon;
 import net.minecraft.core.particles.ParticleType;
