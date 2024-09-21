@@ -51,8 +51,8 @@ public class PlayerUtil {
 
     /**
      * Gives a specific amount of the specified item to the player, handling inventory space automatically.
-     * This method executes independent of the player's gamemode (if you run this method on a player that's
-     * in creative gamemode, the item will disappear).
+     * This method executes independent of the player's gamemode (if you run a generic `add` call on a player
+     * that's in creative gamemode and has full inventory, the item will disappear. This method prevents that).
      *
      * @param player The player to give the item to.
      * @param itemStack The ItemStack to give to the player.

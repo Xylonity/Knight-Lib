@@ -1,0 +1,8 @@
+{
+  "item.knightlib.great_essence": "Great essence",
+  "item.knightlib.small_essence": "Small essence",
+  "block.knightlib.great_chalice": "Great Chalice",
+
+  "tooltip.item.knightlib.great_essence": "§8§oOffer four to a great chalice.",
+  "tooltip.item.knightlib.great_chalice": "§8§oOffer the chalice great essence."
+}
