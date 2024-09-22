@@ -1,7 +1,11 @@
 package dev.xylonity.knightlib.compat.block;
 
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.block.AbstractTickBlock;
+import dev.xylonity.knightlib.compat.integration.KnightQuestIntegration;
+import dev.xylonity.knightlib.compat.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.compat.registry.KnightLibItems;
+import dev.xylonity.knightlib.compat.registry.KnightLibParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
@@ -12,6 +16,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -75,7 +81,19 @@ public class ChaliceBlock extends AbstractTickBlock {
         ItemStack stack = pPlayer.getItemInHand(pHand);
         Item item = stack.getItem();
 
-        if (block.equals(KnightLibBlocks.GREAT_CHALICE.get()) && item.equals(KnightLibItems.GREAT_ESSENCE.get()) && (Arrays.asList(1, 2, 3, 4).contains(pState.getValue(fill)))) {
+        Item knightquestEmptyGoblet = null;
+        Item knightquestFilledGoblet = null;
+        Item knightquestRadiantEssence = null;
+        boolean configCanSummonNetherman = true;
+
+        if (KnightLib.isKnightQuestLoaded()) {
+            knightquestEmptyGoblet = KnightQuestIntegration.getEmptyGoblet();
+            knightquestFilledGoblet = KnightQuestIntegration.getFilledGoblet();
+            knightquestRadiantEssence = KnightQuestIntegration.getRadiantEssence();
+            configCanSummonNetherman = KnightQuestIntegration.configCanSummonNetherman();
+        }
+
+        if (block.equals(KnightLibBlocks.GREAT_CHALICE) && item.equals(KnightLibItems.GREAT_ESSENCE.get()) && (Arrays.asList(1, 2, 3, 4).contains(pState.getValue(fill)))) {
 
             if (!pLevel.isClientSide()) {
                 double centerX = pPos.getX() + 0.5;
@@ -85,7 +103,7 @@ public class ChaliceBlock extends AbstractTickBlock {
                 double particleY = initialY - 0.48;
 
                 ClientboundLevelParticlesPacket packet = new ClientboundLevelParticlesPacket(
-                        KnightQuestParticles.STARSET_PARTICLE.get(),
+                        KnightLibParticles.STARSET_PARTICLE,
                         true,
                         centerX, particleY, centerZ,
                         0, 0, 0,
@@ -113,7 +131,7 @@ public class ChaliceBlock extends AbstractTickBlock {
 
         }
 
-        if (block.equals(KnightQuestBlocks.GREAT_CHALICE.get()) && item.equals(KnightQuestItems.EMPTY_GOBLET.get()) && pState.getValue(fill).equals(5)) {
+        if (block.equals(KnightLibBlocks.GREAT_CHALICE) && item.equals(knightquestEmptyGoblet) && pState.getValue(fill).equals(5)) {
 
             if (pLevel.isClientSide()) {
                 double radius = 0.5;
@@ -131,7 +149,7 @@ public class ChaliceBlock extends AbstractTickBlock {
                 }
             }
 
-            if (!pLevel.isClientSide()) {
+            if (!pLevel.isClientSide() && knightquestFilledGoblet != null) {
                 pLevel.playSound(null, pPos, SoundEvents.BREWING_STAND_BREW, SoundSource.BLOCKS, 1f, 1f);
 
                 if (pPlayer.getItemInHand(pHand).getCount() > 1) {
@@ -141,24 +159,24 @@ public class ChaliceBlock extends AbstractTickBlock {
                     pPlayer.setItemInHand(pHand, new ItemStack(ItemStack.EMPTY.getItem()));
                 }
 
-                Entity entity = new ItemEntity(pLevel, pPos.getX() + 0.5, pPos.getY() + 1d, pPos.getZ() + 0.5, Kni.FILLED_GOBLET.get().getDefaultInstance());
+                Entity entity = new ItemEntity(pLevel, pPos.getX() + 0.5, pPos.getY() + 1d, pPos.getZ() + 0.5, knightquestFilledGoblet.getDefaultInstance());
                 pLevel.setBlock(pPos, pState.setValue(fill, 1), 3);
                 pLevel.addFreshEntity(entity);
             }
         }
 
-        //if (block.equals(KnightQuestBlocks.GREAT_CHALICE.get()) && item.equals(KnightQuestItems.RADIANT_ESSENCE.get()) && pState.getValue(fill).equals(5) && KQConfigValues.CAN_SUMMON_NETHERMAN) {
-        //    if (!pLevel.isClientSide()) {
-        //        if (pPlayer.getItemInHand(pHand).getCount() > 1) {
-        //            int stackCount = stack.getCount();
-        //            stack.setCount(--stackCount);
-        //        } else {
-        //            pPlayer.setItemInHand(pHand, new ItemStack(ItemStack.EMPTY.getItem()));
-        //        }
+        if (block.equals(KnightLibBlocks.GREAT_CHALICE) && item.equals(knightquestRadiantEssence) && pState.getValue(fill).equals(5) && configCanSummonNetherman) {
+            if (!pLevel.isClientSide()) {
+                if (pPlayer.getItemInHand(pHand).getCount() > 1) {
+                    int stackCount = stack.getCount();
+                    stack.setCount(--stackCount);
+                } else {
+                    pPlayer.setItemInHand(pHand, new ItemStack(ItemStack.EMPTY.getItem()));
+                }
 
-        //        pLevel.setBlock(pPos, pState.cycle(fill), 3);
-        //    }
-        //}
+                pLevel.setBlock(pPos, pState.cycle(fill), 3);
+            }
+        }
 
         return super.use(pState, pLevel, pPos, pPlayer, pHand, pHit);
     }
@@ -196,7 +214,7 @@ public class ChaliceBlock extends AbstractTickBlock {
     public void tick(@NotNull BlockState pState, @NotNull ServerLevel pLevel, @NotNull BlockPos pPos, @NotNull RandomSource pRandom) {
         int tickCount = getTickCount(pPos);
 
-        if (Arrays.asList(6, 7, 8, 9).contains(pState.getValue(fill))) {
+        if (Arrays.asList(6, 7, 8, 9).contains(pState.getValue(fill)) && KnightLib.isKnightQuestLoaded()) {
 
             if (tickCount == 0) {
                 pLevel.playSound(null, pPos, SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.BLOCKS, 1f, 1f);
@@ -210,17 +228,17 @@ public class ChaliceBlock extends AbstractTickBlock {
             if (tickCount == 60) {
                 pLevel.setBlock(pPos, pState.cycle(fill), 3);
 
-                //LightningBolt lightningBolt = EntityType.LIGHTNING_BOLT.create(pLevel);
-                //if (lightningBolt != null && KQConfigValues.SPAWN_LIGHTNING_ON_SPAWN) {
-                //    lightningBolt.moveTo(pPos.getX() + 0.5, pPos.getY(), pPos.getZ() + 0.5);
-                //    pLevel.addFreshEntity(lightningBolt);
-                //}
+                LightningBolt lightningBolt = EntityType.LIGHTNING_BOLT.create(pLevel);
+                if (lightningBolt != null && KnightQuestIntegration.configSpawnLightningOnSpawn()) {
+                    lightningBolt.moveTo(pPos.getX() + 0.5, pPos.getY(), pPos.getZ() + 0.5);
+                    pLevel.addFreshEntity(lightningBolt);
+                }
 
-                //NethermanEntity entity = KnightQuestEntities.NETHERMAN.get().create(pLevel);
-                //if (entity != null) {
-                //    entity.moveTo(pPos.getX() + 0.5F, pPos.getY() + 1, pPos.getZ() + 0.5F);
-                //    pLevel.addFreshEntity(entity);
-                //}
+                Entity entity = KnightQuestIntegration.nethermanEntity().create(pLevel);
+                if (entity != null) {
+                    entity.moveTo(pPos.getX() + 0.5F, pPos.getY() + 1, pPos.getZ() + 0.5F);
+                    pLevel.addFreshEntity(entity);
+                }
 
                 resetTickCount(pPos);
             } else {

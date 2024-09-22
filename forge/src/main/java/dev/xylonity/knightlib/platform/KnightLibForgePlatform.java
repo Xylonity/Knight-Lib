@@ -2,7 +2,6 @@ package dev.xylonity.knightlib.platform;
 
 import dev.xylonity.knightlib.KnightLib;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
 
 import java.util.function.Supplier;
 

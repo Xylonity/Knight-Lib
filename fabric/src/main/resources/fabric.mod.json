@@ -1,6 +1,6 @@
 {
     "schemaVersion": 1,
-    "id": "mod_id",
+    "id": "knightlib",
     "version": "${version}",
     "name": "${mod_name}",
     "description": "${description}",
@@ -17,6 +17,12 @@
     "entrypoints": {
         "main": [
           "dev.xylonity.knightlib.KnightLib"
+        ],
+        "client": [
+            "dev.xylonity.knightlib.KnightLib"
+        ],
+        "fabric-datagen": [
+            "dev.xylonity.knightlib.compat.datagen.KnightLibLootModifierGenerator"
         ]
     },
     "mixins": [
