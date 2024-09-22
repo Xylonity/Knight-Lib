@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * This class is meant for inner item registration for the Knight Quest series. Don't use the compat package.
+ * This class is meant for inner item registration for the Knight Quest series. Don't use neither the compat nor the platform packages.
  */
 public class KnightLibItems {
 
