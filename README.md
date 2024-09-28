@@ -4,7 +4,7 @@
 
 <br><br>
 
-<span style="font-size:14px;font-family:verdana">This mod is a shared code library. Its main function, for my mods, is to add the _"Great Chalice"_ block when the **"Knight Quest"** mod is not present, along with a few additional utilities. However, you're welcome to use this library in your own projects.</span>
+<span style="font-size:14px;font-family:verdana">This mod is a shared code library. Its main function, for my mods, is to add the _"Great Chalice"_ block, along with a few additional utilities. However, you're welcome to use this library in your own projects.</span>
 
 <br>
 
