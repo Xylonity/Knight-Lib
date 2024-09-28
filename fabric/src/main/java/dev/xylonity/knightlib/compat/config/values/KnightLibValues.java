@@ -12,6 +12,6 @@ public class KnightLibValues {
     private static final boolean V = Files.exists(CONFIG_PATH) && FabricLoader.getInstance().isModLoaded("forgeconfigapiport");
 
     // Drop Chance Configuration Section
-    public static float DROP_CHANCE_SMALL_ESSENCE  = (float) (V ? KnightLibConfig.DROP_CHANCE_SMALL_ESSENCE.get() : 0.15);
+    public static float DROP_CHANCE_SMALL_ESSENCE  = (float) (V ? KnightLibConfig.DROP_CHANCE_SMALL_ESSENCE.get() : 0.25);
 
 }

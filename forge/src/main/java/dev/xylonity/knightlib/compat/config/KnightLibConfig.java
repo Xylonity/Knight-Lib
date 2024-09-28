@@ -12,7 +12,7 @@ public class KnightLibConfig {
     static {
         // Drop Chance Configuration Section
         BUILDER.push("Drop Chance Configuration");
-        DROP_CHANCE_SMALL_ESSENCE = BUILDER.comment("Drop chance for small essence").defineInRange("Drop chance for small essence", 0.15, 0, 1);
+        DROP_CHANCE_SMALL_ESSENCE = BUILDER.comment("Drop chance for small essence").defineInRange("Drop chance for small essence", 0.25, 0, 1);
         BUILDER.pop();
 
         SPEC = BUILDER.build();
