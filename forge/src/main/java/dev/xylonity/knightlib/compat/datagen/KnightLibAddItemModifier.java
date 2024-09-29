@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-
 public class KnightLibAddItemModifier extends LootModifier {
     public static final Supplier<Codec<KnightLibAddItemModifier>> CODEC = Suppliers.memoize(() ->
             RecordCodecBuilder.create(inst -> codecStart(inst).and(ForgeRegistries.ITEMS.getCodec()

@@ -3,7 +3,6 @@ package dev.xylonity.knightlib.compat.datagen;
 import dev.xylonity.knightlib.KnightLibCommon;
 import dev.xylonity.knightlib.compat.registry.KnightLibItems;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
@@ -15,43 +14,38 @@ import net.minecraftforge.fml.common.Mod;
 
 public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
 
-    public KnightLibLootModifierGenerator(PackOutput output) {
-        super(output, KnightLibCommon.MOD_ID);
+    public KnightLibLootModifierGenerator(DataGenerator gen, String modid) {
+        super(gen, modid);
     }
 
     /**
      * Declaration of certain mobs that will drop the small_essence item
      */
 
-    private static final ResourceLocation[] MOB_IDS;
-
-    static {
-        String[] vanilla = {
-                "creeper", "spider", "skeleton", "zombie", "cave_spider",
-                "blaze", "enderman", "ghast", "magma_cube", "phantom",
-                "slime", "stray", "vex", "drowned", "witch", "husk",
-                "zombie_villager", "wither_skeleton", "pillager",
-                "vindicator", "evoker", "hoglin", "piglin"
-        };
-
-        String[] knightquest = {
-                "gremlin", "eldknight", "samhain", "ratman", "swampman",
-                "eldbomb", "lizzy", "bad_patch"
-        };
-
-        MOB_IDS = new ResourceLocation[vanilla.length + knightquest.length];
-
-        for (int i = 0; i < vanilla.length; i++) {
-            MOB_IDS[i] = new ResourceLocation("minecraft", "entities/" + vanilla[i]);
-        }
-
-        for (int i = 0; i < knightquest.length; i++) {
-            MOB_IDS[vanilla.length + i] = new ResourceLocation("knightquest", "entities/" + knightquest[i]);
-        }
-    }
-
-    private static final ResourceLocation RATMAN_ID = new ResourceLocation("knightquest", "entities/ratman");
-    private static final ResourceLocation LIZZY_ID = new ResourceLocation("knightquest", "entities/lizzy");
+    private static final ResourceLocation[] MOB_IDS = {
+            new ResourceLocation("minecraft", "entities/creeper"),
+            new ResourceLocation("minecraft", "entities/spider"),
+            new ResourceLocation("minecraft", "entities/skeleton"),
+            new ResourceLocation("minecraft", "entities/zombie"),
+            new ResourceLocation("minecraft", "entities/cave_spider"),
+            new ResourceLocation("minecraft", "entities/blaze"),
+            new ResourceLocation("minecraft", "entities/enderman"),
+            new ResourceLocation("minecraft", "entities/ghast"),
+            new ResourceLocation("minecraft", "entities/magma_cube"),
+            new ResourceLocation("minecraft", "entities/phantom"),
+            new ResourceLocation("minecraft", "entities/slime"),
+            new ResourceLocation("minecraft", "entities/stray"),
+            new ResourceLocation("minecraft", "entities/vex"),
+            new ResourceLocation("minecraft", "entities/drowned"),
+            new ResourceLocation("knightquest", "entities/gremlin"),
+            new ResourceLocation("knightquest", "entities/eldknight"),
+            new ResourceLocation("knightquest", "entities/samhain"),
+            new ResourceLocation("knightquest", "entities/ratman"),
+            new ResourceLocation("knightquest", "entities/swampman"),
+            new ResourceLocation("knightquest", "entities/eldbomb"),
+            new ResourceLocation("knightquest", "entities/lizzy"),
+            new ResourceLocation("knightquest", "entities/bad_patch")
+    };
 
     @Override
     protected void start() {
@@ -65,20 +59,13 @@ public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
     }
 
     @Mod.EventBusSubscriber(modid = KnightLibCommon.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static class KnightLibRecipeGenerator {
-
-        /**
-         * Recipe json generator for certain mobs defined on the array MOB_IDS.
-         *
-         * @see KnightLibLootModifierGenerator
-         */
+    public class KnightLibEventRegisters {
 
         @SubscribeEvent
         public static void gatherData(GatherDataEvent event) {
             DataGenerator generator = event.getGenerator();
-            PackOutput packOutput = generator.getPackOutput();
 
-            generator.addProvider(event.includeServer(), new KnightLibLootModifierGenerator(packOutput));
+            generator.addProvider(event.includeServer(), new KnightLibLootModifierGenerator(generator, KnightLibCommon.MOD_ID));
         }
 
     }

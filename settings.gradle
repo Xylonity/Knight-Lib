@@ -13,18 +13,8 @@ pluginManagement {
             name = 'Sponge Snapshots'
             url = 'https://repo.spongepowered.org/repository/maven-public/'
         }
-        maven {
-            name = 'Parchment'
-            url = 'https://maven.parchmentmc.org'
-        }
     }
 }
 
-plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
-}
-
-rootProject.name = 'Knight-Lib'
-include("common")
-include("fabric")
-include("forge")
+rootProject.name = 'MultiLoader'
+include("Common", "Fabric", "Forge")

@@ -5,7 +5,6 @@ import dev.xylonity.knightlib.compat.datagen.KnightLibLootModifier;
 import dev.xylonity.knightlib.compat.particle.StarsetParticle;
 import dev.xylonity.knightlib.compat.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.compat.registry.KnightLibParticles;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
@@ -17,11 +16,12 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 
 @Mod(KnightLibCommon.MOD_ID)
 public class KnightLib {
 
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, KnightLibCommon.MOD_ID);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, KnightLibCommon.MOD_ID);
     private static final String KNIGHTQUEST_MOD_ID = "knightquest";
 
     public KnightLib() {
@@ -54,7 +54,7 @@ public class KnightLib {
         @SubscribeEvent
         public static void registerParticleFactories(final RegisterParticleProvidersEvent event) {
 
-            event.registerSpriteSet(KnightLibParticles.STARSET_PARTICLE.get(), StarsetParticle.Provider::new);
+            event.register(KnightLibParticles.STARSET_PARTICLE.get(), StarsetParticle.Provider::new);
 
         }
 

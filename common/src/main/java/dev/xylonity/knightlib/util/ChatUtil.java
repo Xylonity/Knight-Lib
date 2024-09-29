@@ -57,7 +57,7 @@ public class ChatUtil {
      * @param message The message as a MutableComponent.
      */
     public static void sendChatMessage(Player player, MutableComponent message) {
-        if (player.level().isClientSide) {
+        if (player.level.isClientSide) {
             player.sendSystemMessage(message);
         }
     }
@@ -82,7 +82,7 @@ public class ChatUtil {
      * @param message The message as a Component.
      */
     public static void addServerChatMessage(Player player, Component message) {
-        if (!player.level().isClientSide) {
+        if (!player.level.isClientSide) {
             player.sendSystemMessage(message);
         }
     }
@@ -133,7 +133,7 @@ public class ChatUtil {
      * @param format The desired formatting options (e.g., bold, italics, color).
      */
     public static void sendFeedback(CommandContext<CommandSourceStack> context, String prefix, String message, ChatFormatting... format) {
-        context.getSource().sendSuccess(() -> createFormattedMessage(prefix, message, format), false);
+        context.getSource().sendSuccess(createFormattedMessage(prefix, message, format), false);
     }
 
     /**

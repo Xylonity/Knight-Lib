@@ -71,7 +71,7 @@ public class ChaliceBlock extends AbstractTickBlock {
      * proportional to its state. The great chalice has six predefined states, with the fifth state making
      * the chalice emit a bright light, as defined in the block registration.
      *
-     * @see dev.xylonity.knightlib.compat.registry.KnightLibBlocks#GREAT_CHALICE
+     * @see KnightLibBlocks#GREAT_CHALICE
      */
 
     @Override

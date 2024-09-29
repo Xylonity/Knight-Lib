@@ -17,7 +17,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -114,7 +117,7 @@ public class PlayerUtil {
      * @param itemStack The item stack to drop.
      */
     private static void dropItemNearPlayer(Player player, ItemStack itemStack) {
-        Level level = player.level();
+        Level level = player.level;
         if (!level.isClientSide && !itemStack.isEmpty()) {
             ItemEntity itemEntity = new ItemEntity(
                     level,
@@ -320,7 +323,7 @@ public class PlayerUtil {
     public static void resetPlayerPositionToSpawn(Player player) {
         BlockPos spawnPos = ((ServerPlayer) player).getRespawnPosition();
         if (spawnPos != null && player instanceof ServerPlayer serverPlayer) {
-            Optional<Vec3> spawnLocation = Player.findRespawnPositionAndUseSpawnBlock((ServerLevel) serverPlayer.level(), spawnPos, ((ServerPlayer) player).getRespawnAngle(), true, false);
+            Optional<Vec3> spawnLocation = Player.findRespawnPositionAndUseSpawnBlock((ServerLevel) serverPlayer.level, spawnPos, ((ServerPlayer) player).getRespawnAngle(), true, false);
             if (spawnLocation.isPresent()) {
                 Vec3 spawnVec = spawnLocation.get();
                 player.teleportTo(spawnVec.x(), spawnVec.y(), spawnVec.z());
@@ -338,7 +341,7 @@ public class PlayerUtil {
      * @param player The player to teleport.
      */
     private static void teleportToWorldSpawn(Player player) {
-        BlockPos worldSpawn = player.level().getSharedSpawnPos();
+        BlockPos worldSpawn = player.level.getSharedSpawnPos();
         player.teleportTo(worldSpawn.getX(), worldSpawn.getY(), worldSpawn.getZ());
     }
 
@@ -351,7 +354,7 @@ public class PlayerUtil {
      * @return The closest entity that satisfies the condition, or null if none found.
      */
     public static Entity findClosestEntity(Player player, double maxDistance, Predicate<Entity> condition) {
-        return player.level().getEntities(player, player.getBoundingBox().inflate(maxDistance), condition)
+        return player.level.getEntities(player, player.getBoundingBox().inflate(maxDistance), condition)
                 .stream()
                 .min(Comparator.comparingDouble(e -> e.distanceTo(player)))
                 .orElse(null);
@@ -401,7 +404,7 @@ public class PlayerUtil {
      * @return A list of nearby entities of the specified type.
      */
     public static <T extends Entity> List<T> findEntitiesAroundPlayer(Player player, Class<T> entityType, double radius) {
-        return player.level().getEntitiesOfClass(entityType, player.getBoundingBox().inflate(radius));
+        return player.level.getEntitiesOfClass(entityType, player.getBoundingBox().inflate(radius));
     }
 
     /**
@@ -413,7 +416,7 @@ public class PlayerUtil {
     public static void randomTeleport(Player player, double range) {
         double randomX = player.getX() + (Math.random() - 0.5) * range * 2;
         double randomZ = player.getZ() + (Math.random() - 0.5) * range * 2;
-        double y = player.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) randomX, (int) randomZ);
+        double y = player.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) randomX, (int) randomZ);
         player.teleportTo(randomX, y, randomZ);
     }
 
@@ -443,7 +446,7 @@ public class PlayerUtil {
 
         for (BlockPos pos : BlockPos.betweenClosed(playerPos.offset((int) -radius, (int) -radius, (int) -radius),
                 playerPos.offset((int) radius, (int) radius, (int) radius))) {
-            if (blockTypes.contains(player.level().getBlockState(pos).getBlock())) {
+            if (blockTypes.contains(player.level.getBlockState(pos).getBlock())) {
                 double distance = playerPos.distSqr(pos);
                 if (distance < closestDistance) {
                     closestDistance = distance;

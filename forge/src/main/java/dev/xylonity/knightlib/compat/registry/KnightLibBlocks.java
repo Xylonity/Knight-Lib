@@ -3,7 +3,6 @@ package dev.xylonity.knightlib.compat.registry;
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.KnightLibCommon;
 import dev.xylonity.knightlib.compat.block.ChaliceBlock;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -13,8 +12,10 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
 import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ import java.util.function.Supplier;
 
 public class KnightLibBlocks {
 
-    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Registries.BLOCK, KnightLibCommon.MOD_ID);
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, KnightLibCommon.MOD_ID);
 
     private static <X extends Block> RegistryObject<Item> registerBlockItem(String name, RegistryObject<X> block) {
         return KnightLib.ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
@@ -37,7 +38,7 @@ public class KnightLibBlocks {
     }
 
     public static final RegistryObject<Block> GREAT_CHALICE = registerBlock("great_chalice",
-            () -> new ChaliceBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).requiresCorrectToolForDrops().strength(3.0F, 6.0F).sound(SoundType.COPPER)
+            () -> new ChaliceBlock(BlockBehaviour.Properties.of(Material.METAL).color(MaterialColor.COLOR_ORANGE).requiresCorrectToolForDrops().strength(3.0F, 6.0F).sound(SoundType.COPPER)
                     .lightLevel(state ->
                             switch (state.getValue(ChaliceBlock.fill)) {
                                 case 1 -> 1;

@@ -6,6 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
@@ -111,8 +112,8 @@ public class EntityUtil {
      * @param destroysBlocks If true, the explosion will destroy blocks.
      */
     public static void explodeEntity(Entity entity, float explosionPower, boolean destroysBlocks) {
-        if (entity.level() instanceof ServerLevel level && !entity.level().isClientSide) {
-            level.explode(entity, entity.getX(), entity.getY(), entity.getZ(), explosionPower, destroysBlocks ? Level.ExplosionInteraction.BLOCK : Level.ExplosionInteraction.NONE);
+        if (entity.level instanceof ServerLevel level && !entity.level.isClientSide) {
+            level.explode(entity, entity.getX(), entity.getY(), entity.getZ(), explosionPower, destroysBlocks ? Explosion.BlockInteraction.BREAK : Explosion.BlockInteraction.NONE);
             entity.remove(Entity.RemovalReason.KILLED);
         }
     }
@@ -149,7 +150,7 @@ public class EntityUtil {
     public static void randomTeleportWithinRadius(Entity entity, double radius) {
         double randomX = entity.getX() + (Math.random() - 0.5) * radius * 2;
         double randomZ = entity.getZ() + (Math.random() - 0.5) * radius * 2;
-        double y = entity.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) randomX, (int) randomZ);
+        double y = entity.level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) randomX, (int) randomZ);
         entity.teleportTo(randomX, y, randomZ);
     }
 
@@ -160,7 +161,7 @@ public class EntityUtil {
      * @return True if the entity is in complete darkness, false otherwise.
      */
     public static boolean isEntityInCompleteDarkness(Entity entity) {
-        return entity.level().getMaxLocalRawBrightness(entity.blockPosition()) == 0;
+        return entity.level.getMaxLocalRawBrightness(entity.blockPosition()) == 0;
     }
 
 }

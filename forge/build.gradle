@@ -1,27 +1,25 @@
 plugins {
+    id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.minecraftforge.gradle'
-    id 'org.spongepowered.mixin'
-    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
+    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
 }
-base {
-    archivesName = "${mod_id}-forge-${minecraft_version}"
-}
-mixin {
-    add(sourceSets.main, "${mod_id}.refmap.json")
 
-    config("${mod_id}.mixins.json")
-    config("${mod_id}.forge.mixins.json")
+version = version
+group = group
+
+base {
+    archivesName = "${mod_name}-forge-${minecraft_version}"
 }
 
 minecraft {
-    mappings("parchment", "2023.09.03-1.20.1")
-
-    copyIdeResources = true
-
-    if (file('src/main/resources/META-INF/accesstransformer.cfg').exists()) {
+    mappings channel: 'official', version: minecraft_version
+    
+    if (project.hasProperty('forge_ats_enabled') && project.findProperty('forge_ats_enabled').toBoolean()) {
+        // This location is hardcoded in Forge and can not be changed.
+        // https://github.com/MinecraftForge/MinecraftForge/blob/be1698bb1554f9c8fa2f58e32b9ab70bc4385e60/fmlloader/src/main/java/net/minecraftforge/fml/loading/moddiscovery/ModFile.java#L123
         accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+        project.logger.debug('Forge Access Transformers are enabled for this project.')
     }
 
     runs {
@@ -34,7 +32,7 @@ minecraft {
             mods {
                 modClientRun {
                     source sourceSets.main
-                    source project(":common").sourceSets.main
+                    source project(":Common").sourceSets.main
                 }
             }
         }
@@ -48,7 +46,7 @@ minecraft {
             mods {
                 modServerRun {
                     source sourceSets.main
-                    source project(":common").sourceSets.main
+                    source project(":Common").sourceSets.main
                 }
             }
         }
@@ -63,7 +61,7 @@ minecraft {
             mods {
                 modDataRun {
                     source sourceSets.main
-                    source project(":common").sourceSets.main
+                    source project(":Common").sourceSets.main
                 }
             }
         }
@@ -74,36 +72,29 @@ sourceSets.main.resources.srcDir 'src/generated/resources'
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    compileOnly project(":common")
-
-    implementation fg.deobf("curse.maven:knight-quest-reforged-1018043:5707641")
-    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:4.4.7")
-
-    annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
+    implementation fg.deobf("curse.maven:knight-quest-reforged-1018043:5720932")
+    implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.19:3.1.40')
+    compileOnly project(":Common")
 }
 
-tasks.withType(JavaCompile).configureEach {
-    source(project(":common").sourceSets.main.allSource)
-}
-tasks.withType(Javadoc).configureEach {
-    source(project(":common").sourceSets.main.allJava)
-}
-tasks.named("sourcesJar", Jar) {
-    from(project(":common").sourceSets.main.allSource)
+tasks.withType(JavaCompile) {
+    source(project(":Common").sourceSets.main.allSource)
 }
 
 processResources {
-    from project(":common").sourceSets.main.resources
+    from project(":Common").sourceSets.main.resources
 }
+
 
 jar.finalizedBy('reobfJar')
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifactId base.archivesName.get()
-            from components.java
-            fg.component(it)
+            groupId project.group
+            artifactId project.archivesBaseName
+            version project.version
+            artifact jar
         }
     }
     repositories {
