@@ -506,7 +506,7 @@ public class PlayerUtil {
 
         ItemStack[] armorBackup = new ItemStack[4];
         for (EquipmentSlot slot : EquipmentSlot.values()) {
-            if (slot.getType() == EquipmentSlot.Type.ARMOR) {
+            if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR) {
                 armorBackup[slot.getIndex()] = player.getInventory().armor.get(slot.getIndex());
             }
         }
@@ -519,7 +519,7 @@ public class PlayerUtil {
         }
 
         for (EquipmentSlot slot : EquipmentSlot.values()) {
-            if (slot.getType() == EquipmentSlot.Type.ARMOR) {
+            if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR) {
                 player.getInventory().armor.set(slot.getIndex(), armorBackup[slot.getIndex()]);
             }
         }

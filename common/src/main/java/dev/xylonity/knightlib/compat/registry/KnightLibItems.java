@@ -36,12 +36,13 @@ public class KnightLibItems {
         }
 
         @Override
-        public void appendHoverText(@NotNull ItemStack itemStack, @Nullable Level level, @NotNull List<Component> list, @NotNull TooltipFlag tooltipFlag) {
+        public void appendHoverText(@NotNull ItemStack pStack, @NotNull TooltipContext pContext, @NotNull List<Component> pTooltipComponents, @NotNull TooltipFlag pTooltipFlag) {
 
-            list.add(Component.translatable("tooltip.item.knightlib." + tooltipInfoName));
+            pTooltipComponents.add(Component.translatable("tooltip.item.knightlib." + tooltipInfoName));
 
-            super.appendHoverText(itemStack, level, list, tooltipFlag);
+            super.appendHoverText(pStack, pContext, pTooltipComponents, pTooltipFlag);
         }
+
     }
 
 }

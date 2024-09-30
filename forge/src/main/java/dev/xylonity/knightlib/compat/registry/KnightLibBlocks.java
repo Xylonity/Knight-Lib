@@ -49,8 +49,14 @@ public class KnightLibBlocks {
                             }))
             {
                 @Override
-                public void appendHoverText(@NotNull ItemStack pStack, @Nullable BlockGetter pLevel, @NotNull List<Component> pTooltip, @NotNull TooltipFlag pFlag) {
+                public void appendHoverText(ItemStack p_49816_, Item.TooltipContext p_331399_, List<Component> p_49818_, TooltipFlag p_49819_) {
                     pTooltip.add(Component.translatable("tooltip.item.knightlib.great_chalice"));
+                    super.appendHoverText(p_49816_, p_331399_, p_49818_, p_49819_);
+                }
+
+                @Override
+                public void appendHoverText(@NotNull ItemStack pStack, @Nullable BlockGetter pLevel, @NotNull List<Component> pTooltip, @NotNull TooltipFlag pFlag) {
+
                     super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
                 }
             });
