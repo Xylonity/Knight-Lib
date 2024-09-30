@@ -1,6 +1,7 @@
 package dev.xylonity.knightlib.util;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
@@ -8,6 +9,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -257,7 +259,7 @@ public class PlayerUtil {
      * @param duration The duration of the effect in ticks (20 ticks = 1 second).
      * @param amplifier The level of the effect (0 for level I, 1 for level II, etc.).
      */
-    public static void applyPotionEffect(Player player, MobEffect effect, int duration, int amplifier) {
+    public static void applyPotionEffect(Player player, Holder<MobEffect> effect, int duration, int amplifier) {
         player.addEffect(new MobEffectInstance(effect, duration, amplifier));
     }
 
@@ -312,27 +314,6 @@ public class PlayerUtil {
     }
 
     /**
-     * Resets the player's position to their spawn point or the world spawn if no respawn point is set.
-     * Handles respawn anchors and beds as valid spawn points.
-     *
-     * @param player The player to teleport.
-     */
-    public static void resetPlayerPositionToSpawn(Player player) {
-        BlockPos spawnPos = ((ServerPlayer) player).getRespawnPosition();
-        if (spawnPos != null && player instanceof ServerPlayer serverPlayer) {
-            Optional<Vec3> spawnLocation = Player.findRespawnPositionAndUseSpawnBlock((ServerLevel) serverPlayer.level(), spawnPos, ((ServerPlayer) player).getRespawnAngle(), true, false);
-            if (spawnLocation.isPresent()) {
-                Vec3 spawnVec = spawnLocation.get();
-                player.teleportTo(spawnVec.x(), spawnVec.y(), spawnVec.z());
-            } else {
-                teleportToWorldSpawn(player);
-            }
-        } else {
-            teleportToWorldSpawn(player);
-        }
-    }
-
-    /**
      * Teleports the player to the world spawn point.
      *
      * @param player The player to teleport.
@@ -380,16 +361,6 @@ public class PlayerUtil {
      */
     public static boolean isPlayerHoldingAnyItemFromList(Player player, List<ItemStack> itemList) {
         return itemList.stream().anyMatch(item -> player.getMainHandItem().getItem().equals(item.getItem()));
-    }
-
-    /**
-     * Sorts players in the server by their experience level.
-     *
-     * @param players A list of players to sort.
-     * @return A sorted list of players by experience level in descending order.
-     */
-    public static List<Player> sortPlayersByExperienceLevel(List<Player> players) {
-        return players.stream().sorted(Comparator.comparingInt(Player::getExperienceReward).reversed()).collect(Collectors.toList());
     }
 
     /**

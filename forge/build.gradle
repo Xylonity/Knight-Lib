@@ -65,11 +65,25 @@ minecraft {
     }
 }
 
+repositories {
+    maven {
+        url "https://cursemaven.com"
+    }
+    maven {
+        name = 'GeckoLib'
+        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+    }
+}
+
 sourceSets.main.resources.srcDir 'src/generated/resources'
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
+
+    implementation('curse.maven:knight-quest-reforged-1018043:5718035')
+
+    implementation "software.bernie.geckolib:geckolib-forge-${minecraft_version}:4.5.6"
 
     // Forge's hack fix
     implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }

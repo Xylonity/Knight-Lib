@@ -1,5 +1,8 @@
 package dev.xylonity.knightlib.util;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -7,6 +10,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,10 +76,7 @@ public class ItemStackUtil {
      */
     public static void clearEnchantments(ItemStack stack) {
         if (stack.isEnchanted()) {
-            CompoundTag tag = stack.getTag();
-            if (tag != null) {
-                tag.remove("Enchantments");
-            }
+            EnchantmentHelper.setEnchantments(stack, ItemEnchantments.EMPTY);
         }
     }
 
@@ -87,7 +88,12 @@ public class ItemStackUtil {
      * @return The renamed ItemStack.
      */
     public static ItemStack setCustomName(ItemStack stack, String name) {
-        stack.setHoverName(Component.literal(name));
+        if (stack == null) {
+            throw new IllegalArgumentException("ItemStack cannot be null");
+        }
+
+        Component customName = Component.literal(name);
+        stack.set(DataComponents.CUSTOM_NAME, customName);
         return stack;
     }
 
@@ -99,7 +105,21 @@ public class ItemStackUtil {
      * @return True if the stack contains the enchantment, false otherwise.
      */
     public static boolean hasEnchantment(ItemStack stack, Enchantment enchantment) {
-        return EnchantmentHelper.getEnchantments(stack).containsKey(enchantment);
+        if (stack == null || enchantment == null) {
+            return false;
+        }
+
+        ItemEnchantments enchantments = EnchantmentHelper.getEnchantmentsForCrafting(stack);
+
+        for (Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
+            Holder<Enchantment> enchantmentHolder = entry.getKey();
+
+            if (enchantmentHolder.value().equals(enchantment)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -114,14 +134,21 @@ public class ItemStackUtil {
             return stack1;
         }
 
-        var enchantment1 = EnchantmentHelper.getEnchantments(stack1);
-        var enchantment2 = EnchantmentHelper.getEnchantments(stack2);
+        ItemEnchantments enchantments2 = EnchantmentHelper.getEnchantmentsForCrafting(stack2);
 
-        enchantment2.forEach((enchantment, level) -> {
-            enchantment1.merge(enchantment, level, Math::max);
+        EnchantmentHelper.updateEnchantments(stack1, enchantments1Mutable -> {
+            for (Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments2.entrySet()) {
+                Holder<Enchantment> enchantmentHolder = entry.getKey();
+                int levelFromStack2 = entry.getIntValue();
+
+                int existingLevel = enchantments1Mutable.getLevel(enchantmentHolder);
+
+                int newLevel = Math.max(existingLevel, levelFromStack2);
+
+                enchantments1Mutable.set(enchantmentHolder, newLevel);
+            }
         });
 
-        EnchantmentHelper.setEnchantments(enchantment1, stack1);
         return stack1;
     }
 
@@ -221,30 +248,6 @@ public class ItemStackUtil {
         }
 
         return stack.getMaxDamage() - stack.getDamageValue();
-    }
-
-    /**
-     * Adds custom NBT data to an ItemStack.
-     *
-     * @param stack The ItemStack to modify.
-     * @param key The NBT key to add.
-     * @param value The value to assign to the NBT key.
-     */
-    public static void addCustomNBT(ItemStack stack, String key, String value) {
-        CompoundTag tag = stack.getOrCreateTag();
-        tag.putString(key, value);
-    }
-
-    /**
-     * Retrieves a custom NBT data from an ItemStack.
-     *
-     * @param stack The ItemStack to check.
-     * @param key The NBT key to retrieve.
-     * @return The value of the NBT key, or null if not found.
-     */
-    public static String getCustomNBT(ItemStack stack, String key) {
-        CompoundTag tag = stack.getTag();
-        return tag != null && tag.contains(key) ? tag.getString(key) : null;
     }
 
 }

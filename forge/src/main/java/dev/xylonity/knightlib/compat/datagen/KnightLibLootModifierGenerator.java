@@ -2,6 +2,7 @@ package dev.xylonity.knightlib.compat.datagen;
 
 import dev.xylonity.knightlib.KnightLibCommon;
 import dev.xylonity.knightlib.compat.registry.KnightLibItems;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -12,11 +13,14 @@ import net.minecraftforge.common.loot.LootTableIdCondition;
 import net.minecraftforge.data.event.GatherDataEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.CompletableFuture;
 
 public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
 
-    public KnightLibLootModifierGenerator(PackOutput output) {
-        super(output, KnightLibCommon.MOD_ID);
+    public KnightLibLootModifierGenerator(PackOutput output, String modid, CompletableFuture<HolderLookup.Provider> registries) {
+        super(output, modid, registries);
     }
 
     /**
@@ -42,19 +46,16 @@ public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
         MOB_IDS = new ResourceLocation[vanilla.length + knightquest.length];
 
         for (int i = 0; i < vanilla.length; i++) {
-            MOB_IDS[i] = new ResourceLocation("minecraft", "entities/" + vanilla[i]);
+            MOB_IDS[i] = ResourceLocation.fromNamespaceAndPath("minecraft", "entities/" + vanilla[i]);
         }
 
         for (int i = 0; i < knightquest.length; i++) {
-            MOB_IDS[vanilla.length + i] = new ResourceLocation("knightquest", "entities/" + knightquest[i]);
+            MOB_IDS[vanilla.length + i] = ResourceLocation.fromNamespaceAndPath("knightquest", "entities/" + knightquest[i]);
         }
     }
 
-    private static final ResourceLocation RATMAN_ID = new ResourceLocation("knightquest", "entities/ratman");
-    private static final ResourceLocation LIZZY_ID = new ResourceLocation("knightquest", "entities/lizzy");
-
     @Override
-    protected void start() {
+    protected void start(HolderLookup.@NotNull Provider registries) {
 
         for (ResourceLocation mobId : MOB_IDS) {
             add(mobId.getPath() + "_small_essence", new KnightLibAddItemModifier(new LootItemCondition[]{
@@ -78,7 +79,7 @@ public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
             DataGenerator generator = event.getGenerator();
             PackOutput packOutput = generator.getPackOutput();
 
-            generator.addProvider(event.includeServer(), new KnightLibLootModifierGenerator(packOutput));
+            generator.addProvider(event.includeServer(), new KnightLibLootModifierGenerator(packOutput, KnightLibCommon.MOD_ID, event.getLookupProvider()));
         }
 
     }

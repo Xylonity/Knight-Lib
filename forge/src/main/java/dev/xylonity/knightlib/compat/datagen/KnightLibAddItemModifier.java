@@ -2,6 +2,7 @@ package dev.xylonity.knightlib.compat.datagen;
 
 import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.xylonity.knightlib.compat.config.values.KnightLibValues;
 import dev.xylonity.knightlib.compat.registry.KnightLibItems;
@@ -17,16 +18,23 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-
 public class KnightLibAddItemModifier extends LootModifier {
-    public static final Supplier<Codec<KnightLibAddItemModifier>> CODEC = Suppliers.memoize(() ->
-            RecordCodecBuilder.create(inst -> codecStart(inst).and(ForgeRegistries.ITEMS.getCodec()
-                            .fieldOf("item").forGetter(m -> m.item))
-                    .and(Codec.FLOAT.fieldOf("chance").forGetter(m -> m.chance))
-                    .apply(inst, KnightLibAddItemModifier::new)));
+    public static final Supplier<MapCodec<KnightLibAddItemModifier>> CODEC = Suppliers.memoize(() ->
+            RecordCodecBuilder.mapCodec(inst ->
+                    codecStart(inst).and(ForgeRegistries.ITEMS.getCodec().fieldOf("item").forGetter(KnightLibAddItemModifier::getItem))
+                            .and(Codec.FLOAT.fieldOf("chance").forGetter(KnightLibAddItemModifier::getChance))
+                            .apply(inst, KnightLibAddItemModifier::new)));
 
     private final Item item;
     private final float chance;
+
+    public Item getItem() {
+        return item;
+    }
+
+    public float getChance() {
+        return chance;
+    }
 
     public KnightLibAddItemModifier(LootItemCondition[] conditionsIn, Item item, float chance) {
         super(conditionsIn);
@@ -50,7 +58,8 @@ public class KnightLibAddItemModifier extends LootModifier {
     }
 
     @Override
-    public Codec<? extends IGlobalLootModifier> codec() {
+    public MapCodec<? extends IGlobalLootModifier> codec() {
         return CODEC.get();
     }
+
 }

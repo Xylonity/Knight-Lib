@@ -9,7 +9,6 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -17,7 +16,6 @@ import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -49,15 +47,9 @@ public class KnightLibBlocks {
                             }))
             {
                 @Override
-                public void appendHoverText(ItemStack p_49816_, Item.TooltipContext p_331399_, List<Component> p_49818_, TooltipFlag p_49819_) {
-                    pTooltip.add(Component.translatable("tooltip.item.knightlib.great_chalice"));
-                    super.appendHoverText(p_49816_, p_331399_, p_49818_, p_49819_);
-                }
-
-                @Override
-                public void appendHoverText(@NotNull ItemStack pStack, @Nullable BlockGetter pLevel, @NotNull List<Component> pTooltip, @NotNull TooltipFlag pFlag) {
-
-                    super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
+                public void appendHoverText(@NotNull ItemStack pStack, Item.@NotNull TooltipContext pContext, @NotNull List<Component> pTooltipComponents, @NotNull TooltipFlag pTooltipFlag) {
+                    pTooltipComponents.add(Component.translatable("tooltip.item.knightlib.great_chalice"));
+                    super.appendHoverText(pStack, pContext, pTooltipComponents, pTooltipFlag);
                 }
             });
 
