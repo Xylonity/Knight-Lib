@@ -1,6 +1,6 @@
-package com.example.examplemod.platform;
+package dev.xylonity.knightlib.platform;
 
-import com.example.examplemod.platform.services.IPlatformHelper;
+import dev.xylonity.knightlib.platform.services.IPlatformHelper;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
 
@@ -9,7 +9,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override
     public String getPlatformName() {
 
-        return "NeoForge";
+        return "Forge";
     }
 
     @Override

@@ -34,6 +34,25 @@ neoForge {
             sourceSet sourceSets.main
         }
     }
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        maven {
+            url "https://cursemaven.com"
+        }
+        maven {
+            name = 'GeckoLib'
+            url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+            content {
+                includeGroupByRegex("software\\.bernie.*")
+                includeGroup("com.eliotlash.mclib")
+            }
+        }
+    }
+    dependencies {
+        implementation "curse.maven:knight-quest-reforged-1018043:5718142"
+        implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.6.5"
+    }
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
