@@ -16,7 +16,13 @@
     "environment": "*",
     "entrypoints": {
         "main": [
-            "com.example.examplemod.ExampleMod"
+            "dev.xylonity.knightlib.KnightLib"
+        ],
+        "client": [
+            "dev.xylonity.knightlib.KnightLib"
+        ],
+        "fabric-datagen": [
+            "dev.xylonity.knightlib.compat.datagen.KnightLibLootModifierGenerator"
         ]
     },
     "mixins": [
