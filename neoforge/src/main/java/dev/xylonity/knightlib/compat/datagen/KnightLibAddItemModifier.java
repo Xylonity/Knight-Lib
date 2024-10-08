@@ -16,9 +16,11 @@ import net.neoforged.neoforge.common.loot.IGlobalLootModifier;
 import net.neoforged.neoforge.common.loot.LootModifier;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Random;
 import java.util.function.Supplier;
 
 public class KnightLibAddItemModifier extends LootModifier {
+
     public static final Supplier<MapCodec<KnightLibAddItemModifier>> CODEC = Suppliers.memoize(() ->
             RecordCodecBuilder.mapCodec(inst ->
                     codecStart(inst).and(BuiltInRegistries.ITEM.byNameCodec().fieldOf("item").forGetter(KnightLibAddItemModifier::getItem))
@@ -26,7 +28,13 @@ public class KnightLibAddItemModifier extends LootModifier {
                             .apply(inst, KnightLibAddItemModifier::new)));
 
     private final Item item;
-    private final float chance;
+    private float chance;
+
+    public KnightLibAddItemModifier(LootItemCondition[] conditionsIn, Item item, float chance) {
+        super(conditionsIn);
+        this.item = item;
+        this.chance = chance;
+    }
 
     public Item getItem() {
         return item;
@@ -36,23 +44,17 @@ public class KnightLibAddItemModifier extends LootModifier {
         return chance;
     }
 
-    public KnightLibAddItemModifier(LootItemCondition[] conditionsIn, Item item, float chance) {
-        super(conditionsIn);
-        this.item = item;
-        this.chance = chance;
-    }
-
     @Override
     protected @NotNull ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
-
-        for(LootItemCondition condition : this.conditions) {
-            if(!condition.test(context)) {
+        for (LootItemCondition condition : this.conditions) {
+            if (!condition.test(context)) {
                 return generatedLoot;
             }
         }
 
-        if (item == KnightLibItems.SMALL_ESSENCE.get() && context.getRandom().nextFloat() <= KnightLibValues.DROP_CHANCE_SMALL_ESSENCE)
+        if (item == KnightLibItems.SMALL_ESSENCE.get() && context.getRandom().nextFloat() <= KnightLibValues.DROP_CHANCE_SMALL_ESSENCE) {
             generatedLoot.add(new ItemStack(this.item));
+        }
 
         return generatedLoot;
     }

@@ -9,6 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.data.GlobalLootModifierProvider;
 import net.neoforged.neoforge.common.loot.LootTableIdCondition;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
@@ -61,6 +63,7 @@ public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
         }
     }
 
+    @EventBusSubscriber(modid = KnightLibCommon.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
     public static class KnightLibRecipeGenerator {
 
         /**

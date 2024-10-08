@@ -2,7 +2,6 @@ package dev.xylonity.knightlib;
 
 import dev.xylonity.knightlib.compat.config.KnightLibConfig;
 import dev.xylonity.knightlib.compat.datagen.KnightLibLootModifier;
-import dev.xylonity.knightlib.compat.datagen.KnightLibLootModifierGenerator;
 import dev.xylonity.knightlib.compat.particle.StarsetParticle;
 import dev.xylonity.knightlib.compat.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.compat.registry.KnightLibParticles;
@@ -25,7 +24,7 @@ public class KnightLib {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Registries.ITEM, KnightLibCommon.MOD_ID);
     private static final String KNIGHTQUEST_MOD_ID = "knightquest";
 
-    public KnightLib(IEventBus modEventBus, ModContainer modContainer) throws NoSuchFieldException {
+    public KnightLib(IEventBus modEventBus, ModContainer modContainer) {
 
         KnightLibParticles.PARTICLES.register(modEventBus);
         KnightLibBlocks.BLOCKS.register(modEventBus);
@@ -36,7 +35,6 @@ public class KnightLib {
         modContainer.registerConfig(ModConfig.Type.COMMON, KnightLibConfig.SPEC, "knightlib.toml");
 
         modEventBus.addListener(KnightLibClientEvents::registerParticleFactories);
-        modEventBus.addListener(KnightLibLootModifierGenerator.KnightLibRecipeGenerator::gatherData);
 
         KnightLibCommon.init();
     }
