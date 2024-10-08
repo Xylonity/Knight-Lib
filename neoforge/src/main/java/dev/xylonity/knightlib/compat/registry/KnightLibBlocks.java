@@ -34,7 +34,7 @@ public class KnightLibBlocks {
         return blockHolder;
     }
 
-    public static final DeferredHolder<?, ?> GREAT_CHALICE = registerBlock("great_chalice",
+    public static final DeferredHolder<Block, ChaliceBlock> GREAT_CHALICE = registerBlock("great_chalice",
             () -> new ChaliceBlock(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_ORANGE).requiresCorrectToolForDrops().strength(3.0F, 6.0F).sound(SoundType.COPPER)
                     .lightLevel(state ->
                             switch (state.getValue(ChaliceBlock.fill)) {
