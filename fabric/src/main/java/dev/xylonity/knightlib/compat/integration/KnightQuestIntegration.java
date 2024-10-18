@@ -2,10 +2,10 @@ package dev.xylonity.knightlib.compat.integration;
 
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
-import net.xylonity.common.entity.boss.NethermanEntity;
-import net.xylonity.config.values.KQConfigValues;
-import net.xylonity.registry.KnightQuestEntities;
-import net.xylonity.registry.KnightQuestItems;
+import dev.xylonity.knightquest.common.entity.boss.NethermanEntity;
+import dev.xylonity.knightquest.config.values.KQConfigValues;
+import dev.xylonity.knightquest.registry.KnightQuestEntities;
+import dev.xylonity.knightquest.registry.KnightQuestItems;
 
 /**
  * Bridge to avoid crashes when specific mods are not present and some internal classes is called.
@@ -13,15 +13,15 @@ import net.xylonity.registry.KnightQuestItems;
 public class KnightQuestIntegration {
 
     public static Item getRadiantEssence() {
-        return KnightQuestItems.RADIANT_ESSENCE;
+        return KnightQuestItems.RADIANT_ESSENCE.get();
     }
 
     public static Item getEmptyGoblet() {
-        return KnightQuestItems.EMPTY_GOBLET;
+        return KnightQuestItems.EMPTY_GOBLET.get();
     }
 
     public static Item getFilledGoblet() {
-        return KnightQuestItems.FILLED_GOBLET;
+        return KnightQuestItems.FILLED_GOBLET.get();
     }
 
     public static boolean configCanSummonNetherman() {
