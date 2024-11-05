@@ -1,11 +1,11 @@
 package dev.xylonity.knightlib.compat.integration;
 
+import dev.xylonity.knightquest.common.entity.boss.NethermanEntity;
+import dev.xylonity.knightquest.config.values.KQConfigValues;
+import dev.xylonity.knightquest.registry.KnightQuestEntities;
+import dev.xylonity.knightquest.registry.KnightQuestItems;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
-import net.xylonity.common.entity.boss.NethermanEntity;
-import net.xylonity.config.values.KQConfigValues;
-import net.xylonity.registry.KnightQuestEntities;
-import net.xylonity.registry.KnightQuestItems;
 
 /**
  * Bridge to avoid crashes when specific mods are not present and some internal classes is called.
