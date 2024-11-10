@@ -13,27 +13,27 @@ import net.minecraft.world.item.Item;
 public class KnightQuestIntegration {
 
     public static Item getRadiantEssence() {
-        return KnightQuestItems.RADIANT_ESSENCE;
+        return KnightQuestItems.RADIANT_ESSENCE.get();
     }
 
     public static Item getEmptyGoblet() {
-        return KnightQuestItems.EMPTY_GOBLET;
+        return KnightQuestItems.EMPTY_GOBLET.get();
     }
 
     public static Item getFilledGoblet() {
-        return KnightQuestItems.FILLED_GOBLET;
+        return KnightQuestItems.FILLED_GOBLET.get();
     }
 
     public static boolean configCanSummonNetherman() {
-        return KQConfigValues.CAN_SUMMON_NETHERMAN;
+        return KQConfigValues.CAN_SUMMON_NETHERMAN.getBoolean();
     }
 
     public static boolean configSpawnLightningOnSpawn() {
-        return KQConfigValues.SPAWN_LIGHTNING_ON_SPAWN;
+        return KQConfigValues.SPAWN_LIGHTNING_ON_SPAWN.getBoolean();
     }
 
     public static EntityType<NethermanEntity> nethermanEntity() {
-        return KnightQuestEntities.NETHERMAN;
+        return KnightQuestEntities.NETHERMAN.get();
     }
 
 }
