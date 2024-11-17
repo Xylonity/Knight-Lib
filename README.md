@@ -13,11 +13,11 @@ As I’m developing several mods (with more coming, especially related to the Kn
 
 <br>
 
-<a href="https://discord.com/invite/rHeQxZymmv" rel="nofollow"><img src="https://media.forgecdn.net/attachments/description/1018043/description_a255b953-62ec-43d7-b4b3-8a1a94b36bac.png" alt="image 1" width="200"></a>
+<a href="https://discord.gg/mb2XhhNNwS" rel="nofollow"><img src="https://media.forgecdn.net/attachments/description/1018043/description_a255b953-62ec-43d7-b4b3-8a1a94b36bac.png" alt="image 1" width="200"></a>
 
 <br>
 
-<span style="font-size:14px;font-family:verdana">All bug reports and feature requests should be directed to me, you can join our [discord server](https://discord.com/invite/rHeQxZymmv).</span>
+<span style="font-size:14px;font-family:verdana">All bug reports and feature requests should be directed to me, you can join our [discord server](https://discord.gg/mb2XhhNNwS).</span>
 
 <br><br>
 
