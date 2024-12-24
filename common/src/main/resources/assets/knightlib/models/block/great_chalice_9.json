@@ -1,9 +1,9 @@
 {
 	"credit": "Made with Blockbench",
-	"parent": "knightlib:block/great_chalice_6",
+	"parent": "knightlib:block/great_chalice_4",
 	"texture_size": [128, 128],
 	"textures": {
-		"1": "knightlib:block/great_chalice_radiant",
+		"1": "knightlib:block/great_chalice_chaotic",
 		"particle": "knightlib:block/great_chalice_break"
 	},
 	"elements": [
@@ -61,8 +61,8 @@
 		},
 		{
 			"name": "liquid",
-			"from": [2, 9, 2],
-			"to": [14, 11, 14],
+			"from": [2, 13, 2],
+			"to": [14, 15, 14],
 			"faces": {
 				"north": {"uv": [1.5, 6, 3, 6.25], "texture": "#1"},
 				"east": {"uv": [0, 6, 1.5, 6.25], "texture": "#1"},
