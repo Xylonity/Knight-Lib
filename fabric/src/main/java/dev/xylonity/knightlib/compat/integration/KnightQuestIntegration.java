@@ -24,12 +24,8 @@ public class KnightQuestIntegration {
         return KnightQuestItems.FILLED_GOBLET.get();
     }
 
-    public static boolean configCanSummonNetherman() {
-        return KQConfigValues.CAN_SUMMON_NETHERMAN;
-    }
-
-    public static boolean configSpawnLightningOnSpawn() {
-        return KQConfigValues.SPAWN_LIGHTNING_ON_SPAWN;
+    public static Item getChaoticEssence() {
+        return KnightQuestItems.CHAOTIC_ESSENCE.get();
     }
 
     public static EntityType<NethermanEntity> nethermanEntity() {

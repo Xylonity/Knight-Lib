@@ -40,7 +40,7 @@ public class KnightLibBlocks {
                         case 2, 9 -> 2;
                         case 3, 8 -> 4;
                         case 4, 7 -> 6;
-                        case 5, 6 -> 8;
+                        case 5, 6, 10 -> 8;
                         default -> 0;
                     }))
             {
