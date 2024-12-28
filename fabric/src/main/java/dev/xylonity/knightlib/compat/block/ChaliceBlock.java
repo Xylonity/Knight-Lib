@@ -43,7 +43,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 public class ChaliceBlock extends AbstractTickBlock {
-    public static final IntegerProperty fill = IntegerProperty.create("level", 1, 9);
+    public static final IntegerProperty fill = IntegerProperty.create("level", 1, 10);
 
     private static final VoxelShape SHAPE_N = Stream.of(
             Block.box(0, 7, 0, 2, 16, 16),
@@ -120,6 +120,7 @@ public class ChaliceBlock extends AbstractTickBlock {
             if (!pLevel.isClientSide()) {
                 pLevel.setBlock(pPos, pState.setValue(fill, 1), 3);
                 dataTag.putBoolean("Activated", true);
+                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(dataTag));
                 pLevel.playSound(null, pPos, SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.BLOCKS, 1f, 1f);
             }
         }

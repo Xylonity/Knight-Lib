@@ -4,7 +4,7 @@
 	"texture_size": [128, 128],
 	"textures": {
 		"1": "knightlib:block/great_chalice_radiant",
-		"particle": "knightlib:block/great_chalice_radiant"
+		"particle": "knightlib:block/great_chalice_break"
 	},
 	"elements": [
 		{
