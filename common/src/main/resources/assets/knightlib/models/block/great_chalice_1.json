@@ -1,10 +1,10 @@
 {
 	"credit": "Made with Blockbench",
-	"parent": "knight_quest_chalice",
+	"parent": "knightlib:block/great_chalice",
 	"texture_size": [128, 128],
 	"textures": {
 		"1": "knightlib:block/great_chalice",
-		"particle": "knightlib:block/great_chalice"
+		"particle": "knightlib:block/great_chalice_break"
 	},
 	"elements": [
 		{

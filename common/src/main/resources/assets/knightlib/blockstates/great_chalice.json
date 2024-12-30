@@ -8,6 +8,7 @@
     "level=6": { "model": "knightlib:block/great_chalice_5" },
     "level=7": { "model": "knightlib:block/great_chalice_6" },
     "level=8": { "model": "knightlib:block/great_chalice_7" },
-    "level=9": { "model": "knightlib:block/great_chalice_8" }
+    "level=9": { "model": "knightlib:block/great_chalice_8" },
+    "level=10": { "model": "knightlib:block/great_chalice_9" }
   }
 }

@@ -72,7 +72,7 @@ sourceSets.main.resources.srcDir 'src/generated/resources'
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    implementation fg.deobf("curse.maven:knight-quest-reforged-1018043:5720932")
+    implementation fg.deobf("curse.maven:knight-quest-reforged-1018043:6036780")
     implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.19:3.1.40')
     compileOnly project(":Common")
 }
