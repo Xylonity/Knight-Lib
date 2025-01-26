@@ -6,8 +6,11 @@ import dev.xylonity.knightlib.compat.integration.KnightQuestIntegration;
 import dev.xylonity.knightlib.compat.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.compat.registry.KnightLibItems;
 import dev.xylonity.knightlib.compat.registry.KnightLibParticles;
+import dev.xylonity.knightquest.common.item.KQWeaponItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -22,6 +25,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -39,7 +43,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 public class ChaliceBlock extends AbstractTickBlock {
-    public static final IntegerProperty fill = IntegerProperty.create("level", 1, 9);
+    public static final IntegerProperty fill = IntegerProperty.create("level", 1, 10);
 
     private static final VoxelShape SHAPE_N = Stream.of(
             Block.box(0, 7, 0, 2, 16, 16),
@@ -71,9 +75,8 @@ public class ChaliceBlock extends AbstractTickBlock {
      * proportional to its state. The great chalice has six predefined states, with the fifth state making
      * the chalice emit a bright light, as defined in the block registration.
      *
-     * @see dev.xylonity.knightlib.compat.registry.KnightLibBlocks#GREAT_CHALICE
+     * @see KnightLibBlocks#GREAT_CHALICE
      */
-
     @Override
     protected @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack pStack, @NotNull BlockState pState, Level pLevel, @NotNull BlockPos pPos, Player pPlayer, @NotNull InteractionHand pHand, @NotNull BlockHitResult pHitResult) {
 
@@ -84,13 +87,41 @@ public class ChaliceBlock extends AbstractTickBlock {
         Item knightquestEmptyGoblet = null;
         Item knightquestFilledGoblet = null;
         Item knightquestRadiantEssence = null;
-        boolean configCanSummonNetherman = true;
+        Item knightquestChaoticEssence = null;
 
         if (KnightLib.isKnightQuestLoaded()) {
             knightquestEmptyGoblet = KnightQuestIntegration.getEmptyGoblet();
             knightquestFilledGoblet = KnightQuestIntegration.getFilledGoblet();
             knightquestRadiantEssence = KnightQuestIntegration.getRadiantEssence();
-            configCanSummonNetherman = KnightQuestIntegration.configCanSummonNetherman();
+            knightquestChaoticEssence = KnightQuestIntegration.getChaoticEssence();
+        }
+
+        CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        CompoundTag dataTag = customData.copyTag();
+
+        if (block.equals(KnightLibBlocks.GREAT_CHALICE.get()) && item instanceof KQWeaponItem && pState.getValue(fill).equals(10) && !dataTag.getBoolean("Activated")) {
+            if (pLevel.isClientSide()) {
+                double radius = 0.5;
+                double centerX = pPos.getX() + 0.5;
+                double centerZ = pPos.getZ() + 0.5;
+                double initialY = pPos.getY();
+
+                for (int i = 0; i < 720; i+=12) {
+                    double angleRadians = Math.toRadians(i);
+
+                    double particleX = centerX + radius * Math.cos(angleRadians);
+                    double particleZ = centerZ + radius * Math.sin(angleRadians);
+
+                    pLevel.addParticle(ParticleTypes.WARPED_SPORE, particleX, initialY + 1, particleZ, -0.5d, 0.5d, 0.5d);
+                }
+            }
+
+            if (!pLevel.isClientSide()) {
+                pLevel.setBlock(pPos, pState.setValue(fill, 1), 3);
+                dataTag.putBoolean("Activated", true);
+                stack.set(DataComponents.CUSTOM_DATA, CustomData.of(dataTag));
+                pLevel.playSound(null, pPos, SoundEvents.EVOKER_PREPARE_SUMMON, SoundSource.BLOCKS, 1f, 1f);
+            }
         }
 
         if (block.equals(KnightLibBlocks.GREAT_CHALICE.get()) && item.equals(KnightLibItems.GREAT_ESSENCE.get()) && (Arrays.asList(1, 2, 3, 4).contains(pState.getValue(fill)))) {
@@ -165,7 +196,7 @@ public class ChaliceBlock extends AbstractTickBlock {
             }
         }
 
-        if (block.equals(KnightLibBlocks.GREAT_CHALICE.get()) && item.equals(knightquestRadiantEssence) && pState.getValue(fill).equals(5) && configCanSummonNetherman) {
+        if (block.equals(KnightLibBlocks.GREAT_CHALICE.get()) && item.equals(knightquestRadiantEssence) && pState.getValue(fill).equals(5)) {
             if (!pLevel.isClientSide()) {
                 if (pPlayer.getItemInHand(pHand).getCount() > 1) {
                     int stackCount = stack.getCount();
@@ -175,6 +206,20 @@ public class ChaliceBlock extends AbstractTickBlock {
                 }
 
                 pLevel.setBlock(pPos, pState.cycle(fill), 3);
+            }
+        }
+
+        if (block.equals(KnightLibBlocks.GREAT_CHALICE.get()) && item.equals(knightquestChaoticEssence) && pState.getValue(fill).equals(5)) {
+            if (!pLevel.isClientSide()) {
+                pLevel.playSound(null, pPos, SoundEvents.ALLAY_AMBIENT_WITHOUT_ITEM, SoundSource.BLOCKS, 1f, 1f);
+                if (pPlayer.getItemInHand(pHand).getCount() > 1) {
+                    int stackCount = stack.getCount();
+                    stack.setCount(--stackCount);
+                } else {
+                    pPlayer.setItemInHand(pHand, new ItemStack(ItemStack.EMPTY.getItem()));
+                }
+
+                pLevel.setBlock(pPos, pState.setValue(fill, 10), 3);
             }
         }
 
@@ -207,6 +252,26 @@ public class ChaliceBlock extends AbstractTickBlock {
 
         }
 
+        if (pState.getValue(fill).equals(10)) {
+
+            if (pLevel.isClientSide()) {
+                double radius = 0.37;
+                double centerX = pPos.getX() + 0.5;
+                double centerZ = pPos.getZ() + 0.5;
+                double initialY = pPos.getY() - 0.5;
+
+                for (int i = 0; i < 360; i+=60) {
+                    double angleRadians = Math.toRadians(i);
+
+                    double particleX = centerX + radius * Math.cos(angleRadians);
+                    double particleZ = centerZ + radius * Math.sin(angleRadians);
+
+                    pLevel.addParticle(ParticleTypes.WARPED_SPORE, particleX, initialY + 1, particleZ, 0d, 0.35d, 0d);
+                }
+            }
+
+        }
+
         super.animateTick(pState, pLevel, pPos, pRandom);
     }
 
@@ -226,11 +291,11 @@ public class ChaliceBlock extends AbstractTickBlock {
             }
 
             if (tickCount == 60) {
-                pLevel.setBlock(pPos, pState.cycle(fill), 3);
+                pLevel.setBlock(pPos, pState.setValue(fill, 1), 3);
 
                 LightningBolt lightningBolt = EntityType.LIGHTNING_BOLT.create(pLevel);
-                if (lightningBolt != null && KnightQuestIntegration.configSpawnLightningOnSpawn()) {
-                    lightningBolt.moveTo(pPos.getX() + 0.5, pPos.getY(), pPos.getZ() + 0.5);
+                if (lightningBolt != null) {
+                    lightningBolt.moveTo(pPos.getX() + 0.5, pPos.getY() - 1, pPos.getZ() + 0.5);
                     pLevel.addFreshEntity(lightningBolt);
                 }
 
