@@ -1,9 +1,17 @@
 {
   "item.knightlib.great_essence": "Great essence",
   "item.knightlib.small_essence": "Small essence",
+  "item.knightlib.empty_grail": "Empty grail",
+  "item.knightlib.filled_grail": "Filled grail",
+  "item.knightlib.homunculus": "Homunculus",
   "block.knightlib.great_chalice": "Great Chalice",
 
   "tooltip.item.knightlib.great_essence": "§8§oOffer four to a great chalice.",
   "tooltip.item.knightlib.small_essence": "§8§oCombine four to make great essence!",
-  "tooltip.item.knightlib.great_chalice": "§8§oOffer the chalice great essence."
+  "tooltip.item.knightlib.homunculus": "§8§oWhat was dead may yet stir... unnaturally",
+  "tooltip.item.knightlib.empty_grail": "§8§oFill it with purpose.",
+  "tooltip.item.knightlib.filled_grail": "§8§oOne sip and it's so over.",
+  "tooltip.item.knightlib.great_chalice": "§8§oWhispers names you've never heard.",
+
+  "jei.knightlib.great_chalice_grail_interaction.title": "Great Chalice"
 }

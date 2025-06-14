@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.compat.datagen;
 
 import dev.xylonity.knightlib.compat.config.values.KnightLibValues;
-import dev.xylonity.knightlib.compat.registry.KnightLibItems;
+import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.storage.loot.LootPool;

@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.compat.datagen;
 
 import dev.xylonity.knightlib.KnightLibCommon;
-import dev.xylonity.knightlib.compat.registry.KnightLibItems;
+import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;

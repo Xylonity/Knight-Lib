@@ -1,8 +1,6 @@
 package dev.xylonity.knightlib.compat.particle;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import dev.xylonity.knightlib.compat.block.ChaliceBlock;
-import dev.xylonity.knightlib.compat.registry.KnightLibBlocks;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
@@ -25,20 +23,20 @@ public class StarsetParticle extends TextureSheetParticle {
 
         BlockPos blockPos = BlockPos.containing(x, y + 1, z);
 
-        if (world.getBlockState(blockPos).getBlock() == KnightLibBlocks.GREAT_CHALICE.get()) {
-            int fillValue = world.getBlockState(blockPos).getValue(ChaliceBlock.fill);
-
-            this.quadSize = switch (fillValue) {
-                case 1 -> 1f;
-                case 2 -> 1.2f;
-                case 3 -> 1.4f;
-                case 4 -> 1.8f;
-                default -> 0f;
-            };
-
-        } else {
-            this.quadSize = (float) velX;
-        }
+        //if (world.getBlockState(blockPos).getBlock() == KnightLibBlocks.GREAT_CHALICE.get()) {
+//
+//
+        //    //this.quadSize = switch (fillValue) {
+        //    //    case 1 -> 1f;
+        //    //    case 2 -> 1.2f;
+        //    //    case 3 -> 1.4f;
+        //    //    case 4 -> 1.8f;
+        //    //    default -> 0f;
+        //    //};
+//
+        //} else {
+        //    this.quadSize = (float) velX;
+        //}
 
         this.rCol = 1F;
         this.gCol = 1F;

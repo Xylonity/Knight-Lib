@@ -1,10 +1,10 @@
 package dev.xylonity.knightlib.compat.block;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.block.AbstractTickBlock;
+import dev.xylonity.knightlib.common.block.AbstractTickBlock;
 import dev.xylonity.knightlib.compat.integration.KnightQuestIntegration;
 import dev.xylonity.knightlib.compat.registry.KnightLibBlocks;
-import dev.xylonity.knightlib.compat.registry.KnightLibItems;
+import dev.xylonity.knightlib.registry.KnightLibItems;
 import dev.xylonity.knightlib.compat.registry.KnightLibParticles;
 import dev.xylonity.knightquest.common.item.KQWeaponItem;
 import net.minecraft.core.BlockPos;
