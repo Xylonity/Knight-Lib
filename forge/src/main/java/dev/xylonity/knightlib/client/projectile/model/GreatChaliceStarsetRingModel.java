@@ -14,6 +14,10 @@ public class GreatChaliceStarsetRingModel extends GeoModel<GreatChaliceStartsetR
 
     @Override
     public ResourceLocation getTextureResource(GreatChaliceStartsetRing animatable) {
+        //int frames = 10;
+        //int millisPerFrame = 50;
+        //int perTick = 1;
+        //int frameIndex = animatable.getAnimationFrame(frames, perTick);
         int frames = 10;
         int perTick = 1;
 

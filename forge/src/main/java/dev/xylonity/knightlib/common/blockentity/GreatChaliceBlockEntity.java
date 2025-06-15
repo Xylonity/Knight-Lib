@@ -51,7 +51,8 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
     public void setCharges(int charges) {
         this.charges = Math.min(charges, IGreatChaliceInteractable.MAX_CHARGES);
 
-        starsetRing();
+        if (charges != 0) starsetRing();
+        if (charges == 0) setState(GreatChaliceState.EMPTY);
 
         this.prevCharges = this.charges;
         setChanged();

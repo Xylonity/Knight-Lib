@@ -13,7 +13,6 @@ public class GreatChaliceStartsetRing extends BaseProjectile implements GeoEntit
 
     @Override
     public void tick() {
-
         double px = getX();
         double py = getY();
         double pz = getZ();

@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
-@Deprecated
 public final class ConfigManager {
     private static Path CONFIG_DIR = Path.of("config");
     private static final Set<Class<?>> REGISTERED = new HashSet<>();

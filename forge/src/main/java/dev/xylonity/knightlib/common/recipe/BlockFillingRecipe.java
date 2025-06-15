@@ -2,6 +2,7 @@ package dev.xylonity.knightlib.common.recipe;
 
 import com.google.gson.JsonObject;
 import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
@@ -10,20 +11,16 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-
-import net.minecraft.world.item.crafting.*;
 import org.jetbrains.annotations.NotNull;
 
-public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
+public record BlockFillingRecipe(ItemStack input, ItemStack block) implements Recipe<SimpleContainer> {
 
-    private static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "great_chalice_interaction");
+    private static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "block_filling");
 
-    public static final RecipeSerializer<GreatChaliceRecipe> SERIALIZER = new Serializer();
-    public static final RecipeType<GreatChaliceRecipe> RECIPE_TYPE = new Type();
-
-    public final ItemStack input = new ItemStack(KnightLibItems.EMPTY_GRAIL.get());
-    public final ItemStack output = new ItemStack(KnightLibItems.FILLED_GRAIL.get());
+    public static final RecipeSerializer<BlockFillingRecipe> SERIALIZER = new Serializer();
+    public static final RecipeType<BlockFillingRecipe> RECIPE_TYPE = new Type();
 
     @Override
     public boolean matches(SimpleContainer inv, @NotNull Level lvl) {
@@ -32,7 +29,7 @@ public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
 
     @Override
     public @NotNull ItemStack assemble(@NotNull SimpleContainer inv, @NotNull RegistryAccess reg) {
-        return output.copy();
+        return ItemStack.EMPTY;
     }
 
     @Override
@@ -42,7 +39,7 @@ public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
 
     @Override
     public @NotNull ItemStack getResultItem(@NotNull RegistryAccess reg) {
-        return output.copy();
+        return ItemStack.EMPTY;
     }
 
     @Override
@@ -60,7 +57,7 @@ public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
         return RECIPE_TYPE;
     }
 
-    public static final class Type implements RecipeType<GreatChaliceRecipe> {
+    public static class Type implements RecipeType<BlockFillingRecipe> {
 
         @Override
         public String toString() {
@@ -69,19 +66,24 @@ public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
 
     }
 
-    public static final class Serializer implements RecipeSerializer<GreatChaliceRecipe> {
+    public static class Serializer implements RecipeSerializer<BlockFillingRecipe> {
         @Override
-        public @NotNull GreatChaliceRecipe fromJson(@NotNull ResourceLocation id, @NotNull JsonObject json) {
-            return new GreatChaliceRecipe();
+        public @NotNull BlockFillingRecipe fromJson(@NotNull ResourceLocation id, @NotNull JsonObject json) {
+            return new BlockFillingRecipe(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()));
         }
 
         @Override
-        public GreatChaliceRecipe fromNetwork(@NotNull ResourceLocation id, @NotNull FriendlyByteBuf buf) {
-            return new GreatChaliceRecipe();
+        public BlockFillingRecipe fromNetwork(@NotNull ResourceLocation id, @NotNull FriendlyByteBuf buf) {
+            ItemStack input = buf.readItem();
+            ItemStack block = buf.readItem();
+            return new BlockFillingRecipe(input, block);
         }
 
         @Override
-        public void toNetwork(@NotNull FriendlyByteBuf buf, @NotNull GreatChaliceRecipe rec) { ;; }
+        public void toNetwork(@NotNull FriendlyByteBuf buf, @NotNull BlockFillingRecipe rec) {
+            buf.writeItem(rec.input);
+            buf.writeItem(rec.block);
+        }
     }
 
 }

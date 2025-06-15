@@ -3,16 +3,17 @@
   "category": "misc",
   "key": {
     "#": {
-      "item": "knightlib:small_essence"
+      "item": "minecraft:copper_ingot"
     }
   },
   "pattern": [
-    "##",
-    "##"
+    "   ",
+    "# #",
+    " # "
   ],
   "result": {
-    "item": "knightlib:great_essence",
+    "item": "knightlib:empty_grail",
     "count": 1
   },
-  "show_notification": false
+  "show_notification": true
 }

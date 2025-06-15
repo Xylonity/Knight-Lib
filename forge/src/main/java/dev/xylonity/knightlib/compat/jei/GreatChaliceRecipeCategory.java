@@ -39,19 +39,14 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
     public static final ResourceLocation UID = new ResourceLocation(KnightLib.MOD_ID, "great_chalice_interaction");
     public static final RecipeType<GreatChaliceRecipe> TYPE = new RecipeType<>(UID, GreatChaliceRecipe.class);
 
-    private static final int X_INPUT = 4;
-    private static final int X_BLOCK = 48;
-    private static final int X_OUTPUT = 92;
-    private static final int Y_SLOT = 18;
+    public static final ResourceLocation SHADOW = new ResourceLocation(KnightLib.MOD_ID, "textures/gui/shadow.png");
 
-    private final IDrawable background;
     private final IDrawable icon;
 
     private GreatChaliceBlockEntity cachedBlockEntity;
     private long lastUpdateTime = 0;
 
     public GreatChaliceRecipeCategory(IGuiHelper gui) {
-        this.background = gui.createDrawable(new ResourceLocation(KnightLib.MOD_ID, "textures/gui/jei_great_chalice.png"), 0, 0, 116, 50);
         this.icon = gui.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()));
     }
 
@@ -66,8 +61,13 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
     }
 
     @Override
-    public IDrawable getBackground() {
-        return background;
+    public int getHeight() {
+        return 80;
+    }
+
+    @Override
+    public int getWidth() {
+        return 160;
     }
 
     @Override
@@ -76,24 +76,10 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, GreatChaliceRecipe rec, IFocusGroup focuses) {
-        builder.addSlot(RecipeIngredientRole.INPUT, X_INPUT, Y_SLOT).addItemStack(rec.input);
+    public void setRecipe(IRecipeLayoutBuilder builder, GreatChaliceRecipe rec, @NotNull IFocusGroup focuses) {
+        builder.addSlot(RecipeIngredientRole.INPUT, 10, 5).addItemStack(rec.input);
 
-        builder.addSlot(RecipeIngredientRole.RENDER_ONLY, X_BLOCK, Y_SLOT).addItemStack(new ItemStack(KnightLibBlocks.GREAT_CHALICE.get())).setCustomRenderer(
-                VanillaTypes.ITEM_STACK, new IIngredientRenderer<>() {
-                    @Override
-                    public void render(@NotNull GuiGraphics guiGraphics, @NotNull ItemStack itemStack) {
-                        ;;
-                    }
-
-                    @Override
-                    public List<Component> getTooltip(@NotNull ItemStack itemStack, @NotNull TooltipFlag tooltipFlag) {
-                        return itemStack.getTooltipLines(Minecraft.getInstance().player, tooltipFlag);
-                    }
-                }
-        );
-
-        builder.addSlot(RecipeIngredientRole.OUTPUT, X_OUTPUT, Y_SLOT).addItemStack(rec.output);
+        builder.addSlot(RecipeIngredientRole.OUTPUT, 130, 42).addItemStack(rec.output);
     }
 
     private GreatChaliceBlockEntity getOrCreateBlockEntity() {
@@ -117,7 +103,19 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
     }
 
     @Override
-    public void draw(@NotNull GreatChaliceRecipe recipe, @NotNull IRecipeSlotsView slots, GuiGraphics guiGraphics, double mouseX, double mouseY) {
+    public void draw(@NotNull GreatChaliceRecipe recipe, @NotNull IRecipeSlotsView slots, @NotNull GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        RenderSystem.setShaderTexture(0, SHADOW);
+        // chalice shadow
+        guiGraphics.blit(SHADOW, 20, 55, 0, 0, 39, 17);
+        // arrow down
+        guiGraphics.blit(SHADOW, 32, 10, 46, 3, 33, 22);
+        // arrow right
+        guiGraphics.blit(SHADOW, 85, 45, 81, 6, 39, 12);
+        // item bg input
+        guiGraphics.blit(SHADOW, 129, 41, 120, 0, 19, 19);
+        // item bg output
+        guiGraphics.blit(SHADOW, 9, 4, 120, 0, 19, 19);
+
         updateAnimation();
 
         GreatChaliceBlockEntity be = getOrCreateBlockEntity();
@@ -131,16 +129,16 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
         MultiBufferSource.BufferSource buffer = guiGraphics.bufferSource();
 
         pose.pushPose();
-        pose.translate(X_BLOCK + 8, Y_SLOT + 8, 100);
-        pose.scale(16f, 16f, 16f);
-        pose.mulPose(Axis.XP.rotationDegrees(-30f));
+        pose.translate(59, 55, 0);
+        pose.scale(24f, 24f, 24f);
+        pose.mulPose(Axis.XP.rotationDegrees(-25f));
         pose.mulPose(Axis.YP.rotationDegrees(45f));
         pose.mulPose(Axis.ZP.rotationDegrees(180f));
 
         Matrix3f normalMat = pose.last().normal();
 
-        Vector3f up = new Vector3f(-1, -1, -1);
-        Vector3f front = new Vector3f(-1, -1, -1);
+        Vector3f up = new Vector3f(-1, 10, -1);
+        Vector3f front = new Vector3f(-1, 3, -1);
 
         normalMat.transform(up).normalize();
         normalMat.transform(front).normalize();

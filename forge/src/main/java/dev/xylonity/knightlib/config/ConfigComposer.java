@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 // Abstraction of the config api to use ForgeConfigSpec, so any mod that adds a general config GUI,
 // such as Configured, detects this config. This should also enable hot-reloading
-@Deprecated
 public final class ConfigComposer {
     private static final Map<Field, ForgeConfigSpec.ConfigValue<?>> VALUES = new ConcurrentHashMap<>();
 
@@ -34,10 +33,7 @@ public final class ConfigComposer {
 
         makeConfig(builder, clazz, ac.style(), ac.categoryBanner());
 
-        ForgeConfigSpec spec = builder.build();
-
-        // TODO: Default config registry type is hardcoded to COMMON
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, spec, specName(clazz));
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, builder.build(), specName(clazz));
 
         // On the (re)load stage of the config directory, we reapply the changes so the config file contains the newest changes
         modBus.addListener((ModConfigEvent.Loading e) -> applyFromSpec());

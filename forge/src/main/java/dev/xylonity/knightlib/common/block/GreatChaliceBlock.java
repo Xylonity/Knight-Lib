@@ -4,6 +4,7 @@ import dev.xylonity.knightlib.common.api.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -71,9 +72,9 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
 
         ItemStack stack = pPlayer.getItemInHand(pHand);
         if (stack.getItem() instanceof IGreatChaliceInteractable actor) {
-            if (!actor.getRequiredState().contains(chalice.getState())) {
-                return InteractionResult.PASS;
-            }
+            if (!actor.canInteract(chalice, pLevel, pPlayer)) return InteractionResult.PASS;
+
+            actor.onPreInteraction(chalice, pPlayer, pLevel, pHit);
 
             int total = chalice.getCharges() + actor.getChargesToApply();
             if (total < 0 || total > IGreatChaliceInteractable.MAX_CHARGES) {
@@ -81,11 +82,6 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
             }
 
             chalice.setCharges(total);
-
-            if (actor.shouldSwapStates()) {
-                chalice.setState(actor.getTargetState());
-            }
-
             stack.shrink(actor.shrinkItemAmount());
 
             if (!actor.getRewards().isEmpty()) {
@@ -95,9 +91,13 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
                 }
             }
 
-            if (actor.getInteractionSound() != null) {
-                pLevel.playSound(null, pPos, actor.getInteractionSound(), SoundSource.BLOCKS, 1f, 1f);
+            if (!actor.getInteractionSounds().isEmpty()) {
+                for (SoundEvent sound : actor.getInteractionSounds()) {
+                    pLevel.playSound(null, pPos, sound, SoundSource.BLOCKS, 1f, 1f);
+                }
             }
+
+            actor.onPostInteraction(chalice, pPlayer, pLevel, pHit);
 
             return InteractionResult.SUCCESS;
         }
