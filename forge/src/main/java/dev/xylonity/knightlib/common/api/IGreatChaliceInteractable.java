@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public interface IGreatChaliceInteractable {
 
-    // Great chalice maximum charges
+    /** Great chalice maximum charges **/
     int MAX_CHARGES = 12;
 
     /**
@@ -89,6 +89,15 @@ public interface IGreatChaliceInteractable {
      */
     default @NotNull Set<SoundEvent> getInteractionSounds() {
         return Set.of(SoundEvents.BUCKET_EMPTY);
+    }
+
+    /**
+     * Returns the sound to play if the chalice reaches its maximum capacity.
+     *
+     * @return the sound event
+     */
+    default @NotNull SoundEvent getFullChargeSound() {
+        return SoundEvents.PLAYER_LEVELUP;
     }
 
 }
