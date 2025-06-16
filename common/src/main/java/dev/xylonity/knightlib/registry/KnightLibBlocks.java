@@ -22,15 +22,20 @@ public class KnightLibBlocks {
                         .strength(3f, 6f)
                         .requiresCorrectToolForDrops()
                         .sound(SoundType.COPPER)
-                        .noOcclusion(), BlockType.GREAT_CHALICE);
+                        .noOcclusion(), BlockType.GREAT_CHALICE, BlockItem.GREAT_CHALICE);
     }
 
-    private static <T extends Block> Supplier<T> registerBlock(String id, BlockBehaviour.Properties properties, BlockType blockType) {
-        return KnightLibCommon.PLATFORM.registerBlock(id, properties, blockType);
+    private static <T extends Block> Supplier<T> registerBlock(String id, BlockBehaviour.Properties properties, BlockType blockType, BlockItem blockItem) {
+        return KnightLibCommon.PLATFORM.registerBlock(id, properties, blockType, blockItem);
     }
 
     public enum BlockType {
         GREAT_CHALICE
+    }
+
+    public enum BlockItem {
+        GREAT_CHALICE,
+        GENERIC
     }
 
 }

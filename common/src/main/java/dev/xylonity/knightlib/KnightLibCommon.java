@@ -3,6 +3,7 @@ package dev.xylonity.knightlib;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import dev.xylonity.knightlib.platform.KnightLibPlatform;
+import dev.xylonity.knightlib.registry.KnightLibParticles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,7 @@ public class KnightLibCommon {
     public static void init() {
         KnightLibItems.init();
         KnightLibBlocks.init();
+        KnightLibParticles.init();
     }
 
 }

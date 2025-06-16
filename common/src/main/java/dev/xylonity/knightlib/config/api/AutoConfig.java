@@ -16,7 +16,7 @@ public @interface AutoConfig {
     DecorationType style() default DecorationType.SIMPLE;
 
     // Extra comment above the category indicating its own existence (lol)
-    boolean categoryBanner() default true;
+    boolean categoryBanner() default false;
 
     // Should be autosaved
     boolean autosave() default true;
