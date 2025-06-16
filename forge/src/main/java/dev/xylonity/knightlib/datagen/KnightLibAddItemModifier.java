@@ -1,14 +1,17 @@
-package dev.xylonity.knightlib.compat.datagen;
+package dev.xylonity.knightlib.datagen;
 
 import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import dev.xylonity.knightlib.compat.config.values.KnightLibValues;
+import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraftforge.common.loot.IGlobalLootModifier;
 import net.minecraftforge.common.loot.LootModifier;
@@ -17,12 +20,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-
 public class KnightLibAddItemModifier extends LootModifier {
     public static final Supplier<Codec<KnightLibAddItemModifier>> CODEC = Suppliers.memoize(() ->
-            RecordCodecBuilder.create(inst -> codecStart(inst).and(ForgeRegistries.ITEMS.getCodec()
-                            .fieldOf("item").forGetter(m -> m.item))
-                    .and(Codec.FLOAT.fieldOf("chance").forGetter(m -> m.chance))
+            RecordCodecBuilder.create(inst -> codecStart(inst)
+                    .and(ForgeRegistries.ITEMS.getCodec()
+                            .fieldOf("item")
+                            .forGetter(m -> m.item))
+                    .and(Codec.FLOAT.fieldOf("chance")
+                            .forGetter(m -> m.chance))
                     .apply(inst, KnightLibAddItemModifier::new)));
 
     private final Item item;
@@ -36,15 +41,21 @@ public class KnightLibAddItemModifier extends LootModifier {
 
     @Override
     protected @NotNull ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
-
-        for(LootItemCondition condition : this.conditions) {
-            if(!condition.test(context)) {
+        for (LootItemCondition condition : this.conditions) {
+            if (!condition.test(context)) {
                 return generatedLoot;
             }
         }
 
-        if (item == KnightLibItems.SMALL_ESSENCE.get() && context.getRandom().nextFloat() <= KnightLibValues.DROP_CHANCE_SMALL_ESSENCE)
-            generatedLoot.add(new ItemStack(this.item));
+        if (context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof Mob mob && mob.getType().getCategory() == MobCategory.MONSTER
+                && context.getRandom().nextFloat() <= KnightLibConfig.SMALL_ESSENCE_DROP_RATE) {
+            generatedLoot.add(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()));
+        }
+
+        if (context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof Mob mob && mob.getType().getCategory() == MobCategory.MONSTER
+                && context.getRandom().nextFloat() <= KnightLibConfig.GREAT_ESSENCE_DROP_RATE) {
+            generatedLoot.add(new ItemStack(KnightLibItems.GREAT_ESSENCE.get()));
+        }
 
         return generatedLoot;
     }
