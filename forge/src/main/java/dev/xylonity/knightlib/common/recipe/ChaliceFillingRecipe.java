@@ -15,12 +15,12 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
-public record BlockFillingRecipe(ItemStack input, ItemStack block) implements Recipe<SimpleContainer> {
+public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements Recipe<SimpleContainer> {
 
     private static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "block_filling");
 
-    public static final RecipeSerializer<BlockFillingRecipe> SERIALIZER = new Serializer();
-    public static final RecipeType<BlockFillingRecipe> RECIPE_TYPE = new Type();
+    public static final RecipeSerializer<ChaliceFillingRecipe> SERIALIZER = new Serializer();
+    public static final RecipeType<ChaliceFillingRecipe> RECIPE_TYPE = new Type();
 
     @Override
     public boolean matches(SimpleContainer inv, @NotNull Level lvl) {
@@ -57,7 +57,7 @@ public record BlockFillingRecipe(ItemStack input, ItemStack block) implements Re
         return RECIPE_TYPE;
     }
 
-    public static class Type implements RecipeType<BlockFillingRecipe> {
+    public static class Type implements RecipeType<ChaliceFillingRecipe> {
 
         @Override
         public String toString() {
@@ -66,21 +66,21 @@ public record BlockFillingRecipe(ItemStack input, ItemStack block) implements Re
 
     }
 
-    public static class Serializer implements RecipeSerializer<BlockFillingRecipe> {
+    public static class Serializer implements RecipeSerializer<ChaliceFillingRecipe> {
         @Override
-        public @NotNull BlockFillingRecipe fromJson(@NotNull ResourceLocation id, @NotNull JsonObject json) {
-            return new BlockFillingRecipe(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()));
+        public @NotNull ChaliceFillingRecipe fromJson(@NotNull ResourceLocation id, @NotNull JsonObject json) {
+            return new ChaliceFillingRecipe(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()));
         }
 
         @Override
-        public BlockFillingRecipe fromNetwork(@NotNull ResourceLocation id, @NotNull FriendlyByteBuf buf) {
+        public ChaliceFillingRecipe fromNetwork(@NotNull ResourceLocation id, @NotNull FriendlyByteBuf buf) {
             ItemStack input = buf.readItem();
             ItemStack block = buf.readItem();
-            return new BlockFillingRecipe(input, block);
+            return new ChaliceFillingRecipe(input, block);
         }
 
         @Override
-        public void toNetwork(@NotNull FriendlyByteBuf buf, @NotNull BlockFillingRecipe rec) {
+        public void toNetwork(@NotNull FriendlyByteBuf buf, @NotNull ChaliceFillingRecipe rec) {
             buf.writeItem(rec.input);
             buf.writeItem(rec.block);
         }

@@ -7,7 +7,7 @@ import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.common.api.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import dev.xylonity.knightlib.common.entity.projectile.GreatChaliceStartsetRing;
-import dev.xylonity.knightlib.common.recipe.BlockFillingRecipe;
+import dev.xylonity.knightlib.common.recipe.ChaliceFillingRecipe;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibEntities;
 import mezz.jei.api.constants.VanillaTypes;
@@ -34,10 +34,10 @@ import org.joml.Vector3f;
 import software.bernie.geckolib.renderer.GeoBlockRenderer;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
-public class BlockFillingRecipeCategory implements IRecipeCategory<BlockFillingRecipe> {
+public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFillingRecipe> {
 
     public static final ResourceLocation UID = new ResourceLocation(KnightLib.MOD_ID, "block_filling");
-    public static final RecipeType<BlockFillingRecipe> TYPE = new RecipeType<>(UID, BlockFillingRecipe.class);
+    public static final RecipeType<ChaliceFillingRecipe> TYPE = new RecipeType<>(UID, ChaliceFillingRecipe.class);
     public static final ResourceLocation SHADOW = new ResourceLocation(KnightLib.MOD_ID, "textures/gui/shadow.png");
 
     private GreatChaliceBlockEntity cachedBlockEntity;
@@ -50,14 +50,14 @@ public class BlockFillingRecipeCategory implements IRecipeCategory<BlockFillingR
     private static final long ENTITY_INTERVAL = 2000;
     private long lastEntityTickAdvanceTime = 0;
 
-    private BlockFillingRecipe currentRecipe;
+    private ChaliceFillingRecipe currentRecipe;
 
-    public BlockFillingRecipeCategory(IGuiHelper gui) {
+    public ChaliceFillingRecipeCategory(IGuiHelper gui) {
         this.icon = gui.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()));
     }
 
     @Override
-    public @NotNull RecipeType<BlockFillingRecipe> getRecipeType() {
+    public @NotNull RecipeType<ChaliceFillingRecipe> getRecipeType() {
         return TYPE;
     }
 
@@ -82,7 +82,7 @@ public class BlockFillingRecipeCategory implements IRecipeCategory<BlockFillingR
     }
 
     @Override
-    public void setRecipe(IRecipeLayoutBuilder builder, BlockFillingRecipe rec, @NotNull IFocusGroup focuses) {
+    public void setRecipe(IRecipeLayoutBuilder builder, ChaliceFillingRecipe rec, @NotNull IFocusGroup focuses) {
         this.currentRecipe = rec;
         builder.addSlot(RecipeIngredientRole.INPUT, 10, 5).addItemStack(rec.input());
     }
@@ -149,7 +149,7 @@ public class BlockFillingRecipeCategory implements IRecipeCategory<BlockFillingR
     }
 
     @Override
-    public void draw(@NotNull BlockFillingRecipe recipe, @NotNull IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
+    public void draw(@NotNull ChaliceFillingRecipe recipe, @NotNull IRecipeSlotsView recipeSlotsView, GuiGraphics guiGraphics, double mouseX, double mouseY) {
         RenderSystem.setShaderTexture(0, SHADOW);
         guiGraphics.blit(SHADOW, 21, 55, 0, 0, 39, 17);
         // arrow down

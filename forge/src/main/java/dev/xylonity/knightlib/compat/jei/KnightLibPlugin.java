@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.compat.jei;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.common.recipe.BlockFillingRecipe;
+import dev.xylonity.knightlib.common.recipe.ChaliceFillingRecipe;
 import dev.xylonity.knightlib.common.recipe.GreatChaliceRecipe;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
@@ -29,21 +29,21 @@ public final class KnightLibPlugin implements IModPlugin {
     @Override
     public void registerCategories(IRecipeCategoryRegistration reg) {
         reg.addRecipeCategories(new GreatChaliceRecipeCategory(reg.getJeiHelpers().getGuiHelper()));
-        reg.addRecipeCategories(new BlockFillingRecipeCategory(reg.getJeiHelpers().getGuiHelper()));
+        reg.addRecipeCategories(new ChaliceFillingRecipeCategory(reg.getJeiHelpers().getGuiHelper()));
     }
 
     @Override
     public void registerRecipes(IRecipeRegistration reg) {
         reg.addRecipes(GreatChaliceRecipeCategory.TYPE, List.of(new GreatChaliceRecipe()));
-        reg.addRecipes(BlockFillingRecipeCategory.TYPE, List.of(
-                new BlockFillingRecipe(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get())),
-                new BlockFillingRecipe(new ItemStack(KnightLibItems.GREAT_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()))
+        reg.addRecipes(ChaliceFillingRecipeCategory.TYPE, List.of(
+                new ChaliceFillingRecipe(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get())),
+                new ChaliceFillingRecipe(new ItemStack(KnightLibItems.GREAT_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()))
         ));}
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration reg) {
         reg.addRecipeCatalyst(new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()), GreatChaliceRecipeCategory.TYPE);
-        reg.addRecipeCatalyst(new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()), BlockFillingRecipeCategory.TYPE);
+        reg.addRecipeCatalyst(new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()), ChaliceFillingRecipeCategory.TYPE);
     }
 
 }
