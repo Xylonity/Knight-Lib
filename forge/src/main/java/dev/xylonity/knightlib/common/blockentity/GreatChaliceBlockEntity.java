@@ -5,7 +5,9 @@ import dev.xylonity.knightlib.common.api.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.entity.projectile.GreatChaliceStartsetRing;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibEntities;
+import dev.xylonity.knightlib.registry.KnightLibParticles;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -22,26 +24,28 @@ import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
+
+import java.util.Random;
 
 public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEntity {
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-
-    private final RawAnimation BOUNCE = RawAnimation.begin().thenPlay("idle");
 
     private int charges;
     private int prevCharges;
 
     private GreatChaliceState state;
 
+    private long tickcount;
+
     public GreatChaliceBlockEntity(BlockPos pos, BlockState state) {
         super(KnightLibBlockEntities.GREAT_CHALICE.get(), pos, state);
         this.state = GreatChaliceState.EMPTY;
         this.charges = 0;
         this.prevCharges = 0;
+        this.tickcount = 0;
     }
 
     public int getCharges() {
@@ -116,6 +120,47 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
     public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T F) {
         if (!(F instanceof GreatChaliceBlockEntity chalice)) return;
 
+        if (chalice.charges == IGreatChaliceInteractable.MAX_CHARGES && chalice.tickcount % 15 == 0) {
+            chalice.spawnSpecialParticles();
+        }
+
+        if (chalice.tickcount % 5 == 0) {
+            chalice.spawnProgressiveParticles(pos);
+        }
+
+        chalice.tickcount++;
+    }
+
+    private void spawnSpecialParticles() {
+        if (level instanceof ServerLevel sv) {
+            for (int i = 0; i < 2; i++) {
+                double dx = (new Random().nextDouble() - 0.5) * 0.5;
+                double dy = (new Random().nextDouble() - 0.5) * 0.5;
+                double dz = (new Random().nextDouble() - 0.5) * 0.5;
+                if (i % 3 == 0) {
+                    sv.sendParticles(KnightLibParticles.STARSET.get(),
+                            this.getBlockPos().getX() + 0.5,
+                            this.getBlockPos().getY() + 0.5 * Math.random(),
+                            this.getBlockPos().getZ() + 0.5,
+                            1, dx, dy, dz, 0.35);
+                }
+            }
+        }
+
+    }
+
+    private void spawnProgressiveParticles(BlockPos pos) {
+        if (level instanceof ServerLevel sv) {
+            for (int i = 0; i < this.charges; i++) {
+                if (sv.random.nextFloat() < 0.10f) {
+                    sv.sendParticles(ParticleTypes.EFFECT,
+                            pos.getX() + 0.5 + (sv.random.nextDouble() - 0.5) * 0.9,
+                            pos.getY() + ((double) this.getCharges() / 12) + sv.random.nextDouble() * 0.5,
+                            pos.getZ() + 0.5 + (sv.random.nextDouble() - 0.5) * 0.9,
+                            1, 0.0, 0.1, 0.0, 0.0);
+                }
+            }
+        }
 
     }
 

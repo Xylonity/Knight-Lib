@@ -64,7 +64,7 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public InteractionResult use(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull Player pPlayer, @NotNull InteractionHand pHand, @NotNull BlockHitResult pHit) {
+    public @NotNull InteractionResult use(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull Player pPlayer, @NotNull InteractionHand pHand, @NotNull BlockHitResult pHit) {
 
         if (pLevel.isClientSide) return InteractionResult.PASS;
 
@@ -95,6 +95,10 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
                 for (SoundEvent sound : actor.getInteractionSounds()) {
                     pLevel.playSound(null, pPos, sound, SoundSource.BLOCKS, 1f, 1f);
                 }
+            }
+
+            if (chalice.getCharges() == IGreatChaliceInteractable.MAX_CHARGES) {
+                pLevel.playSound(null, pPos, actor.getFullChargeSound(), SoundSource.BLOCKS, 1f, 1f);
             }
 
             actor.onPostInteraction(chalice, pPlayer, pLevel, pHit);
