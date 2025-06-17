@@ -31,10 +31,9 @@ In addition to the core items, the library includes:<br>
 </span>
 
 <br>
-
-<a href="https://discord.gg/mb2XhhNNwS" rel="nofollow"><img src="https://media.forgecdn.net/attachments/description/1018043/description_a255b953-62ec-43d7-b4b3-8a1a94b36bac.png" alt="Discord" width="200"></a>
-</a><a href="https://www.curseforge.com/minecraft/mc-mods/geckolib" target="_blank" rel="nofollow noopener"><img src="https://media.forgecdn.net/attachments/description/1018043/description_1b32b3dd-8aa3-4fa4-b6f4-d7c186884e91.png" style="width:160px" alt="Geckolib"></a>
-<br>
+<a href="https://discord.gg/mb2XhhNNwS" rel="nofollow"><br><img src="https://media.forgecdn.net/attachments/description/1018043/description_a255b953-62ec-43d7-b4b3-8a1a94b36bac.png" alt="Discord" width="200"></a>
+<a href="https://www.curseforge.com/minecraft/mc-mods/geckolib" target="_blank" rel="nofollow noopener"><img src="https://media.forgecdn.net/attachments/description/1018043/description_1b32b3dd-8aa3-4fa4-b6f4-d7c186884e91.png" style="width:160px" alt="Geckolib"></a>
+<br><br>
 
 <span style="font-size:14px;font-family:verdana">
 To report bugs or suggest features, join our <a href="https://discord.gg/mb2XhhNNwS" rel="nofollow">Discord server</a>.
