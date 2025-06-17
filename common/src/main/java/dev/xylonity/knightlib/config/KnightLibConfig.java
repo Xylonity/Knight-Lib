@@ -11,7 +11,7 @@ public final class KnightLibConfig {
             min = 0.0d,
             max = 1.0d
     )
-    public static double SMALL_ESSENCE_DROP_RATE = 0.10d;
+    public static double SMALL_ESSENCE_DROP_RATE = 0.125d;
 
     @ConfigEntry(
             category = "Essence Drop Probabilities",

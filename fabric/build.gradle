@@ -3,6 +3,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'fabric-loom'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 base {
     archivesName = "${mod_id}-fabric-${minecraft_version}"
@@ -13,13 +14,44 @@ dependencies {
         officialMojangMappings()
         parchment("org.parchmentmc.data:parchment-1.20.1:2023.09.03@zip")
     }
-    modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${project.fuzs_version}"
-    modImplementation("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:4.4.7")
-    modImplementation "curse.maven:knight-quest-fabric-1016595:6025270"
+    modImplementation("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
+    //modImplementation "curse.maven:knight-quest-fabric-1016595:6025270"
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
     implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.1'
+
+    shadow("com.electronwill.night-config:toml:3.6.6")
+
+    modCompileOnlyApi "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}"
+    modRuntimeOnly "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
+
     implementation project(":common")
+}
+configurations {
+    shadow
+    implementation.extendsFrom shadow
+}
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import net.fabricmc.loom.task.RemapJarTask
+
+def shadowJarTask = tasks.named('shadowJar', ShadowJar)
+
+shadowJarTask.configure {
+    archiveClassifier.set('dev-shadow')
+    configurations = [project.configurations.shadow]
+
+    relocate 'com.electronwill.nightconfig', "dev.xylonity.nightconfig"
+
+    exclude 'META-INF/LICENSE*', 'META-INF/NOTICE*'
+}
+
+tasks.named('remapJar', RemapJarTask).configure { remap ->
+    dependsOn shadowJarTask
+
+    inputFile.set(shadowJarTask.flatMap { it.archiveFile })
+
+    archiveClassifier.set('')
 }
 
 loom {
@@ -67,8 +99,6 @@ publishing {
         }
     }
     repositories {
-        maven {
-            url "file://" + System.getenv("local_maven")
-        }
+        maven { url "file://" + System.getenv("local_maven") }
     }
 }

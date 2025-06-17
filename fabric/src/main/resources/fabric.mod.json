@@ -12,7 +12,7 @@
         "sources": "https://github.com/FabricMC/fabric-example-mod"
     },
     "license": "${license}",
-    "icon": "assets/modid/${mod_id}.png",
+    "icon": "assets/knightlib/icon.png",
     "environment": "*",
     "entrypoints": {
         "main": [
@@ -21,19 +21,23 @@
         "client": [
             "dev.xylonity.knightlib.KnightLib"
         ],
+        "jei_mod_plugin": [
+            "dev.xylonity.knightlib.compat.jei.KnightLibPlugin"
+        ],
         "fabric-datagen": [
-            "dev.xylonity.knightlib.compat.datagen.KnightLibLootModifierGenerator"
+            "dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator"
         ]
     },
     "mixins": [
-        "${mod_id}.mixins.json",
-        "${mod_id}.fabric.mixins.json"
+        "knightlib.mixins.json",
+        "knightlib.fabric.mixins.json"
     ],
     "depends": {
         "fabricloader": ">=0.14",
         "fabric": "*",
         "minecraft": "~${minecraft_version}",
-        "java": ">=17"
+        "java": ">=17",
+        "geckolib": "*"
     },
     "suggests": {
         "another-mod": "*"

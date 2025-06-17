@@ -32,11 +32,6 @@ public final class TickScheduler {
                 if (level.isClientSide()) getOrCreateQueue(CLIENT_TASKS, level).add(task);
                 break;
             case BOTH:
-                if (!level.isClientSide())
-                    getOrCreateQueue(SERVER_TASKS, level).add(task);
-                else
-                    getOrCreateQueue(CLIENT_TASKS, level).add(task);
-
                 getOrCreateQueue(COMMON_TASKS, level).add(task);
                 break;
             default:

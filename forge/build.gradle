@@ -77,7 +77,7 @@ dependencies {
     compileOnly project(":common")
 
     //implementation fg.deobf("curse.maven:knight-quest-reforged-1018043:6018677")
-    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:4.7.1.2")
+    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
 
     // compile against the JEI API but do not include it at runtime
     compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))

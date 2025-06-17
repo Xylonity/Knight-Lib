@@ -60,9 +60,4 @@ public class KnightLibForgePlatform implements KnightLibPlatform {
         return KnightLib.PARTICLES.register(id, () -> (T) new SimpleParticleType(overrideLimiter));
     }
 
-    //@Override
-    //public int getGreatChaliceLightLevel(BlockState state) {
-    //    return state.getValue(GreatChaliceBlock.LIT);
-    //}
-
 }
