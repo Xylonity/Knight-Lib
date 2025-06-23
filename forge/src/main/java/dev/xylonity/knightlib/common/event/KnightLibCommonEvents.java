@@ -28,20 +28,6 @@ public class KnightLibCommonEvents {
 
     }
 
-    @SubscribeEvent(priority = EventPriority.LOW)
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-
-        Minecraft minecraft = Minecraft.getInstance();
-        Level level = minecraft.level;
-        if (level == null) return;
-
-        TickScheduler.clean();
-        TickScheduler.incrementTick(level);
-        TickScheduler.processClientTasks(level);
-        TickScheduler.processCommonTasks(level);
-    }
-
     @SubscribeEvent
     public static void onLevelUnload(LevelEvent.Unload event) {
         if (event.getLevel() instanceof Level level) {

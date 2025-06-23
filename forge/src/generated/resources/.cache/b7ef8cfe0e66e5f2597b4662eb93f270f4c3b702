@@ -1,3 +1,3 @@
-// 1.20.1	2025-06-16T15:02:40.1369462	Global Loot Modifiers : knightlib
-a8d349815579024864ecfed1952a9704bd6e9553 data/forge/loot_modifiers/global_loot_modifiers.json
-87f31cc12686e8c4ddabdd1dd2c14af38e13a36b data/knightlib/loot_modifiers/small_essence_all_hostiles.json
+// 1.20.1	2025-06-17T22:01:30.6609567	Global Loot Modifiers : knightlib
+5f345723a8f771355f899dab9e16f77197b9a5b8 data/forge/loot_modifiers/global_loot_modifiers.json
+b531329c6abc713ef263a7f15ebdace40061be2c data/knightlib/loot_modifiers/essence_all_hostiles.json
