@@ -20,33 +20,42 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
-@Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class KnightLibClientEvents {
 
-    @SubscribeEvent
-    public static void registerEntityRenderers(FMLClientSetupEvent event) {
-        EntityRenderers.register(KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(), GreatChaliceStarsetRingRenderer::new);
+    @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    public static class KnightLibClientModBus {
 
-        BlockEntityRenderers.register(KnightLibBlockEntities.GREAT_CHALICE.get(), GreatChaliceRenderer::new);
+        @SubscribeEvent
+        public static void registerEntityRenderers(FMLClientSetupEvent event) {
+            EntityRenderers.register(KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(), GreatChaliceStarsetRingRenderer::new);
+
+            BlockEntityRenderers.register(KnightLibBlockEntities.GREAT_CHALICE.get(), GreatChaliceRenderer::new);
+        }
+
+        @SubscribeEvent
+        public static void registerParticleFactories(final RegisterParticleProvidersEvent event) {
+            event.registerSpriteSet(KnightLibParticles.STARSET.get(), StarsetParticle.Provider::new);
+        }
+
     }
 
-    @SubscribeEvent
-    public static void registerParticleFactories(final RegisterParticleProvidersEvent event) {
-        event.registerSpriteSet(KnightLibParticles.STARSET.get(), StarsetParticle.Provider::new);
-    }
+    @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+    public static class KnightLibClientForgeBus {
 
-    @SubscribeEvent(priority = EventPriority.LOW)
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+        @SubscribeEvent(priority = EventPriority.LOW)
+        public static void onClientTick(TickEvent.ClientTickEvent event) {
+            if (event.phase != TickEvent.Phase.END) return;
 
-        Minecraft minecraft = Minecraft.getInstance();
-        Level level = minecraft.level;
-        if (level == null) return;
+            Minecraft minecraft = Minecraft.getInstance();
+            Level level = minecraft.level;
+            if (level == null) return;
 
-        TickScheduler.clean();
-        TickScheduler.incrementTick(level);
-        TickScheduler.processClientTasks(level);
-        TickScheduler.processCommonTasks(level);
+            TickScheduler.clean();
+            TickScheduler.incrementTick(level);
+            TickScheduler.processClientTasks(level);
+            TickScheduler.processCommonTasks(level);
+        }
+
     }
 
 }
