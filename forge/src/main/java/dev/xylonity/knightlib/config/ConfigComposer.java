@@ -20,17 +20,21 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 // Abstraction of the config api to use ForgeConfigSpec, so any mod that adds a general config GUI,
-// such as Configured, detects this config. This should also enable hot-reloading
+// such as Configured, detects this config. This should also work with hot-reloading
 public final class ConfigComposer {
     private static final Map<Field, ForgeConfigSpec.ConfigValue<?>> VALUES = new ConcurrentHashMap<>();
 
     public static void registerConfig(Class<?> clazz, IEventBus modBus) {
+        registerConfig(clazz, modBus, ModConfig.Type.COMMON);
+    }
+
+    public static void registerConfig(Class<?> clazz, IEventBus modBus, ModConfig.Type type) {
         AutoConfig ac = clazz.getAnnotation(AutoConfig.class);
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         makeConfig(builder, clazz, ac.style(), ac.categoryBanner());
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, builder.build(), specName(clazz));
+        ModLoadingContext.get().registerConfig(type, builder.build(), specName(clazz));
 
         // Let's create the default config from the specified config class
         ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
