@@ -11,6 +11,8 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class ConfigManager {
     private static Path CONFIG_DIR = Path.of("config");
@@ -72,7 +74,11 @@ public final class ConfigManager {
                 continue;
             }
 
-            if (!cfg.contains(path)) {
+            Object raw = cfg.get(path);
+            Object oldDefault = parseDefFromComment(cfg.getComment(path), field.getType());
+
+            // if the toml value is the same (or if it doesn't exist) as the config one I change it
+            if (!cfg.contains(path) || (oldDefault != null && same(raw, oldDefault))) {
                 cfg.set(path, def);
             }
 
@@ -80,7 +86,6 @@ public final class ConfigManager {
             String entryComment = buildEntryComment(e, def, style);
             cfg.setComment(path, wrapAndIndent(entryComment));
 
-            Object raw = cfg.get(path);
             // Obtains the min/max value to avoid crashes in case the player decides to break the limits of the entry
             Object val = clamp(raw, e, field.getType());
             try {
@@ -93,6 +98,38 @@ public final class ConfigManager {
         }
 
         cfg.save();
+    }
+
+    private static Object parseDefFromComment(String s, Class<?> clazz) {
+        if (s == null) return null;
+
+        Matcher m = Pattern.compile("Default:\\s*([^\\|\\n]+)").matcher(s);
+        if (!m.find()) return null;
+
+        String raw = m.group(1).trim();
+        try {
+            return switch (clazz.getName()) {
+                case "int" -> Integer.parseInt(raw);
+                case "long" -> Long.parseLong(raw);
+                case "float" -> Float.parseFloat(raw);
+                case "double" -> Double.parseDouble(raw);
+                case "boolean"-> Boolean.parseBoolean(raw);
+                default -> raw;
+            };
+        } catch (NumberFormatException e) {
+            return null;
+        }
+
+    }
+
+    private static boolean same(Object a, Object b) {
+        if (a == null || b == null) return false;
+
+        if (a instanceof Number n1 && b instanceof Number n2) {
+            return Math.abs(n1.doubleValue() - n2.doubleValue()) < 1.0e-9;
+        }
+
+        return a.equals(b);
     }
 
     public static String buildCategoryBanner(String cat, DecorationType style) {
@@ -212,7 +249,7 @@ public final class ConfigManager {
             String[] words = paragraph.split(" ");
             int col = 0;
             for (String w : words) {
-                if (col + w.length() > 100) {
+                if (col + w.length() > 130) {
                     out.append("\n");
                     col = 0;
                 } else if (col > 0) {

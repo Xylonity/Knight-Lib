@@ -25,15 +25,15 @@ public final class ConfigComposer {
     private static final Map<Field, ForgeConfigSpec.ConfigValue<?>> VALUES = new ConcurrentHashMap<>();
 
     public static void registerConfig(Class<?> clazz, IEventBus modBus) {
-        // Let's create the default config from the specified config class
-        ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
-
         AutoConfig ac = clazz.getAnnotation(AutoConfig.class);
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         makeConfig(builder, clazz, ac.style(), ac.categoryBanner());
 
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, builder.build(), specName(clazz));
+
+        // Let's create the default config from the specified config class
+        ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
 
         // On the (re)load stage of the config directory, we reapply the changes so the config file contains the newest changes
         modBus.addListener((ModConfigEvent.Loading e) -> applyFromSpec());
