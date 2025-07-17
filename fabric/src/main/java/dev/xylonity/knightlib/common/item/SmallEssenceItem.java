@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.common.item;
 
-import dev.xylonity.knightlib.common.api.GreatChaliceState;
-import dev.xylonity.knightlib.common.api.IGreatChaliceInteractable;
+import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
+import dev.xylonity.knightlib.api.impl.GreatChaliceState;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -9,6 +9,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,12 @@ public class SmallEssenceItem extends Item implements IGreatChaliceInteractable 
     @Override
     public boolean canInteract(GreatChaliceBlockEntity chalice, Level level, Player player) {
         return chalice.getState() == GreatChaliceState.NORMAL || chalice.getState() == GreatChaliceState.EMPTY;
+    }
+
+    @Override
+    public void onPostInteraction(GreatChaliceBlockEntity chalice, Player player, Level level, BlockHitResult hit) {
+        IGreatChaliceInteractable.super.onPostInteraction(chalice, player, level, hit);
+        if (chalice.getState() == GreatChaliceState.EMPTY) chalice.setState(GreatChaliceState.NORMAL);
     }
 
     @Override

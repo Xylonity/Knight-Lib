@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.common.api;
+package dev.xylonity.knightlib.api;
 
 import net.minecraft.world.level.Level;
 
@@ -40,14 +40,32 @@ public final class TickScheduler {
 
     }
 
+    /**
+     * Schedule in time a task on the server
+     * @param level the level where the task is scheduled
+     * @param runnable the executable task
+     * @param delay the delay in ticks
+     */
     public static void scheduleServer(Level level, Runnable runnable, int delay) {
         schedule(level, runnable, delay, SERVER);
     }
 
+    /**
+     * Schedule in time a task on the client
+     * @param level the level where the task is scheduled
+     * @param runnable the executable task
+     * @param delay the delay in ticks
+     */
     public static void scheduleClient(Level level, Runnable runnable, int delay) {
         schedule(level, runnable, delay, CLIENT);
     }
 
+    /**
+     * Schedule in time a task on both sides
+     * @param level the level where the task is scheduled
+     * @param runnable the executable task
+     * @param delay the delay in ticks
+     */
     public static void scheduleBoth(Level level, Runnable runnable, int delay) {
         schedule(level, runnable, delay, BOTH);
     }

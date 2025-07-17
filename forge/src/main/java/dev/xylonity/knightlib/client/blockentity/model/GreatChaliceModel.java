@@ -15,7 +15,6 @@ public class GreatChaliceModel extends GeoModel<GreatChaliceBlockEntity> {
     @Override
     public ResourceLocation getTextureResource(GreatChaliceBlockEntity animatable) {
         return switch (animatable.getState()) {
-            case RADIANT -> new ResourceLocation(KnightLib.MOD_ID, "textures/block/great_chalice_radiant.png");
             case CHAOTIC -> new ResourceLocation(KnightLib.MOD_ID, "textures/block/great_chalice_chaotic.png");
             default -> // EMPTY/NORMAL
                     new ResourceLocation(KnightLib.MOD_ID, "textures/block/great_chalice.png");

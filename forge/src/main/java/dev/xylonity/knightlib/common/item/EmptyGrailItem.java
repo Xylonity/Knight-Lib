@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.common.item;
 
-import dev.xylonity.knightlib.common.api.GreatChaliceState;
+import dev.xylonity.knightlib.api.impl.GreatChaliceState;
 import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import dev.xylonity.knightlib.registry.KnightLibItems;
@@ -35,8 +35,7 @@ public class EmptyGrailItem extends Item implements IGreatChaliceInteractable {
 
     @Override
     public boolean canInteract(GreatChaliceBlockEntity chalice, Level level, Player player) {
-        return chalice.isFull() &&
-                (chalice.getState() == GreatChaliceState.NORMAL || chalice.getState() == GreatChaliceState.EMPTY);
+        return chalice.isFull() && chalice.getState() == GreatChaliceState.NORMAL;
     }
 
     @Override
@@ -63,7 +62,6 @@ public class EmptyGrailItem extends Item implements IGreatChaliceInteractable {
                 sv.sendParticles(ParticleTypes.EFFECT, px, py, pz, 1, 0.0, 0.0, 0.0, 0.0);
             }
         }
-
 
     }
 

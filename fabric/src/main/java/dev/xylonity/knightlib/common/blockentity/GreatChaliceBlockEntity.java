@@ -1,10 +1,8 @@
 package dev.xylonity.knightlib.common.blockentity;
 
-import dev.xylonity.knightlib.common.api.GreatChaliceState;
-import dev.xylonity.knightlib.common.api.IGreatChaliceInteractable;
-import dev.xylonity.knightlib.common.entity.projectile.GreatChaliceStartsetRing;
+import dev.xylonity.knightlib.api.impl.GreatChaliceState;
+import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
-import dev.xylonity.knightlib.registry.KnightLibEntities;
 import dev.xylonity.knightlib.registry.KnightLibParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -55,22 +53,11 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
     public void setCharges(int charges) {
         this.charges = Math.min(charges, IGreatChaliceInteractable.MAX_CHARGES);
 
-        if (charges != 0) starsetRing();
         if (charges == 0) setState(GreatChaliceState.EMPTY);
 
         this.prevCharges = this.charges;
         setChanged();
         sync();
-    }
-
-    private void starsetRing() {
-        if (level != null) {
-            GreatChaliceStartsetRing ring = KnightLibEntities.GREAT_CHALICE_STARSET_RING.create(level);
-            if (ring != null) {
-                ring.setPos(getBlockPos().getX() + 0.5f, getBlockPos().getY() + 0.015, getBlockPos().getZ() + 0.5f);
-                level.addFreshEntity(ring);
-            }
-        }
     }
 
     public GreatChaliceState getState() {
@@ -124,6 +111,10 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
             chalice.spawnSpecialParticles();
         }
 
+        if (chalice.charges == IGreatChaliceInteractable.MAX_CHARGES && chalice.tickcount % 5 == 0) {
+            chalice.spawnChaoticParticles();
+        }
+
         if (chalice.tickcount % 5 == 0) {
             chalice.spawnProgressiveParticles(pos);
         }
@@ -132,7 +123,7 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
     }
 
     private void spawnSpecialParticles() {
-        if (level instanceof ServerLevel sv) {
+        if (level instanceof ServerLevel sv && getState() == GreatChaliceState.NORMAL) {
             for (int i = 0; i < 2; i++) {
                 double dx = (new Random().nextDouble() - 0.5) * 0.5;
                 double dy = (new Random().nextDouble() - 0.5) * 0.5;
@@ -144,6 +135,32 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
                             this.getBlockPos().getZ() + 0.5,
                             1, dx, dy, dz, 0.35);
                 }
+            }
+        }
+
+    }
+
+    private void spawnChaoticParticles() {
+        if (level instanceof ServerLevel sv && getState() == GreatChaliceState.CHAOTIC) {
+            for (int i = 0; i < 2; i++) {
+                double dx = (new Random().nextDouble() - 0.5) * 0.5;
+                double dy = (new Random().nextDouble() - 0.5) * 0.5;
+                double dz = (new Random().nextDouble() - 0.5) * 0.5;
+                sv.sendParticles(ParticleTypes.WARPED_SPORE,
+                        this.getBlockPos().getX() + 0.5,
+                        this.getBlockPos().getY() + 0.5 * Math.random(),
+                        this.getBlockPos().getZ() + 0.5,
+                        1, dx, dy, dz, 0.3);
+            }
+            for (int i = 0; i < 2; i++) {
+                double dx = (new Random().nextDouble() - 0.5) * 0.5;
+                double dy = (new Random().nextDouble() - 0.5) * 0.5;
+                double dz = (new Random().nextDouble() - 0.5) * 0.5;
+                sv.sendParticles(ParticleTypes.CRIMSON_SPORE,
+                        this.getBlockPos().getX() + 0.5,
+                        this.getBlockPos().getY() + 0.5 * Math.random(),
+                        this.getBlockPos().getZ() + 0.5,
+                        1, dx, dy, dz, 0.25);
             }
         }
 

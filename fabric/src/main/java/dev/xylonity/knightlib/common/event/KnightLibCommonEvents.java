@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.common.event;
 
-import dev.xylonity.knightlib.common.api.TickScheduler;
+import dev.xylonity.knightlib.api.TickScheduler;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.minecraft.server.level.ServerLevel;

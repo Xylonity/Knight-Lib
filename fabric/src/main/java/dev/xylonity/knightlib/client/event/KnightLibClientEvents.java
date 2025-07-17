@@ -5,7 +5,7 @@ import dev.xylonity.knightlib.api.impl.BossMusicRegistry;
 import dev.xylonity.knightlib.api.internal.BossMusicManager;
 import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
 import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
-import dev.xylonity.knightlib.common.api.TickScheduler;
+import dev.xylonity.knightlib.api.TickScheduler;
 import dev.xylonity.knightlib.common.particle.StarsetParticle;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibEntities;

@@ -1,6 +1,8 @@
 package dev.xylonity.knightlib.api;
 
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
+import dev.xylonity.knightlib.common.entity.projectile.GreatChaliceStartsetRing;
+import dev.xylonity.knightlib.registry.KnightLibEntities;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Player;
@@ -70,7 +72,12 @@ public interface IGreatChaliceInteractable {
      * @param hit the blockhit info
      */
     default void onPostInteraction(GreatChaliceBlockEntity chalice, Player player, Level level, BlockHitResult hit) {
-        ;;
+        GreatChaliceStartsetRing ring = KnightLibEntities.GREAT_CHALICE_STARSET_RING.get().create(level);
+        if (ring != null) {
+            ring.setPos(chalice.getBlockPos().getX() + 0.5f, chalice.getBlockPos().getY() + 0.015, chalice.getBlockPos().getZ() + 0.5f);
+            level.addFreshEntity(ring);
+        }
+
     }
 
     /**
