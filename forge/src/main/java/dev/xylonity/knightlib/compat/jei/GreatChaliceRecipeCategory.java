@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.common.api.IGreatChaliceInteractable;
+import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import dev.xylonity.knightlib.common.recipe.GreatChaliceRecipe;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
@@ -13,7 +13,6 @@ import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.helpers.IGuiHelper;
-import mezz.jei.api.ingredients.IIngredientRenderer;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
@@ -27,13 +26,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;
 import org.joml.Vector3f;
 import software.bernie.geckolib.renderer.GeoBlockRenderer;
-
-import java.util.List;
 
 public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatChaliceRecipe> {
     public static final ResourceLocation UID = new ResourceLocation(KnightLib.MOD_ID, "great_chalice_interaction");

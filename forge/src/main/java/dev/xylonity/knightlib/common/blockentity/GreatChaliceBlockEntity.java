@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.common.blockentity;
 
 import dev.xylonity.knightlib.common.api.GreatChaliceState;
-import dev.xylonity.knightlib.common.api.IGreatChaliceInteractable;
+import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.entity.projectile.GreatChaliceStartsetRing;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibEntities;

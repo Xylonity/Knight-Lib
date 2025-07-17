@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.common.item;
 
 import dev.xylonity.knightlib.common.api.GreatChaliceState;
-import dev.xylonity.knightlib.common.api.IGreatChaliceInteractable;
+import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.core.particles.ParticleTypes;
@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 public class EmptyGrailItem extends Item implements IGreatChaliceInteractable {

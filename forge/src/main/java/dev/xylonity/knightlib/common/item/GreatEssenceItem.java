@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.common.item;
 
 import dev.xylonity.knightlib.common.api.GreatChaliceState;
-import dev.xylonity.knightlib.common.api.IGreatChaliceInteractable;
+import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -13,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 public class GreatEssenceItem extends Item implements IGreatChaliceInteractable {
 
