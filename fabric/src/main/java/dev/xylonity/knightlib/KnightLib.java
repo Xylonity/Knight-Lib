@@ -17,7 +17,6 @@ public class KnightLib implements ModInitializer, ClientModInitializer {
 
     @Override
     public void onInitialize() {
-
         KnightLibBlockEntities.init();
         KnightLibEntities.init();
         KnightLibRecipes.init();
