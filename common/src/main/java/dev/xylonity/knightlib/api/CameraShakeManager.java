@@ -16,10 +16,17 @@ public final class CameraShakeManager {
 
     private CameraShakeManager() { ;; }
 
+    /**
+     * This method should be called with the corresponding params to apply camera shaking on a certain player.
+     */
     public static void shake(Player player, int durationTicks, float intensityX, float intensityY, float intensityZ, int fadeStartTick) {
         SHAKES.put(player.getUUID(), new Shake(Util.getMillis(), player.level(), durationTicks, intensityX, intensityY, intensityZ, fadeStartTick));
     }
 
+    /**
+     * Bridge method to shake non-active players, abstractly called from loader-specific implementations and should not be called directly
+     * since it has no direct usage.
+     */
     public static void applyShakeIfPresent(Player player, Camera camera) {
         Shake shake = SHAKES.get(player.getUUID());
         if (shake == null) return;
@@ -36,7 +43,10 @@ public final class CameraShakeManager {
         SHAKES.values().removeIf(Shake::isExpired);
     }
 
-    public record Shake(long startMillis, Level lvl, int durationTicks, float ix, float iy, float iz, int fadeStart) {
+    /**
+     * Private shake interface to tempsave relevant data
+     */
+    private record Shake(long startMillis, Level lvl, int durationTicks, float ix, float iy, float iz, int fadeStart) {
 
         void apply(Camera camera) {
             int elapsed = (int) ((Util.getMillis() - startMillis) / 50);
