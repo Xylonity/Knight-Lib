@@ -5,7 +5,7 @@
 <br><br>
 
 <span style="font-size:14px;font-family:verdana">
-This shared code library exposes a primary block, the <strong>“Great Chalice”</strong>, used as a catalyst in my mods, along with several auxiliary items, including the essences and grails.
+This is a shared code library that exposes multiple items without dedicated implementations, thus mods can freely use (or ignore) them for custom features. The library is based on a multiloader template, thus making it fully compatible with loader-specific MDKs and other multiloader templates.
 </span>
 
 <br>
@@ -13,15 +13,21 @@ This shared code library exposes a primary block, the <strong>“Great Chalice�
 
 ## What is Knight Lib for?
 <span style="font-size:14px;font-family:verdana">
-Knight Lib is designed for use in any project, either as the foundation for a custom mod or as an addon for any of my mods. Its goal is to prevent code duplication and provide a unified implementation of the Great Chalice and related items.
+Knight Lib is designed for use in any project, either as the foundation for your own mod or as a required dependency for any of my mods.  Its primary goals are to eliminate code duplication and provide unified, easy-to-use implementations of common utilities, ensuring compatibility across all mod loaders.
 </span>
 <br>
 <br>
 <span style="font-size:14px;font-family:verdana">
-In addition to the core items, the library includes:<br>
-- A <b>custom tick scheduler</b>.
+Within the core components, this library includes:<br>
+- A <b>custom tick scheduler</b> without data persistance.
 <br>
-- An <b>Auto Config</b> system available for Fabric and (Neo)Forge, with hotreload support (for Forge it's compatible with mods that add gui config).
+- An <b>Auto Config</b> system available for Fabric and (Neo)Forge, with hotreload support (for Forge it's compatible with mods that add gui config, such as 'Configured'). The config is instantly read upon executing the mod that implements it, thus supporting configurability that was not possible before. It also contains multiple styles to decorate the TOML file.
+<br>
+- A <b>custom boss bar builder</b> to dynamically create and manage either simple or complex boss bars for registered bosses.
+<br>
+- A highly customizable <b>camera shake manager</b> for player cameras, designed for effortless usage.
+<br>
+- A <b>music provider</b> for <b>entities</b>, primarily meant for "Boss" entities. Easy-to-use utility, loops a music instance under certain conditionals.
 </span>
 
 <span style="font-size:14px;font-family:verdana">
@@ -36,7 +42,7 @@ In addition to the core items, the library includes:<br>
 <br><br>
 
 <span style="font-size:14px;font-family:verdana">
-To report bugs or suggest features, join our <a href="https://discord.gg/mb2XhhNNwS" rel="nofollow">Discord server</a>.
+To report bugs or suggest features, join our <a href="https://discord.gg/mb2XhhNNwS" rel="nofollow">Discord server</a>!
 </span>
 
 <br>
