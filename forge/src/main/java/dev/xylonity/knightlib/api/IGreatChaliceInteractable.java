@@ -16,7 +16,9 @@ import java.util.Set;
  */
 public interface IGreatChaliceInteractable {
 
-    /** Great chalice maximum charges **/
+    /**
+     * Great chalice maximum charges
+     */
     int MAX_CHARGES = 12;
 
     /**

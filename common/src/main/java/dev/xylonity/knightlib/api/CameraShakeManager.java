@@ -10,14 +10,24 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Client-sided abstraction.
+ */
 public final class CameraShakeManager {
 
     private static final Map<UUID, Shake> SHAKES = new ConcurrentHashMap<>();
 
     private CameraShakeManager() { ;; }
 
+
     /**
      * This method should be called with the corresponding params to apply camera shaking on a certain player.
+     * @param player the player to apply camera shake
+     * @param durationTicks the duration in ticks of the shake effect
+     * @param intensityX shake intensity within the x-axis
+     * @param intensityY shake intensity within the y-axis
+     * @param intensityZ shake intensity within the z-axis
+     * @param fadeStartTick fading ticks
      */
     public static void shake(Player player, int durationTicks, float intensityX, float intensityY, float intensityZ, int fadeStartTick) {
         SHAKES.put(player.getUUID(), new Shake(Util.getMillis(), player.level(), durationTicks, intensityX, intensityY, intensityZ, fadeStartTick));

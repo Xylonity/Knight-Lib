@@ -6,6 +6,10 @@ import net.minecraft.client.gui.components.LerpingBossEvent;
 
 import java.util.function.Predicate;
 
+/**
+ * Client-sided abstraction. The boss bar instances should be registered on the client MOD bus on the forge loader
+ * or either inside onInitializeClient on fabric.
+ */
 public final class BossBarBuilder {
 
     private Predicate<LerpingBossEvent> matcher;
@@ -15,6 +19,7 @@ public final class BossBarBuilder {
 
     /**
      * Literal name (not registry name) of the entity to apply.
+     * @param matcher the string to match
      */
     public static BossBarBuilder matcher(Predicate<LerpingBossEvent> matcher) {
         BossBarBuilder builder = new BossBarBuilder();
@@ -24,6 +29,7 @@ public final class BossBarBuilder {
 
     /**
      * Custom rendering logic of the actual boss bar and its derivative components.
+     * @param renderer the renderer. Receives 4 params, as declared inside the abstract method of CustomBossBarRenderer
      */
     public BossBarBuilder renderer(CustomBossBarRenderer renderer) {
         this.renderer = renderer;
@@ -31,7 +37,8 @@ public final class BossBarBuilder {
     }
 
     /**
-     * Extra padding to apply between boss bars. The bar height (px) is recommended.
+     * Padding to apply between boss bars. The bar height (px) is recommended.
+     * @param padding the padding to apply
      */
     public BossBarBuilder padding(int padding) {
         this.padding = padding;

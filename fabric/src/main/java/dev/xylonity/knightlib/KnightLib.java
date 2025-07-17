@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib;
 
-import dev.xylonity.knightlib.common.event.KnightLibClientEvents;
+import dev.xylonity.knightlib.client.event.KnightLibClientEvents;
 import dev.xylonity.knightlib.common.event.KnightLibCommonEvents;
 import dev.xylonity.knightlib.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
