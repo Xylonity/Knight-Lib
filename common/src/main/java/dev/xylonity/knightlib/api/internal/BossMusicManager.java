@@ -13,7 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Map;
 
 public final class BossMusicManager {
-    private static final Map<Integer, AbstractLoopSound> ACTIVE = new Int2ObjectOpenHashMap<>();
+    private static final Map<Integer, AbstractTickableSoundInstance> ACTIVE = new Int2ObjectOpenHashMap<>();
 
     private BossMusicManager() { ;; }
 
@@ -29,14 +29,14 @@ public final class BossMusicManager {
             if (ACTIVE.containsKey(id)) continue;
             if (!entity.shouldPlayBossMusic(player)) continue;
 
-            AbstractLoopSound sound = new AbstractLoopSound(entity, SoundSource.MUSIC);
+            AbstractTickableSoundInstance sound = entity.createBossMusicSound(player);
             mc.getSoundManager().play(sound);
             ACTIVE.put(id, sound);
         }
     }
 
     public static void clear() {
-        for (AbstractLoopSound sound : ACTIVE.values()) {
+        for (AbstractTickableSoundInstance sound : ACTIVE.values()) {
             ((AbstractTickableSoundInstanceAccessor) sound).stopAccessor();
         }
 
