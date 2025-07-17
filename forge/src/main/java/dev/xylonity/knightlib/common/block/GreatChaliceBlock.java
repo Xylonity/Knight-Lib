@@ -82,7 +82,7 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
             }
 
             chalice.setCharges(total);
-            stack.shrink(actor.shrinkItemAmount());
+            if (!pPlayer.getAbilities().instabuild) stack.shrink(actor.shrinkItemAmount());
 
             if (!actor.getRewards().isEmpty()) {
                 for (ItemStack e : actor.getRewards()) {
