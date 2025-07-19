@@ -34,11 +34,15 @@ public final class KnightLibPlugin implements IModPlugin {
 
     @Override
     public void registerRecipes(IRecipeRegistration reg) {
-        reg.addRecipes(GreatChaliceRecipeCategory.TYPE, List.of(new GreatChaliceRecipe()));
+        reg.addRecipes(GreatChaliceRecipeCategory.TYPE, List.of(new GreatChaliceRecipe(
+                new ItemStack(KnightLibItems.EMPTY_GRAIL.get()),
+                new ItemStack(KnightLibItems.FILLED_GRAIL.get()))
+        ));
         reg.addRecipes(ChaliceFillingRecipeCategory.TYPE, List.of(
                 new ChaliceFillingRecipe(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get())),
                 new ChaliceFillingRecipe(new ItemStack(KnightLibItems.GREAT_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()))
-        ));}
+        ));
+    }
 
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration reg) {

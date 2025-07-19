@@ -8,6 +8,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface CameraAccessor {
 
     @Invoker("move")
-    void moveAccessor(double dx, double dy, double dz);
+    void moveAccessor(float pZoom, float pDy, float pDx);
 
 }

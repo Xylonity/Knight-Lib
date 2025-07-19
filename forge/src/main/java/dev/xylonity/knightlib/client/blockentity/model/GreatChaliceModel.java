@@ -9,21 +9,21 @@ public class GreatChaliceModel extends GeoModel<GreatChaliceBlockEntity> {
 
     @Override
     public ResourceLocation getModelResource(GreatChaliceBlockEntity animatable) {
-        return new ResourceLocation(KnightLib.MOD_ID, "geo/great_chalice.geo.json");
+        return ResourceLocation.fromNamespaceAndPath(KnightLib.MOD_ID, "geo/great_chalice.geo.json");
     }
 
     @Override
     public ResourceLocation getTextureResource(GreatChaliceBlockEntity animatable) {
         return switch (animatable.getState()) {
-            case CHAOTIC -> new ResourceLocation(KnightLib.MOD_ID, "textures/block/great_chalice_chaotic.png");
+            case CHAOTIC -> ResourceLocation.fromNamespaceAndPath(KnightLib.MOD_ID, "textures/block/great_chalice_chaotic.png");
             default -> // EMPTY/NORMAL
-                    new ResourceLocation(KnightLib.MOD_ID, "textures/block/great_chalice.png");
+                    ResourceLocation.fromNamespaceAndPath(KnightLib.MOD_ID, "textures/block/great_chalice.png");
         };
     }
 
     @Override
     public ResourceLocation getAnimationResource(GreatChaliceBlockEntity animatable) {
-        return new ResourceLocation(KnightLib.MOD_ID, "animations/great_chalice.animation.json");
+        return ResourceLocation.fromNamespaceAndPath(KnightLib.MOD_ID, "animations/great_chalice.animation.json");
     }
 
 }

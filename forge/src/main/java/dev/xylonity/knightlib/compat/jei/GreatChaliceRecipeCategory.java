@@ -73,9 +73,9 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
 
     @Override
     public void setRecipe(IRecipeLayoutBuilder builder, GreatChaliceRecipe rec, @NotNull IFocusGroup focuses) {
-        builder.addSlot(RecipeIngredientRole.INPUT, 10, 5).addItemStack(rec.input);
+        builder.addSlot(RecipeIngredientRole.INPUT, 10, 5).addItemStack(rec.input());
 
-        builder.addSlot(RecipeIngredientRole.OUTPUT, 130, 42).addItemStack(rec.output);
+        builder.addSlot(RecipeIngredientRole.OUTPUT, 130, 42).addItemStack(rec.output());
     }
 
     private GreatChaliceBlockEntity getOrCreateBlockEntity() {

@@ -65,9 +65,9 @@ public final class CameraShakeManager {
                 fade = 1f - Math.min(1f, (float) (elapsed - fadeStart) / (durationTicks - fadeStart));
             }
 
-            double x = (lvl.random.nextDouble() - 0.5) * ix * fade;
-            double y = (lvl.random.nextDouble() - 0.5) * iy * fade;
-            double z = (lvl.random.nextDouble() - 0.5) * iz * fade;
+            float x = (float) ((lvl.random.nextDouble() - 0.5) * ix * fade);
+            float y = (float) ((lvl.random.nextDouble() - 0.5) * iy * fade);
+            float z = (float) ((lvl.random.nextDouble() - 0.5) * iz * fade);
 
             ((CameraAccessor) camera).moveAccessor(x, y, z);
         }

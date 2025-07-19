@@ -89,8 +89,6 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
 
-    implementation "curse.maven:knight-quest-reforged-1018043:6128732"
-
     implementation "software.bernie.geckolib:geckolib-forge-${minecraft_version}:4.5.6"
 
     implementation fg.deobf("mezz.jei:jei-1.21.1-forge:${jei_version}")

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "   ",
+    "# #",
+    " # "
+  ],
+  "result": {
+    "item": "knightlib:empty_grail",
+    "count": 1
+  },
+  "show_notification": true
+}
