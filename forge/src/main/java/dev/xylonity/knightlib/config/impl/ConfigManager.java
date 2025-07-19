@@ -80,6 +80,8 @@ public final class ConfigManager {
             // if the toml value is the same (or if it doesn't exist) as the config one I change it
             if (!cfg.contains(path) || (oldDefault != null && same(raw, oldDefault))) {
                 cfg.set(path, def);
+                // fallback if the config file isn't created, assign the default value
+                raw = cfg.get(path);
             }
 
             // Now we build the current entry
@@ -88,6 +90,7 @@ public final class ConfigManager {
 
             // Obtains the min/max value to avoid crashes in case the player decides to break the limits of the entry
             Object val = clamp(raw, e, field.getType());
+            if (val == null) val = def;
             try {
                 // If we set the value directly, the compiler would probably throw an exception, so we check the primitive type
                 // the original value belongs to
