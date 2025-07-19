@@ -21,6 +21,9 @@
         "client": [
             "dev.xylonity.knightlib.KnightLib"
         ],
+        "jei_mod_plugin": [
+            "dev.xylonity.knightlib.compat.jei.KnightLibPlugin"
+        ],
         "fabric-datagen": [
             "dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator"
         ]
