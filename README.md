@@ -4,31 +4,54 @@
 
 <br><br>
 
-<span style="font-size:14px;font-family:verdana">This mod is a shared code library. Its main function, for my mods, is to add the _"Great Chalice"_ block, along with a few additional utilities. However, you're welcome to use this library in your own projects.</span>
+<span style="font-size:14px;font-family:verdana">
+This is a shared code library that exposes multiple items without dedicated implementations, thus mods can freely use (or ignore) them for custom features. The library is based on a multiloader template, thus making it fully compatible with loader-specific MDKs and other multiloader templates.
+</span>
 
 <br>
-
-### Why "Knight Lib"?
-As I’m developing several mods (with more coming, especially related to the Knight Quest series), I decided that making the "Great Chalice" a mandatory dependency would prevent code duplication and provide a unified block for all my mods to use.
-
 <br>
 
-<a href="https://discord.gg/mb2XhhNNwS" rel="nofollow"><img src="https://media.forgecdn.net/attachments/description/1018043/description_a255b953-62ec-43d7-b4b3-8a1a94b36bac.png" alt="image 1" width="200"></a>
+## What is Knight Lib for?
+<span style="font-size:14px;font-family:verdana">
+Knight Lib is designed for use in any project, either as the foundation for your own mod or as a required dependency for any of my mods.  Its primary goals are to eliminate code duplication and provide unified, easy-to-use implementations of common utilities, ensuring compatibility across all mod loaders.
+</span>
+<br>
+<br>
+<span style="font-size:14px;font-family:verdana">
+Within the core components, this library includes:<br>
+- A <b>custom tick scheduler</b> without data persistance.
+<br>
+- An <b>Auto Config</b> system available for Fabric and (Neo)Forge, with hotreload support (for Forge it's compatible with mods that add gui config, such as 'Configured'). The config is instantly read upon executing the mod that implements it, thus supporting configurability that was not possible before. It also contains multiple styles to decorate the TOML file.
+<br>
+- A <b>custom boss bar builder</b> to dynamically create and manage either simple or complex boss bars for registered bosses.
+<br>
+- A highly customizable <b>camera shake manager</b> for player cameras, designed for effortless usage.
+<br>
+- A <b>music provider</b> for <b>entities</b>, primarily meant for "Boss" entities. Easy-to-use utility, loops a music instance under certain conditionals.
+</span>
+
+<span style="font-size:14px;font-family:verdana">
+    <br>
+    <br>
+    More functionalities will be added over time, so any suggestion is welcome.
+</span>
 
 <br>
-
-<span style="font-size:14px;font-family:verdana">All bug reports and feature requests should be directed to me, you can join our [discord server](https://discord.gg/mb2XhhNNwS).</span>
-
+<a href="https://discord.gg/mb2XhhNNwS" rel="nofollow"><br><img src="https://media.forgecdn.net/attachments/description/1018043/description_a255b953-62ec-43d7-b4b3-8a1a94b36bac.png" alt="Discord" width="200"></a>
+<a href="https://www.curseforge.com/minecraft/mc-mods/geckolib" target="_blank" rel="nofollow noopener"><img src="https://media.forgecdn.net/attachments/description/1018043/description_1b32b3dd-8aa3-4fa4-b6f4-d7c186884e91.png" style="width:160px" alt="Geckolib"></a>
 <br><br>
 
-## **Developer information**
+<span style="font-size:14px;font-family:verdana">
+To report bugs or suggest features, join our <a href="https://discord.gg/mb2XhhNNwS" rel="nofollow">Discord server</a>!
+</span>
 
 <br>
 
-<span style="font-size:14px;font-family:verdana">If you're a developer and want to use this library in your development environment, you can follow the information located in the [wiki](https://github.com/Xylonity/Knight-Lib/wiki) section of the GitHub page for installation.</span>
+## **Developer Information**
+
+<span style="font-size:14px;font-family:verdana">
+If you’re a developer and want to integrate this library into your development environment, see the installation instructions on the <a href="https://github.com/Xylonity/Knight-Lib/wiki">project wiki on GitHub</a>.
+</span>
 
 <br>
-
-### Why should you use this library over others? 
-
-I’ve noticed many public _libraries_ and _APIs_ are either poorly documented or overloaded with unnecessary functionality/code. Here, I focus on clear documentation and useful features, making it lightweight and easy to use. It’s **compatible** with multiloader projects, giving access to _specific loaders_ and the _common_ class.
+<br>
