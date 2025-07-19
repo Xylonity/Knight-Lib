@@ -1,0 +1,146 @@
+package dev.xylonity.knightlib.config;
+
+import dev.xylonity.knightlib.config.api.AutoConfig;
+import dev.xylonity.knightlib.config.api.ConfigEntry;
+import dev.xylonity.knightlib.config.api.DecorationType;
+import dev.xylonity.knightlib.config.impl.ConfigManager;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.common.ModConfigSpec;
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+// Abstraction of the config api to use ForgeConfigSpec, so any mod that adds a general config GUI,
+// such as Configured, detects this config. This should also work with hot-reloading
+public final class ConfigComposer {
+    private static final Map<Field, ModConfigSpec.ConfigValue<?>> VALUES = new ConcurrentHashMap<>();
+
+    public static void registerConfig(Class<?> clazz, IEventBus modBus) {
+        registerConfig(clazz, modBus, ModConfig.Type.COMMON);
+    }
+
+    public static void registerConfig(Class<?> clazz, IEventBus modBus, ModConfig.Type type) {
+        AutoConfig ac = clazz.getAnnotation(AutoConfig.class);
+        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
+
+        makeConfig(builder, clazz, ac.style(), ac.categoryBanner());
+
+        ModLoadingContext.get().getActiveContainer().registerConfig(type, builder.build(), specName(clazz));
+
+        // Let's create the default config from the specified config class
+        ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
+
+        // On the (re)load stage of the config directory, we reapply the changes so the config file contains the newest changes
+        modBus.addListener((ModConfigEvent.Loading e) -> applyFromSpec());
+        modBus.addListener((ModConfigEvent.Reloading e) -> {
+            applyFromSpec();
+            ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
+        });
+    }
+
+    private static String specName(Class<?> clazz) {
+        return clazz.getAnnotation(AutoConfig.class).file() + ".toml";
+    }
+
+    private static void makeConfig(ModConfigSpec.Builder b, Class<?> clazz, DecorationType style, boolean categoryBanner) {
+        // We sort by category so the entry insertion order won't matter at all
+        Map<String, List<Field>> byCategory = Arrays.stream(clazz.getDeclaredFields())
+                .filter(f -> f.isAnnotationPresent(ConfigEntry.class))
+                .collect(Collectors.groupingBy(f -> f.getAnnotation(ConfigEntry.class).category()));
+
+        for (var catEntry : byCategory.entrySet()) {
+            String category = catEntry.getKey();
+            if (!category.isEmpty()) {
+                if (categoryBanner) {
+                    String[] bannerLines = ConfigManager.buildCategoryBanner(category, style).split("\n");
+                    b.comment(bannerLines);
+                }
+
+                b.push(category);
+            }
+
+            for (Field field : catEntry.getValue()) {
+                ConfigEntry meta = field.getAnnotation(ConfigEntry.class);
+                field.setAccessible(true);
+                Object defaultVal;
+
+                try {
+                    defaultVal = field.get(null);
+                } catch (IllegalAccessException e) {
+                    defaultVal = null;
+                }
+
+                // Raw comments and such
+                String rawComment = ConfigManager.buildEntryComment(meta, defaultVal, style);
+                String wrapped = ConfigManager.wrapText(rawComment);
+                b.comment(wrapped.split("\n"));
+
+                // We 'simulate' the actual entry typedef for the config stack
+                ModConfigSpec.ConfigValue<?> cfgValue = defineValue(b, field, meta);
+                VALUES.put(field, cfgValue);
+            }
+
+            if (!category.isEmpty()) {
+                b.pop();
+            }
+        }
+
+    }
+
+    private static ModConfigSpec.ConfigValue<?> defineValue(ModConfigSpec.Builder b, Field field, ConfigEntry entry) {
+        try {
+            String name = field.getName();
+            Class<?> type = field.getType();
+
+            // Cap predicates to hard bypass forge's stack adding duplicated comments
+            Predicate<Object> inIntRange = v -> v instanceof Integer i && i >= entry.min() && i <= entry.max();
+            Predicate<Object> inLongRange = v -> v instanceof Long l && l >= (long) entry.min() && l <= (long) entry.max();
+            Predicate<Object> inFloatRange = v -> v instanceof Float f && f >= (float) entry.min() && f <= (float) entry.max();
+            Predicate<Object> inDoubleRange = v -> v instanceof Double d && d >= entry.min() && d <= entry.max();
+
+            if (type == int.class) {
+                return b.define(name, field.getInt(null), inIntRange);
+            }
+
+            if (type == double.class) {
+                return b.define(name, field.getDouble(null), inDoubleRange);
+            }
+
+            // float types may not work correctly on some gui config mods
+            if (type == float.class) {
+                return b.define(name, field.getFloat(null), inFloatRange);
+            }
+
+            if (type == long.class) {
+                return b.define(name, field.getLong(null), inLongRange);
+            }
+
+            if (type == boolean.class) {
+                return b.define(name, field.getBoolean(null));
+            }
+
+            return b.define(name, field.get(null));
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private static void applyFromSpec() {
+        VALUES.forEach((field, value) -> {
+            try {
+                field.set(null, value.get());
+            } catch (Exception ignore) { ;; }
+        });
+    }
+
+}
