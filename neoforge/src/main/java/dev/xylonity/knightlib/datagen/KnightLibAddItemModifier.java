@@ -7,6 +7,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
@@ -24,7 +25,7 @@ import java.util.function.Supplier;
 public class KnightLibAddItemModifier extends LootModifier {
     public static final Supplier<MapCodec<KnightLibAddItemModifier>> CODEC = Suppliers.memoize(() ->
             RecordCodecBuilder.mapCodec(inst -> codecStart(inst)
-                    .and(Registries.ITEM.getCodec()
+                    .and(BuiltInRegistries.ITEM.byNameCodec()
                             .fieldOf("item")
                             .forGetter(m -> m.item))
                     .and(Codec.FLOAT.fieldOf("chance")

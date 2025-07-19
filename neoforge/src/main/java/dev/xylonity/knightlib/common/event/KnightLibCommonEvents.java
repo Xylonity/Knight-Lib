@@ -14,7 +14,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 public class KnightLibCommonEvents {
 
     @SubscribeEvent(priority = EventPriority.LOW)
-    public static void onServerTick(ServerTickEvent event) {
+    public static void onServerTick(ServerTickEvent.Post event) {
         TickScheduler.clean();
 
         for (ServerLevel level : event.getServer().getAllLevels()) {

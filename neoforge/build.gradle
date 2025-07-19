@@ -54,10 +54,21 @@ neoForge {
                 includeGroup("com.eliotlash.mclib")
             }
         }
+        maven {
+            name = "Jared's maven"
+            url = "https://maven.blamejared.com/"
+        }
+        maven {
+            name = "ModMaven"
+            url = "https://modmaven.dev"
+        }
     }
+
     dependencies {
         implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.6.5"
+        implementation "mezz.jei:jei-1.21.1-neoforge:${jei_version}"
     }
+
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }

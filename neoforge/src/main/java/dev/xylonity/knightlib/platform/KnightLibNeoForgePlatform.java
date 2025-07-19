@@ -37,9 +37,9 @@ public class KnightLibNeoForgePlatform implements KnightLibPlatform {
 
     @Override
     public <T extends Block> Supplier<T> registerBlock(String id, BlockBehaviour.Properties properties, KnightLibBlocks.BlockType blockType, KnightLibBlocks.BlockItem blockItem) {
-        RegistryObject<T> tr = switch (blockType) {
+        Supplier<T> tr = switch (blockType) {
             default -> // CHALICE
-                    (RegistryObject<T>) KnightLib.BLOCKS.register(id, () -> new GreatChaliceBlock(properties));
+                    (Supplier<T>) KnightLib.BLOCKS.register(id, () -> new GreatChaliceBlock(properties));
         };
 
         Supplier<Item> item = switch (blockItem) {

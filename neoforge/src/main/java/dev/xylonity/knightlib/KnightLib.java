@@ -1,10 +1,5 @@
 package dev.xylonity.knightlib;
 
-import dev.xylonity.knightlib.compat.config.KnightLibConfig;
-import dev.xylonity.knightlib.compat.datagen.KnightLibLootModifier;
-import dev.xylonity.knightlib.compat.particle.StarsetParticle;
-import dev.xylonity.knightlib.compat.registry.KnightLibBlocks;
-import dev.xylonity.knightlib.compat.registry.KnightLibParticles;
 import dev.xylonity.knightlib.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
@@ -12,19 +7,12 @@ import dev.xylonity.knightlib.registry.KnightLibEntities;
 import dev.xylonity.knightlib.registry.KnightLibLootModifier;
 import dev.xylonity.knightlib.registry.KnightLibRecipes;
 import net.minecraft.core.particles.ParticleType;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
-import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 @Mod(KnightLibCommon.MOD_ID)

@@ -4,7 +4,8 @@ import dev.xylonity.knightlib.client.blockentity.renderer.GenericBlockItemRender
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
@@ -29,7 +30,7 @@ public class GenericBlockItem extends BlockItem implements GeoItem {
             private GenericBlockItemRenderer renderer;
 
             @Override
-            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+            public @NotNull BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 if(this.renderer == null)
                     this.renderer = new GenericBlockItemRenderer(name);
 

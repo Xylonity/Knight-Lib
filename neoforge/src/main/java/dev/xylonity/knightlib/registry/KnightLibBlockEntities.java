@@ -15,13 +15,13 @@ public class KnightLibBlockEntities {
 
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY = DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, KnightLib.MOD_ID);
 
-    public static final DeferredHolder<BlockEntityType<GreatChaliceBlockEntity>, ?> GREAT_CHALICE;
+    public static final Supplier<BlockEntityType<GreatChaliceBlockEntity>> GREAT_CHALICE;
 
     static {
         GREAT_CHALICE = register("great_chalice", GreatChaliceBlockEntity::new, KnightLibBlocks.GREAT_CHALICE);
     }
 
-    private static <T extends BlockEntity> DeferredHolder<BlockEntityType<T>> register(String name, BlockEntityType.BlockEntitySupplier<T> supplier, Supplier<Block> block) {
+    private static <T extends BlockEntity> Supplier<BlockEntityType<T>> register(String name, BlockEntityType.BlockEntitySupplier<T> supplier, Supplier<Block> block) {
         return BLOCK_ENTITY.register(name, () -> BlockEntityType.Builder.of(supplier, block.get()).build(null));
     }
 
