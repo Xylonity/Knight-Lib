@@ -6,6 +6,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "client": [
+    "CameraMixin",
+    "ClientLevelMixin"
   ],
   "server": [],
   "injectors": {

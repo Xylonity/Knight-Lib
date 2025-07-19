@@ -12,7 +12,7 @@
     "###"
   ],
   "result": {
-    "item": "knightlib:great_chalice",
+    "id": "knightlib:great_chalice",
     "count": 1
   },
   "show_notification": true
