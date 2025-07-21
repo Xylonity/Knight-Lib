@@ -76,14 +76,6 @@ public class KnightLibClientEvents {
         }
 
         @SubscribeEvent
-        public static void onCamera(ViewportEvent.ComputeCameraAngles e) {
-            if (e.getCamera().getEntity() instanceof Player p) {
-                CameraShakeManager.applyShakeIfPresent(p, e.getCamera());
-            }
-
-        }
-
-        @SubscribeEvent
         public static void onEntityJoin(EntityJoinLevelEvent e) {
             if (!e.getLevel().isClientSide()) return;
             if (e.getEntity() instanceof IBossMusicProvider prov) {
