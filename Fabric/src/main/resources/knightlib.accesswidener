@@ -1,0 +1,5 @@
+accessWidener v1 named
+
+accessible field com/mojang/math/Vector3f x F
+accessible field com/mojang/math/Vector3f y F
+accessible field com/mojang/math/Vector3f z F
