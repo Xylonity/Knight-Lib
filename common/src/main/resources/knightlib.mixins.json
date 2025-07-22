@@ -9,8 +9,7 @@
   "client": [
     "AbstractTickableSoundInstanceAccessor",
     "BossHealthOverlayMixin",
-    "CameraAccessor",
-    "McMixin"
+    "CameraAccessor"
   ],
   "server": [
   ],
