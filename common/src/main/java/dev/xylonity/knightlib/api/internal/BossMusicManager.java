@@ -6,7 +6,6 @@ import dev.xylonity.knightlib.mixin.AbstractTickableSoundInstanceAccessor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
@@ -29,7 +28,7 @@ public final class BossMusicManager {
             if (ACTIVE.containsKey(id)) continue;
             if (!entity.shouldPlayBossMusic(player)) continue;
 
-            AbstractTickableSoundInstance sound = entity.createBossMusicSound(player);
+            AbstractTickableSoundInstance sound = new AbstractLoopSound(entity, entity.soundSource());
             mc.getSoundManager().play(sound);
             ACTIVE.put(id, sound);
         }

@@ -1,6 +1,7 @@
 package dev.xylonity.knightlib.api;
 
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,10 @@ public interface IBossMusicProvider {
     default boolean shouldPlayBossMusic(Player listener) {
         Entity e = (Entity) this;
         return e.isAlive() && listener.distanceToSqr(e) <= getMusicRangeSqr();
+    }
+
+    default SoundSource soundSource() {
+        return SoundSource.RECORDS;
     }
 
     /**
