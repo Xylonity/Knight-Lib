@@ -18,6 +18,7 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
+import mod.azure.azurelib.renderer.GeoBlockRenderer;
 import mod.azure.azurelib.rewrite.render.block.AzBlockEntityRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -48,11 +49,11 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
 
         this.bg = gui.createBlankDrawable(120, 80);
 
-        this.shadow    = gui.createDrawable(SHADOW, 0,   0, 39, 17);
+        this.shadow = gui.createDrawable(SHADOW, 0, 0, 39, 17);
         this.arrowDown = gui.createDrawable(SHADOW, 46,  3, 33, 22);
-        this.right    = gui.createDrawable(SHADOW, 81, 6, 39, 12);
-        this.inputBg    = gui.createDrawable(SHADOW, 120, 0, 19, 19);
-        this.outputBg    = gui.createDrawable(SHADOW, 120, 0, 19, 19);
+        this.right = gui.createDrawable(SHADOW, 81, 6, 39, 12);
+        this.inputBg = gui.createDrawable(SHADOW, 120, 0, 19, 19);
+        this.outputBg = gui.createDrawable(SHADOW, 120, 0, 19, 19);
     }
 
     @Override
@@ -131,7 +132,7 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
         GreatChaliceBlockEntity be = getOrCreateBlockEntity();
 
         @SuppressWarnings("unchecked")
-        AzBlockEntityRenderer<GreatChaliceBlockEntity> renderer = (AzBlockEntityRenderer<GreatChaliceBlockEntity>) Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(be);
+        GeoBlockRenderer<GreatChaliceBlockEntity> renderer = (GeoBlockRenderer<GreatChaliceBlockEntity>) Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(be);
 
         if (renderer == null) return;
 

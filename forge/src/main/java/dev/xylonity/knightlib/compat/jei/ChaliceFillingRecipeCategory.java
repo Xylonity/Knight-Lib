@@ -20,6 +20,8 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
+import mod.azure.azurelib.renderer.GeoBlockRenderer;
+import mod.azure.azurelib.renderer.GeoEntityRenderer;
 import mod.azure.azurelib.rewrite.render.block.AzBlockEntityRenderer;
 import mod.azure.azurelib.rewrite.render.entity.AzEntityRenderer;
 import net.minecraft.client.Minecraft;
@@ -57,9 +59,9 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
         this.icon = gui.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()));
         this.bg = gui.createBlankDrawable(120, 80);
 
-        this.shadow    = gui.createDrawable(SHADOW, 0,   0, 39, 17);
+        this.shadow = gui.createDrawable(SHADOW, 0,   0, 39, 17);
         this.arrowDown = gui.createDrawable(SHADOW, 46,  3, 33, 22);
-        this.itemBg    = gui.createDrawable(SHADOW, 120, 0, 19, 19);
+        this.itemBg = gui.createDrawable(SHADOW, 120, 0, 19, 19);
     }
 
     @Override
@@ -155,22 +157,17 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
             blockEntity.setCharges(next);
         }
 
-
         lastUpdateTime = currentTime;
     }
 
     @Override
-    public void draw(@NotNull ChaliceFillingRecipe recipe,
-                     @NotNull IRecipeSlotsView recipeSlotsView,
-                     @NotNull PoseStack stack,
-                     double mouseX, double mouseY) {
-        // --- texturas 2D ---
+    public void draw(@NotNull ChaliceFillingRecipe recipe, @NotNull IRecipeSlotsView recipeSlotsView, @NotNull PoseStack stack, double mouseX, double mouseY) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, SHADOW);
-        // sombra base
+
         shadow.draw(stack, 21, 55);
         arrowDown.draw(stack, 33, 10);
-        itemBg.draw(stack,    9,  4);
+        itemBg.draw(stack, 9, 4);
 
         updateAnimation();
 
@@ -178,28 +175,15 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
         GreatChaliceStartsetRing entity = getOrCreateEntity();
 
         @SuppressWarnings("unchecked")
-        AzBlockEntityRenderer<GreatChaliceBlockEntity> blockRenderer =
-                (AzBlockEntityRenderer<GreatChaliceBlockEntity>)
-                        Minecraft.getInstance()
-                                .getBlockEntityRenderDispatcher()
-                                .getRenderer(blockEntity);
+        GeoBlockRenderer<GreatChaliceBlockEntity> blockRenderer = (GeoBlockRenderer<GreatChaliceBlockEntity>) Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(blockEntity);
 
         @SuppressWarnings("unchecked")
-        AzEntityRenderer<GreatChaliceStartsetRing> entityRenderer =
-                entity != null
-                        ? (AzEntityRenderer<GreatChaliceStartsetRing>)
-                        Minecraft.getInstance()
-                                .getEntityRenderDispatcher()
-                                .getRenderer(entity)
-                        : null;
+        GeoEntityRenderer<GreatChaliceStartsetRing> entityRenderer = entity != null ? (GeoEntityRenderer<GreatChaliceStartsetRing>) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity) : null;
 
         if (blockRenderer == null) return;
 
-        // MultiBuffer para render 3D
-        MultiBufferSource.BufferSource buffer =
-                Minecraft.getInstance().renderBuffers().bufferSource();
+        MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
 
-        // --- render del cálice ---
         stack.pushPose();
         stack.translate(60, 55, 20);
         stack.scale(24f, 24f, 24f);
@@ -207,7 +191,6 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
         stack.mulPose(Vector3f.YP.rotationDegrees(45f));
         stack.mulPose(Vector3f.ZP.rotationDegrees(180f));
 
-        // iluminación gui 3D
         Matrix3f normalMat = stack.last().normal();
         Vector3f up = new Vector3f(-1, 10, -1);
         Vector3f front = new Vector3f(-1,  3, -1);
@@ -219,21 +202,13 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
 
         try {
             float partial = (System.currentTimeMillis() - lastUpdateTime) / 50f;
-            blockRenderer.render(blockEntity, partial, stack, buffer,
-                    LightTexture.pack(15, 15),
-                    OverlayTexture.NO_OVERLAY);
+            blockRenderer.render(blockEntity, partial, stack, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
         } catch (Exception e) {
-            blockRenderer.render(blockEntity,
-                    Minecraft.getInstance().getFrameTime(),
-                    stack, buffer,
-                    LightTexture.pack(15, 15),
-                    OverlayTexture.NO_OVERLAY);
+            blockRenderer.render(blockEntity, Minecraft.getInstance().getFrameTime(), stack, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
         }
         stack.popPose();
 
-        // --- render de la entidad flotante ---
-        if (entity != null &&
-                (System.currentTimeMillis() - lastEntityAppearTime) < ENTITY_VISIBLE_DURATION) {
+        if (entity != null && (System.currentTimeMillis() - lastEntityAppearTime) < ENTITY_VISIBLE_DURATION) {
             stack.pushPose();
             stack.translate(60, 66, 27.5);
             stack.scale(24f, 24f, 24f);
@@ -241,10 +216,7 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
             stack.mulPose(Vector3f.YP.rotationDegrees(45f));
             stack.mulPose(Vector3f.ZP.rotationDegrees(180f));
 
-            entityRenderer.render(entity, 0f,
-                    Minecraft.getInstance().getFrameTime(),
-                    stack, buffer,
-                    LightTexture.pack(15, 15));
+            entityRenderer.render(entity, 0f, Minecraft.getInstance().getFrameTime(), stack, buffer, LightTexture.pack(15, 15));
             stack.popPose();
         }
 
