@@ -28,7 +28,7 @@ public final class BossMusicManager {
             if (ACTIVE.containsKey(id)) continue;
             if (!entity.shouldPlayBossMusic(player)) continue;
 
-            AbstractTickableSoundInstance sound = entity.createBossMusicSound(player);
+            AbstractTickableSoundInstance sound = new AbstractLoopSound(entity, entity.soundSource());
             mc.getSoundManager().play(sound);
             ACTIVE.put(id, sound);
         }
