@@ -2,14 +2,15 @@
   "required": true,
   "minVersion": "0.8",
   "package": "dev.xylonity.knightlib.mixin",
-  "refmap": "${mod_id}.refmap.json",
+  "refmap": "knightlib.refmap.json",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
   ],
   "client": [
     "AbstractTickableSoundInstanceAccessor",
     "BossHealthOverlayMixin",
-    "CameraAccessor"
+    "CameraAccessor",
+    "McMixin"
   ],
   "server": [
   ],

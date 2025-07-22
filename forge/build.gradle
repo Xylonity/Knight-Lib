@@ -3,6 +3,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 version = version
@@ -14,7 +15,7 @@ base {
 
 minecraft {
     mappings channel: 'official', version: minecraft_version
-    
+
     if (project.hasProperty('forge_ats_enabled') && project.findProperty('forge_ats_enabled').toBoolean()) {
         // This location is hardcoded in Forge and can not be changed.
         // https://github.com/MinecraftForge/MinecraftForge/blob/be1698bb1554f9c8fa2f58e32b9ab70bc4385e60/fmlloader/src/main/java/net/minecraftforge/fml/loading/moddiscovery/ModFile.java#L123
@@ -68,6 +69,11 @@ minecraft {
     }
 }
 
+mixin {
+    add sourceSets.main, 'knightlib.refmap.json'
+    config 'knightlib.mixins.json'
+}
+
 sourceSets.main.resources.srcDir 'src/generated/resources'
 
 dependencies {
@@ -75,6 +81,7 @@ dependencies {
     implementation fg.deobf("mod.azure.azurelib:azurelib-forge-${minecraft_version}:3.0.8")
     compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:11.8.1.1034"))
     implementation fg.deobf("mezz.jei:jei-${minecraft_version}-forge:11.8.1.1034")
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     compileOnly project(":Common")
 }
 
