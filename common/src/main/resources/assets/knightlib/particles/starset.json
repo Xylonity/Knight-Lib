@@ -1,5 +1,6 @@
 {
   "textures": [
+    "knightlib:starset0",
     "knightlib:starset1",
     "knightlib:starset2",
     "knightlib:starset3",
@@ -12,12 +13,6 @@
     "knightlib:starset10",
     "knightlib:starset11",
     "knightlib:starset12",
-    "knightlib:starset13",
-    "knightlib:starset14",
-    "knightlib:starset15",
-    "knightlib:starset16",
-    "knightlib:starset17",
-    "knightlib:starset18",
-    "knightlib:starset19"
+    "knightlib:starset13"
   ]
 }

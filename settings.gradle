@@ -16,5 +16,5 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'MultiLoader'
+rootProject.name = 'KnightLib'
 include("Common", "Fabric", "Forge")

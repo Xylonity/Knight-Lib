@@ -1,17 +1,18 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "pattern": [
-      "## ",
-      "## ",
-      "   "
-  ],
   "key": {
     "#": {
       "item": "knightlib:small_essence"
     }
   },
+  "pattern": [
+    "##",
+    "##"
+  ],
   "result": {
-    "item": "knightlib:great_essence"
-  }
+    "item": "knightlib:great_essence",
+    "count": 1
+  },
+  "show_notification": false
 }

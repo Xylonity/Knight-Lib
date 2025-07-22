@@ -2,6 +2,7 @@ plugins {
     id 'fabric-loom' version '1.7-SNAPSHOT'
     id 'maven-publish'
     id 'idea'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 version = version
@@ -18,6 +19,40 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
     implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.1'
     implementation project(":Common")
+
+    shadow("com.electronwill.night-config:toml:3.6.6")
+
+    modImplementation "mod.azure.azurelib:azurelib-fabric-${minecraft_version}:3.0.8"
+
+    modCompileOnlyApi "mezz.jei:jei-${minecraft_version}-fabric-api:11.8.1.1034"
+    modRuntimeOnly "mezz.jei:jei-${minecraft_version}-fabric:11.8.1.1034"
+}
+
+configurations {
+    shadow
+    implementation.extendsFrom shadow
+}
+
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import net.fabricmc.loom.task.RemapJarTask
+
+def shadowJarTask = tasks.named('shadowJar', ShadowJar)
+
+shadowJarTask.configure {
+    archiveClassifier.set('dev-shadow')
+    configurations = [project.configurations.shadow]
+
+    relocate 'com.electronwill.nightconfig', "dev.xylonity.nightconfig"
+
+    exclude 'META-INF/LICENSE*', 'META-INF/NOTICE*'
+}
+
+tasks.named('remapJar', RemapJarTask).configure { remap ->
+    dependsOn shadowJarTask
+
+    inputFile.set(shadowJarTask.flatMap { it.archiveFile })
+
+    archiveClassifier.set('')
 }
 
 loom {

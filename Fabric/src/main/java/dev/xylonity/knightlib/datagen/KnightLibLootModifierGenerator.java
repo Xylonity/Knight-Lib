@@ -1,0 +1,53 @@
+package dev.xylonity.knightlib.datagen;
+
+import dev.xylonity.knightlib.config.KnightLibConfig;
+import dev.xylonity.knightlib.registry.KnightLibItems;
+import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
+import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
+import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+
+public class KnightLibLootModifierGenerator {
+
+    public static void init() {
+        LootTableEvents.MODIFY.register((rm, lm, id, tableBuilder, source) -> {
+            if (!id.getPath().startsWith("entities/")) return;
+
+            ResourceLocation rl = new ResourceLocation(id.getNamespace(), id.getPath().substring("entities/".length()));
+
+            if (!Registry.ENTITY_TYPE.containsKey(rl)) return;
+            if (Registry.ENTITY_TYPE.get(rl).getCategory() != MobCategory.MONSTER) return;
+
+            LootPool.Builder smallEssencePool = LootPool.lootPool()
+                    .setRolls(ConstantValue.exactly(1))
+                    .add(LootItem.lootTableItem(KnightLibItems.SMALL_ESSENCE.get())
+                            .apply(SetItemCountFunction.setCount(
+                                    UniformGenerator.between(1.0F, 1.0F)
+                            ))
+                    )
+                    .when(LootItemRandomChanceCondition.randomChance(
+                            (float) KnightLibConfig.SMALL_ESSENCE_DROP_RATE
+                    ));
+
+            LootPool.Builder greatEssencePool = LootPool.lootPool()
+                    .setRolls(ConstantValue.exactly(1))
+                    .add(LootItem.lootTableItem(KnightLibItems.GREAT_ESSENCE.get())
+                            .apply(SetItemCountFunction.setCount(
+                                    UniformGenerator.between(1.0F, 1.0F)
+                            ))
+                    )
+                    .when(LootItemRandomChanceCondition.randomChance(
+                            (float) KnightLibConfig.GREAT_ESSENCE_DROP_RATE
+                    ));
+
+            tableBuilder.withPool(smallEssencePool).withPool(greatEssencePool);
+        });
+    }
+
+}

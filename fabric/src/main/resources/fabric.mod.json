@@ -1,36 +1,44 @@
 {
-    "schemaVersion": 1,
-    "id": "modid",
-    "version": "${version}",
-  
-    "name": "Example Mod",
-    "description": "This is an example description! Tell everyone what your mod is about!",
-    "authors": [
-      "Me!"
-    ],
-    "contact": {
-      "homepage": "https://fabricmc.net/",
-      "sources": "https://github.com/FabricMC/fabric-example-mod"
-    },
-  
-    "license": "CC0-1.0",
-    "icon": "assets/modid/icon.png",
-  
+  "schemaVersion": 1,
+  "id": "knightlib",
+  "version": "${version}",
+  "name": "Knight Lib",
+  "description": "A Minecraft library mod that serves as a bridge between mods.",
+  "authors": [
+    "Xylonity",
+    "ModderG"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "GNU GPL v3.0",
+  "icon": "assets/knightlib/icon.png",
     "environment": "*",
     "entrypoints": {
       "main": [
-        "com.example.examplemod.ExampleMod"
+        "dev.xylonity.knightlib.KnightLib"
+      ],
+      "client": [
+        "dev.xylonity.knightlib.KnightLib"
+      ],
+      "jei_mod_plugin": [
+        "dev.xylonity.knightlib.compat.jei.KnightLibPlugin"
+      ],
+      "fabric-datagen": [
+        "dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator"
       ]
     },
     "mixins": [
-      "modid.mixins.json"
+      "knightlib.mixins.json",
+      "knightlib.fabric.mixins.json"
     ],
-  
     "depends": {
       "fabricloader": ">=0.14",
       "fabric": "*",
       "minecraft": "1.19.x",
-      "java": ">=17"
+      "java": ">=17",
+      "azurelib": "*"
     },
     "suggests": {
       "another-mod": "*"
