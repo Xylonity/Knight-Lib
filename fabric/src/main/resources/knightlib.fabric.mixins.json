@@ -8,12 +8,13 @@
   ],
   "client": [
     "CameraMixin",
-    "ClientLevelMixin"
+    "ClientLevelMixin",
+    "BossHealthOverlayMixin"
   ],
   "server": [
   ],
   "injectors": {
     "defaultRequire": 1
   }
-  }
+}
   

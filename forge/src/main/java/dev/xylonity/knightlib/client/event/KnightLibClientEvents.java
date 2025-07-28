@@ -3,6 +3,7 @@ package dev.xylonity.knightlib.client.event;
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.CameraShakeManager;
 import dev.xylonity.knightlib.api.IBossMusicProvider;
+import dev.xylonity.knightlib.api.impl.BossBarApi;
 import dev.xylonity.knightlib.api.impl.BossMusicRegistry;
 import dev.xylonity.knightlib.api.internal.BossMusicManager;
 import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
@@ -13,11 +14,14 @@ import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibEntities;
 import dev.xylonity.knightlib.registry.KnightLibParticles;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.CustomizeGuiOverlayEvent;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.ViewportEvent;
@@ -29,6 +33,8 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+
+import java.util.Optional;
 
 public class KnightLibClientEvents {
 
@@ -115,6 +121,30 @@ public class KnightLibClientEvents {
         public static void onReload(RegisterClientReloadListenersEvent e) {
             BossMusicRegistry.clear();
             BossMusicManager.clear();
+        }
+
+        @SubscribeEvent
+        public static void onBossBar(CustomizeGuiOverlayEvent.BossEventProgress event) {
+            LerpingBossEvent boss = event.getBossEvent();
+            Optional<BossBarApi.BossBarEntry> match = BossBarApi.match(boss);
+
+            if (match.isEmpty()) return;
+
+            BossBarApi.BossBarEntry entry = match.get();
+
+            GuiGraphics gui = event.getGuiGraphics();
+            int x = event.getX();
+            int y = event.getY();
+
+            event.setCanceled(true);
+
+            entry.renderer().render(gui, boss, x, y);
+
+            if (entry.extraYPadding() != 0) {
+                event.setIncrement(event.getIncrement() + entry.extraYPadding());
+            }
+
+            // hideVanillaName option temporary disabled
         }
 
     }
