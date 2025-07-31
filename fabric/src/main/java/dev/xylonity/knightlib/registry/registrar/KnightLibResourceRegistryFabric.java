@@ -13,8 +13,8 @@ import java.util.function.Supplier;
 @SuppressWarnings("unchecked")
 public class KnightLibResourceRegistryFabric<T> implements ResourceRegistry<T> {
 
-    private final net.minecraft.core.Registry<T> registry;
     private final String modid;
+    private final Registry<T> registry;
     private final List<ResourceEntry<T>> entries = new ArrayList<>();
 
     public KnightLibResourceRegistryFabric(ResourceType type, String modid) {
@@ -45,11 +45,13 @@ public class KnightLibResourceRegistryFabric<T> implements ResourceRegistry<T> {
             case DIMENSION_TYPE -> (Registry<T>) Registries.DIMENSION_TYPE;
             case DIMENSION -> (Registry<T>) Registries.DIMENSION;
         };
+
     }
 
     @Override
     public <I extends T> ResourceEntry<I> register(String name, Supplier<? extends I> supplier) {
         ResourceLocation id = new ResourceLocation(modid, name);
+
         I object = supplier.get();
         Registry.register(registry, id, object);
         KnightLibResourceEntryFabric<I> entry = new KnightLibResourceEntryFabric<>(object, id);
@@ -61,6 +63,11 @@ public class KnightLibResourceRegistryFabric<T> implements ResourceRegistry<T> {
     @Override
     public Collection<ResourceEntry<T>> getEntries() {
         return List.copyOf(entries);
+    }
+
+    @Override
+    public String getNamespace() {
+        return this.modid;
     }
 
     /**

@@ -42,7 +42,7 @@ public class KnightLibRegistrarForge implements KnightLibRegistrar {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         dr.register(modBus);
 
-        return new KnightLibResourceRegistryForge<>(dr);
+        return new KnightLibResourceRegistryForge<>(dr, modid);
     }
 
 }

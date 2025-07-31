@@ -8,11 +8,13 @@ import java.util.function.Supplier;
 
 public class KnightLibResourceRegistryForge<T> implements ResourceRegistry<T> {
 
+    private final String modid;
     private final DeferredRegister<T> dr;
     private final ResourceEntries<T> entries = new ResourceEntries<>();
 
-    public KnightLibResourceRegistryForge(DeferredRegister<T> dr) {
+    public KnightLibResourceRegistryForge(DeferredRegister<T> dr, String modid) {
         this.dr = dr;
+        this.modid = modid;
     }
 
     /**
@@ -29,6 +31,11 @@ public class KnightLibResourceRegistryForge<T> implements ResourceRegistry<T> {
     @Override
     public Collection<ResourceEntry<T>> getEntries() {
         return entries.getAllEntries();
+    }
+
+    @Override
+    public String getNamespace() {
+        return this.modid;
     }
 
     /**
