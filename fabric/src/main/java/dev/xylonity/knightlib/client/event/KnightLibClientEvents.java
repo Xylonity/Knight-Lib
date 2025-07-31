@@ -22,9 +22,9 @@ import net.minecraft.world.level.Level;
 public final class KnightLibClientEvents {
 
     public static void init() {
-        EntityRendererRegistry.register(KnightLibEntities.GREAT_CHALICE_STARSET_RING, GreatChaliceStarsetRingRenderer::new);
+        EntityRendererRegistry.register(KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(), GreatChaliceStarsetRingRenderer::new);
 
-        BlockEntityRendererRegistry.register(KnightLibBlockEntities.GREAT_CHALICE, ctx -> new GreatChaliceRenderer(null));
+        BlockEntityRendererRegistry.register(KnightLibBlockEntities.GREAT_CHALICE.get(), ctx -> new GreatChaliceRenderer(null));
 
         ParticleFactoryRegistry.getInstance().register(KnightLibParticles.STARSET.get(), StarsetParticle.Provider::new);
 

@@ -1,9 +1,8 @@
 package dev.xylonity.knightlib;
 
-import dev.xylonity.knightlib.registry.KnightLibBlocks;
-import dev.xylonity.knightlib.registry.KnightLibItems;
+import dev.xylonity.knightlib.registry.*;
 import dev.xylonity.knightlib.platform.KnightLibPlatform;
-import dev.xylonity.knightlib.registry.KnightLibParticles;
+import dev.xylonity.knightlib.platform.KnightLibRegistrar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,11 +14,14 @@ public class KnightLibCommon {
     public static final Logger LOGGER = LoggerFactory.getLogger("KnightLib");
 
     public static final KnightLibPlatform PLATFORM = ServiceLoader.load(KnightLibPlatform.class).findFirst().orElseThrow();
+    public static final KnightLibRegistrar REGISTRAR = ServiceLoader.load(KnightLibRegistrar.class).findFirst().orElseThrow();
 
     public static void init() {
-        KnightLibItems.init();
-        KnightLibBlocks.init();
-        KnightLibParticles.init();
+        KnightLibEntities.ENTITIES.init();
+        KnightLibBlocks.BLOCKS.init();
+        KnightLibItems.ITEMS.init();
+        KnightLibParticles.PARTICLES.init();
+        KnightLibBlockEntities.BLOCK_ENTITIES.init();
     }
 
 }

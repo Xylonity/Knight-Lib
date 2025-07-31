@@ -99,7 +99,7 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
         if (cachedEntity == null) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level != null) {
-                cachedEntity = new GreatChaliceStartsetRing(KnightLibEntities.GREAT_CHALICE_STARSET_RING, mc.level);
+                cachedEntity = new GreatChaliceStartsetRing(KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(), mc.level);
                 cachedEntity.setNoGravity(true);
             }
         }

@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.common.item.blockitem;
 
-import dev.xylonity.knightlib.client.blockentity.renderer.GenericBlockItemRenderer;
+import dev.xylonity.knightlib.client.item.renderer.GenericBlockItemRenderer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
