@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.mixin;
 
-import dev.xylonity.knightlib.api.CameraShakeManager;
+import dev.xylonity.knightlib.api.camera.CameraShakeManager;
 import net.minecraft.client.Camera;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;

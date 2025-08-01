@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.api.impl;
+package dev.xylonity.knightlib.api.interop;
 
 import net.minecraft.util.StringRepresentable;
 import org.jetbrains.annotations.NotNull;

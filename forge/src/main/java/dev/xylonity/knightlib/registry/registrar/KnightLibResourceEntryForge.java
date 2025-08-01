@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.registry.registrar;
 
+import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.RegistryObject;
 

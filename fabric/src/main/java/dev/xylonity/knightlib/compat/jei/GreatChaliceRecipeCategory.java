@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
+import dev.xylonity.knightlib.api.interop.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import dev.xylonity.knightlib.common.recipe.GreatChaliceRecipe;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;

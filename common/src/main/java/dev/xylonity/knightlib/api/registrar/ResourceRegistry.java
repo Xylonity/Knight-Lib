@@ -1,6 +1,5 @@
-package dev.xylonity.knightlib.registry.registrar;
+package dev.xylonity.knightlib.api.registrar;
 
-import dev.xylonity.knightlib.KnightLibCommon;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;

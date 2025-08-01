@@ -1,6 +1,6 @@
-package dev.xylonity.knightlib.api.impl;
+package dev.xylonity.knightlib.impl.internal;
 
-import dev.xylonity.knightlib.api.IBossMusicProvider;
+import dev.xylonity.knightlib.api.music.IBossMusicProvider;
 import net.minecraft.world.entity.Entity;
 
 import java.util.Collection;

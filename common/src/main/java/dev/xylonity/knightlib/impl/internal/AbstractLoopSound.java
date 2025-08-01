@@ -1,6 +1,6 @@
-package dev.xylonity.knightlib.api.internal;
+package dev.xylonity.knightlib.impl.internal;
 
-import dev.xylonity.knightlib.api.IBossMusicProvider;
+import dev.xylonity.knightlib.api.music.IBossMusicProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;

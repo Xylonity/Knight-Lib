@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.common.item;
 
-import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
-import dev.xylonity.knightlib.api.impl.GreatChaliceState;
+import dev.xylonity.knightlib.api.interop.IGreatChaliceInteractable;
+import dev.xylonity.knightlib.api.interop.GreatChaliceState;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;

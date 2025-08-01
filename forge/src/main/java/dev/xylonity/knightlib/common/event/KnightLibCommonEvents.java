@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.common.event;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.api.TickScheduler;
+import dev.xylonity.knightlib.api.scheduler.TickScheduler;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;

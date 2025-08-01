@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.api;
+package dev.xylonity.knightlib.api.camera;
 
 import dev.xylonity.knightlib.mixin.CameraAccessor;
 import net.minecraft.Util;

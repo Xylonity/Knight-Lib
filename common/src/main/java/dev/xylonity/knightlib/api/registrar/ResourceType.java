@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.registry.registrar;
+package dev.xylonity.knightlib.api.registrar;
 
 /**
  * Every ResourceType maps to one Registry on the service loader abstraction

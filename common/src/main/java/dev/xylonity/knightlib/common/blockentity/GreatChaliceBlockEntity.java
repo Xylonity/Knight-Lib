@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.common.blockentity;
 
-import dev.xylonity.knightlib.api.IGreatChaliceInteractable;
-import dev.xylonity.knightlib.api.impl.GreatChaliceState;
+import dev.xylonity.knightlib.api.interop.IGreatChaliceInteractable;
+import dev.xylonity.knightlib.api.interop.GreatChaliceState;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibParticles;
 import net.minecraft.core.BlockPos;

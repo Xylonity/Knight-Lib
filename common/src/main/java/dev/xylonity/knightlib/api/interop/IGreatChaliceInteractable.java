@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.api;
+package dev.xylonity.knightlib.api.interop;
 
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import dev.xylonity.knightlib.common.entity.projectile.GreatChaliceStartsetRing;

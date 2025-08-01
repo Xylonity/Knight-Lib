@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.registry.registrar;
+package dev.xylonity.knightlib.api.registrar;
 
 import net.minecraft.resources.ResourceLocation;
 

@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.api;
+package dev.xylonity.knightlib.api.music;
 
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;

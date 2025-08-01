@@ -1,7 +1,7 @@
-package dev.xylonity.knightlib.api;
+package dev.xylonity.knightlib.api.bossbar;
 
-import dev.xylonity.knightlib.api.impl.BossBarApi;
-import dev.xylonity.knightlib.api.impl.CustomBossBarRenderer;
+import dev.xylonity.knightlib.impl.internal.BossBarApi;
+import dev.xylonity.knightlib.impl.internal.CustomBossBarRenderer;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 
 import java.util.function.Predicate;

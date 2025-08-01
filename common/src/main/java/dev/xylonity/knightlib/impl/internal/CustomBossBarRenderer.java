@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.api.impl;
+package dev.xylonity.knightlib.impl.internal;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;

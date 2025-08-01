@@ -1,7 +1,6 @@
-package dev.xylonity.knightlib.api.internal;
+package dev.xylonity.knightlib.impl.internal;
 
-import dev.xylonity.knightlib.api.IBossMusicProvider;
-import dev.xylonity.knightlib.api.impl.BossMusicRegistry;
+import dev.xylonity.knightlib.api.music.IBossMusicProvider;
 import dev.xylonity.knightlib.mixin.AbstractTickableSoundInstanceAccessor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;

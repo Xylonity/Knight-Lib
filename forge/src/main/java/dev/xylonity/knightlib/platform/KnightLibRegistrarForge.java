@@ -1,6 +1,8 @@
-package dev.xylonity.knightlib.registry.registrar;
+package dev.xylonity.knightlib.platform;
 
-import dev.xylonity.knightlib.platform.KnightLibRegistrar;
+import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
+import dev.xylonity.knightlib.api.registrar.ResourceType;
+import dev.xylonity.knightlib.registry.registrar.KnightLibResourceRegistryForge;
 import net.minecraft.core.registries.Registries;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;

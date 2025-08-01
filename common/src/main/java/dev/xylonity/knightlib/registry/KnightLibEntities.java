@@ -2,10 +2,10 @@ package dev.xylonity.knightlib.registry;
 
 import dev.xylonity.knightlib.KnightLibCommon;
 import dev.xylonity.knightlib.common.entity.projectile.GreatChaliceStartsetRing;
-import dev.xylonity.knightlib.registry.registrar.ResourceDispatcher;
-import dev.xylonity.knightlib.registry.registrar.ResourceEntry;
-import dev.xylonity.knightlib.registry.registrar.ResourceRegistry;
-import dev.xylonity.knightlib.registry.registrar.ResourceType;
+import dev.xylonity.knightlib.api.registrar.ResourceDispatcher;
+import dev.xylonity.knightlib.api.registrar.ResourceEntry;
+import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
+import dev.xylonity.knightlib.api.registrar.ResourceType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 

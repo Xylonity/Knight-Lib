@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.api;
+package dev.xylonity.knightlib.api.scheduler;
 
 import net.minecraft.world.level.Level;
 

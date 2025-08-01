@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.mixin;
 
-import dev.xylonity.knightlib.api.IBossMusicProvider;
-import dev.xylonity.knightlib.api.impl.BossMusicRegistry;
+import dev.xylonity.knightlib.api.music.IBossMusicProvider;
+import dev.xylonity.knightlib.impl.internal.BossMusicRegistry;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;

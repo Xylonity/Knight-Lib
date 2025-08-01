@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.mixin;
 
-import dev.xylonity.knightlib.api.impl.BossBarApi;
+import dev.xylonity.knightlib.impl.internal.BossBarApi;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.BossHealthOverlay;

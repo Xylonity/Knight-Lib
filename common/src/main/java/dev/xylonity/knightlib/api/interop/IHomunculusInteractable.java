@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.api;
+package dev.xylonity.knightlib.api.interop;
 
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.context.UseOnContext;

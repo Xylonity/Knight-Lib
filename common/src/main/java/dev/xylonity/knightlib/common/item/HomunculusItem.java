@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.common.item;
 
-import dev.xylonity.knightlib.api.IHomunculusInteractable;
+import dev.xylonity.knightlib.api.interop.IHomunculusInteractable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvent;
