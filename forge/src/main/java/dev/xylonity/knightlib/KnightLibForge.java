@@ -14,7 +14,6 @@ public class KnightLibForge {
     public static final String MOD_ID = KnightLib.MOD_ID;
 
     public KnightLibForge() {
-
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         KnightLibLootModifier.LOOT_MODIFIER_SERIALIZERS.register(modEventBus);

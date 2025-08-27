@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.datagen;
 
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
@@ -23,6 +24,8 @@ public class KnightLibLootModifierGenerator {
 
             if (!BuiltInRegistries.ENTITY_TYPE.containsKey(rl)) return;
             if (BuiltInRegistries.ENTITY_TYPE.get(rl).getCategory() != MobCategory.MONSTER) return;
+
+            if (!KnightLib.isEnabled(KnightLib.Usage.GREEN_ESSENCES)) return;
 
             LootPool.Builder smallEssencePool = LootPool.lootPool()
                     .setRolls(ConstantValue.exactly(1))

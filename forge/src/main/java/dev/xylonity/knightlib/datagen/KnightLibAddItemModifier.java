@@ -3,6 +3,7 @@ package dev.xylonity.knightlib.datagen;
 import com.google.common.base.Suppliers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -48,12 +49,12 @@ public class KnightLibAddItemModifier extends LootModifier {
         }
 
         if (context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof Mob mob && mob.getType().getCategory() == MobCategory.MONSTER
-                && context.getRandom().nextFloat() <= KnightLibConfig.SMALL_ESSENCE_DROP_RATE) {
+                && context.getRandom().nextFloat() <= KnightLibConfig.SMALL_ESSENCE_DROP_RATE && KnightLib.isEnabled(KnightLib.Usage.GREEN_ESSENCES)) {
             generatedLoot.add(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()));
         }
 
         if (context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof Mob mob && mob.getType().getCategory() == MobCategory.MONSTER
-                && context.getRandom().nextFloat() <= KnightLibConfig.GREAT_ESSENCE_DROP_RATE) {
+                && context.getRandom().nextFloat() <= KnightLibConfig.GREAT_ESSENCE_DROP_RATE && KnightLib.isEnabled(KnightLib.Usage.GREEN_ESSENCES)) {
             generatedLoot.add(new ItemStack(KnightLibItems.GREAT_ESSENCE.get()));
         }
 
