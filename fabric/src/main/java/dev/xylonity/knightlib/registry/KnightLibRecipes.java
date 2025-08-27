@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.registry;
 
-import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.KnightLibFabric;
 import dev.xylonity.knightlib.common.recipe.GreatChaliceRecipe;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -16,8 +16,8 @@ public final class KnightLibRecipes {
     public static final RecipeType<GreatChaliceRecipe> CHALICE_TYPE;
 
     static {
-        CHALICE_SERIALIZER = Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, new ResourceLocation(KnightLib.MOD_ID, "great_chalice_interaction"), GreatChaliceRecipe.SERIALIZER);
-        CHALICE_TYPE = Registry.register(BuiltInRegistries.RECIPE_TYPE, new ResourceLocation(KnightLib.MOD_ID, "great_chalice_interaction"), GreatChaliceRecipe.RECIPE_TYPE);
+        CHALICE_SERIALIZER = Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, new ResourceLocation(KnightLibFabric.MOD_ID, "great_chalice_interaction"), GreatChaliceRecipe.SERIALIZER);
+        CHALICE_TYPE = Registry.register(BuiltInRegistries.RECIPE_TYPE, new ResourceLocation(KnightLibFabric.MOD_ID, "great_chalice_interaction"), GreatChaliceRecipe.RECIPE_TYPE);
     }
 
 }

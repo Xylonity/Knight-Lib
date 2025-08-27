@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.platform;
 
-import dev.xylonity.knightlib.KnightLibCommon;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.platform.services.IPlatformHelper;
 
 import java.util.ServiceLoader;
@@ -13,7 +13,7 @@ public class KnightLibServices {
         final T loadedService = ServiceLoader.load(clazz)
                 .findFirst()
                 .orElseThrow(() -> new NullPointerException("Failed to load service for " + clazz.getName()));
-        KnightLibCommon.LOGGER.debug("Loaded {} for service {}", loadedService, clazz);
+        KnightLib.LOGGER.debug("Loaded {} for service {}", loadedService, clazz);
 
         return loadedService;
     }

@@ -8,12 +8,12 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
-@Mod(KnightLibCommon.MOD_ID)
-public class KnightLib {
+@Mod(KnightLib.MOD_ID)
+public class KnightLibForge {
 
-    public static final String MOD_ID = KnightLibCommon.MOD_ID;
+    public static final String MOD_ID = KnightLib.MOD_ID;
 
-    public KnightLib() {
+    public KnightLibForge() {
 
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
@@ -23,7 +23,7 @@ public class KnightLib {
 
         ConfigComposer.registerConfig(KnightLibConfig.class, modEventBus);
 
-        KnightLibCommon.init();
+        KnightLib.init();
     }
 
 }

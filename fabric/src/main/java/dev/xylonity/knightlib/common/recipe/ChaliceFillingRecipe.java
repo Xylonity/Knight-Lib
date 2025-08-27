@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.common.recipe;
 
 import com.google.gson.JsonObject;
-import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.KnightLibFabric;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.core.RegistryAccess;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements Recipe<SimpleContainer> {
 
-    private static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "block_filling");
+    private static final ResourceLocation ID = new ResourceLocation(KnightLibFabric.MOD_ID, "block_filling");
 
     public static final RecipeSerializer<ChaliceFillingRecipe> SERIALIZER = new Serializer();
     public static final RecipeType<ChaliceFillingRecipe> RECIPE_TYPE = new Type();

@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.common.event;
 
-import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.KnightLibForge;
 import dev.xylonity.knightlib.api.scheduler.TickScheduler;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -10,7 +10,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = KnightLib.MOD_ID)
+@Mod.EventBusSubscriber(modid = KnightLibForge.MOD_ID)
 public class KnightLibCommonEvents {
 
     @SubscribeEvent(priority = EventPriority.LOW)

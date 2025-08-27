@@ -2,7 +2,7 @@ package dev.xylonity.knightlib.config.impl;
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.toml.TomlFormat;
-import dev.xylonity.knightlib.KnightLibCommon;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.config.api.AutoConfig;
 import dev.xylonity.knightlib.config.api.ConfigEntry;
 import dev.xylonity.knightlib.config.api.DecorationType;
@@ -96,7 +96,7 @@ public final class ConfigManager {
                 // the original value belongs to
                 setPrimitive(field, val);
             } catch (Exception exception) {
-                KnightLibCommon.LOGGER.error("[CONFIG] Couldn't assign {}: {}", entry, exception.getMessage());
+                KnightLib.LOGGER.error("[CONFIG] Couldn't assign {}: {}", entry, exception.getMessage());
             }
         }
 

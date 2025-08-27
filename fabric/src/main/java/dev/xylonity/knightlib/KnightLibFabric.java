@@ -9,9 +9,9 @@ import dev.xylonity.knightlib.registry.KnightLibRecipes;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 
-public class KnightLib implements ModInitializer, ClientModInitializer {
+public class KnightLibFabric implements ModInitializer, ClientModInitializer {
 
-    public static final String MOD_ID = KnightLibCommon.MOD_ID;
+    public static final String MOD_ID = KnightLib.MOD_ID;
 
     @Override
     public void onInitialize() {
@@ -22,7 +22,7 @@ public class KnightLib implements ModInitializer, ClientModInitializer {
 
         KnightLibCommonEvents.init();
 
-        KnightLibCommon.init();
+        KnightLib.init();
     }
 
     @Override

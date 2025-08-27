@@ -3,7 +3,7 @@ package dev.xylonity.knightlib.compat.jei;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.KnightLibFabric;
 import dev.xylonity.knightlib.api.interop.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import dev.xylonity.knightlib.common.recipe.GreatChaliceRecipe;
@@ -32,10 +32,10 @@ import org.joml.Vector3f;
 import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatChaliceRecipe> {
-    public static final ResourceLocation UID = new ResourceLocation(KnightLib.MOD_ID, "great_chalice_interaction");
+    public static final ResourceLocation UID = new ResourceLocation(KnightLibFabric.MOD_ID, "great_chalice_interaction");
     public static final RecipeType<GreatChaliceRecipe> TYPE = new RecipeType<>(UID, GreatChaliceRecipe.class);
 
-    public static final ResourceLocation SHADOW = new ResourceLocation(KnightLib.MOD_ID, "textures/gui/shadow.png");
+    public static final ResourceLocation SHADOW = new ResourceLocation(KnightLibFabric.MOD_ID, "textures/gui/shadow.png");
 
     private final IDrawable icon;
 

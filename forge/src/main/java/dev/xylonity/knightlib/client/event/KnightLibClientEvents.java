@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.client.event;
 
-import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.KnightLibForge;
 import dev.xylonity.knightlib.api.camera.CameraShakeManager;
 import dev.xylonity.knightlib.api.music.IBossMusicProvider;
 import dev.xylonity.knightlib.api.scheduler.TickScheduler;
@@ -38,7 +38,7 @@ import java.util.Optional;
 
 public class KnightLibClientEvents {
 
-    @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @Mod.EventBusSubscriber(modid = KnightLibForge.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class KnightLibClientModBus {
 
         @SubscribeEvent
@@ -55,7 +55,7 @@ public class KnightLibClientEvents {
 
     }
 
-    @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+    @Mod.EventBusSubscriber(modid = KnightLibForge.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
     public static class KnightLibClientForgeBus {
 
         @SubscribeEvent(priority = EventPriority.LOW)

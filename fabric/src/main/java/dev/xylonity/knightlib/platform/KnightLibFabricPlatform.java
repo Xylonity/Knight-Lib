@@ -1,19 +1,12 @@
 package dev.xylonity.knightlib.platform;
 
-import dev.xylonity.knightlib.KnightLibCommon;
 import dev.xylonity.knightlib.common.block.GreatChaliceBlock;
-import dev.xylonity.knightlib.common.item.*;
-import dev.xylonity.knightlib.common.item.blockitem.GenericBlockItem;
 import dev.xylonity.knightlib.common.item.blockitem.GreatChaliceBlockItem;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
-import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleType;
-import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;

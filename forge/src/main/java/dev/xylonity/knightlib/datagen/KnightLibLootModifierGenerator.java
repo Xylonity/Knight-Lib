@@ -1,23 +1,16 @@
 package dev.xylonity.knightlib.datagen;
 
-import dev.xylonity.knightlib.KnightLibCommon;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibItems;
-import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraftforge.common.data.GlobalLootModifierProvider;
-import net.minecraftforge.common.loot.LootTableIdCondition;
-import net.minecraftforge.data.event.GatherDataEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 
 public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
 
     public KnightLibLootModifierGenerator(PackOutput output) {
-        super(output, KnightLibCommon.MOD_ID);
+        super(output, KnightLib.MOD_ID);
     }
 
     @Override

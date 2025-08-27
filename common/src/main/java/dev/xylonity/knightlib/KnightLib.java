@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ServiceLoader;
 
-public class KnightLibCommon {
+public class KnightLib {
 
     public static final String MOD_ID = "knightlib";
     public static final Logger LOGGER = LoggerFactory.getLogger("KnightLib");

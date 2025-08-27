@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.registry;
 
-import dev.xylonity.knightlib.KnightLibCommon;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.registrar.ResourceDispatcher;
 import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
@@ -12,11 +12,11 @@ import net.minecraft.world.level.material.MapColor;
 
 public class KnightLibBlocks {
 
-    public static final ResourceRegistry<Block> BLOCKS = ResourceDispatcher.create(ResourceType.BLOCKS, KnightLibCommon.MOD_ID);
+    public static final ResourceRegistry<Block> BLOCKS = ResourceDispatcher.create(ResourceType.BLOCKS, KnightLib.MOD_ID);
 
     public static final ResourceEntry<Block> GREAT_CHALICE =
             BLOCKS.register("great_chalice",
-                    KnightLibCommon.PLATFORM.createBlock("great_chalice",
+                    KnightLib.PLATFORM.createBlock("great_chalice",
                             BlockBehaviour.Properties.of()
                                     .mapColor(MapColor.COLOR_ORANGE)
                                     .strength(3f, 6f)

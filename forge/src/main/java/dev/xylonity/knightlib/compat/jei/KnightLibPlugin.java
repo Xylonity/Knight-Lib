@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.compat.jei;
 
-import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.KnightLibForge;
 import dev.xylonity.knightlib.common.recipe.ChaliceFillingRecipe;
 import dev.xylonity.knightlib.common.recipe.GreatChaliceRecipe;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
@@ -19,7 +19,7 @@ import java.util.List;
 @JeiPlugin
 public final class KnightLibPlugin implements IModPlugin {
 
-    private static final ResourceLocation UID = new ResourceLocation(KnightLib.MOD_ID, "jei_plugin");
+    private static final ResourceLocation UID = new ResourceLocation(KnightLibForge.MOD_ID, "jei_plugin");
 
     @Override
     public @NotNull ResourceLocation getPluginUid() {

@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.registry;
 
-import dev.xylonity.knightlib.KnightLibCommon;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.registrar.ResourceDispatcher;
 import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
@@ -9,8 +9,8 @@ import net.minecraft.core.particles.SimpleParticleType;
 
 public class KnightLibParticles {
 
-    public static final ResourceRegistry<SimpleParticleType> PARTICLES = ResourceDispatcher.create(ResourceType.PARTICLES, KnightLibCommon.MOD_ID);
+    public static final ResourceRegistry<SimpleParticleType> PARTICLES = ResourceDispatcher.create(ResourceType.PARTICLES, KnightLib.MOD_ID);
 
-    public static final ResourceEntry<SimpleParticleType> STARSET = PARTICLES.register("starset", KnightLibCommon.PLATFORM.createParticle(true));
+    public static final ResourceEntry<SimpleParticleType> STARSET = PARTICLES.register("starset", KnightLib.PLATFORM.createParticle(true));
 
 }

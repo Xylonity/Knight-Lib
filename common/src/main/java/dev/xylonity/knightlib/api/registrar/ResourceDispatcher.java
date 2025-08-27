@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.api.registrar;
 
-import dev.xylonity.knightlib.KnightLibCommon;
+import dev.xylonity.knightlib.KnightLib;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ public final class ResourceDispatcher {
      * Creates a ResourceRegistry for a given type and modid
      */
     public static <T> ResourceRegistry<T> create(ResourceType type, String modid) {
-        ResourceRegistry<T> reg = KnightLibCommon.REGISTRAR.create(type, modid);
+        ResourceRegistry<T> reg = KnightLib.REGISTRAR.create(type, modid);
         REGISTRIES.add(reg);
         return reg;
     }

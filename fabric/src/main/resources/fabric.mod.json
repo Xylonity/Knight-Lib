@@ -16,10 +16,10 @@
     "environment": "*",
     "entrypoints": {
         "main": [
-          "dev.xylonity.knightlib.KnightLib"
+          "dev.xylonity.knightlib.KnightLibFabric"
         ],
         "client": [
-            "dev.xylonity.knightlib.KnightLib"
+          "dev.xylonity.knightlib.KnightLibFabric"
         ],
         "jei_mod_plugin": [
             "dev.xylonity.knightlib.compat.jei.KnightLibPlugin"
