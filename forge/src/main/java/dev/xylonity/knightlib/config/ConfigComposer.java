@@ -33,14 +33,16 @@ public final class ConfigComposer {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         makeConfig(builder, clazz, ac.style(), ac.categoryBanner());
-
         ModLoadingContext.get().registerConfig(type, builder.build(), specName(clazz));
 
-        // Let's create the default config from the specified config class
-        ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
-
         // On the (re)load stage of the config directory, we reapply the changes so the config file contains the newest changes
-        modBus.addListener((ModConfigEvent.Loading e) -> applyFromSpec());
+        modBus.addListener((ModConfigEvent.Loading e) -> {
+            if (e.getConfig().getFileName().equals(specName(clazz))) {
+                applyFromSpec();
+                // Let's create the default config from the specified config class
+                ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
+            }
+        });
         modBus.addListener((ModConfigEvent.Reloading e) -> {
             applyFromSpec();
             ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
