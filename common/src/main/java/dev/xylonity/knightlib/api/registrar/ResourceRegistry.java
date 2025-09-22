@@ -54,6 +54,10 @@ public interface ResourceRegistry<T> {
         });
     }
 
+    default <X extends Entity> ResourceEntry<EntityType<X>> registerEntity(String name, EntityType.EntityFactory<X> entity, MobCategory category, float width, float height) {
+        return this.registerEntity(name, entity, category, width, height, null);
+    }
+
     /**
      * Used internally to dispatch all the entries
      * @return all pending entries in this registry

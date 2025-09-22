@@ -1,6 +1,8 @@
 package dev.xylonity.knightlib.impl.internal;
 
+import dev.xylonity.knightlib.api.bossbar.BossBarContext;
 import net.minecraft.client.gui.components.LerpingBossEvent;
+import net.minecraft.world.entity.Entity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +20,30 @@ public final class BossBarApi {
     }
 
     public static Optional<BossBarEntry> match(LerpingBossEvent boss) {
-        return ENTRIES.stream().filter(e -> e.matcher().test(boss)).findFirst();
+        BossBarLinks.Ref reference = BossBarLinks.INSTANCE.get(boss.getId());
+        Entity entity = reference != null ? reference.resolve() : null;
+        BossBarContext ctx = new BossBarContext(boss, entity, reference != null ? reference.entityType : null);
+
+        return ENTRIES
+                .stream()
+                .filter(
+                        e -> {
+                            if (e.matcher() != null) {
+                                return e.matcher().test(ctx);
+                            }
+
+                            if (e.legacyMatcher() != null) {
+                                return e.legacyMatcher().test(boss);
+                            }
+
+                            return false;
+                    }
+                )
+                .findFirst();
     }
 
-    public record BossBarEntry(Predicate<LerpingBossEvent> matcher, CustomBossBarRenderer renderer, int extraYPadding, boolean hideVanillaName) { ;; }
+    public record BossBarEntry(Predicate<LerpingBossEvent> legacyMatcher, Predicate<BossBarContext> matcher, LegacyCustomBossBarRenderer legacyRenderer, CustomBossBarRenderer renderer, int extraYPadding, boolean hideVanillaName) {
+        ;;
+    }
 
 }

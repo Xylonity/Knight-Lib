@@ -1,10 +1,13 @@
 package dev.xylonity.knightlib.client.event;
 
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.KnightLibForge;
+import dev.xylonity.knightlib.api.bossbar.BossBarContext;
 import dev.xylonity.knightlib.api.camera.CameraShakeManager;
 import dev.xylonity.knightlib.api.music.IBossMusicProvider;
 import dev.xylonity.knightlib.api.scheduler.TickScheduler;
 import dev.xylonity.knightlib.impl.internal.BossBarApi;
+import dev.xylonity.knightlib.impl.internal.BossBarLinks;
 import dev.xylonity.knightlib.impl.internal.BossMusicRegistry;
 import dev.xylonity.knightlib.impl.internal.BossMusicManager;
 import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
@@ -18,6 +21,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
@@ -126,11 +131,9 @@ public class KnightLibClientEvents {
         @SubscribeEvent
         public static void onBossBar(CustomizeGuiOverlayEvent.BossEventProgress event) {
             LerpingBossEvent boss = event.getBossEvent();
+
             Optional<BossBarApi.BossBarEntry> match = BossBarApi.match(boss);
-
             if (match.isEmpty()) return;
-
-            BossBarApi.BossBarEntry entry = match.get();
 
             GuiGraphics gui = event.getGuiGraphics();
             int x = event.getX();
@@ -138,7 +141,18 @@ public class KnightLibClientEvents {
 
             event.setCanceled(true);
 
-            entry.renderer().render(gui, boss, x, y);
+            BossBarLinks.Ref reference = BossBarLinks.INSTANCE.get(boss.getId());
+            Entity entity = reference != null ? reference.resolve() : null;
+
+            BossBarApi.BossBarEntry entry = match.get();
+            BossBarContext ctx = new BossBarContext(boss, entity, reference != null ? reference.entityType : null);
+
+            if (entry.renderer() != null) {
+                entry.renderer().render(gui, ctx, x, y);
+            }
+            else if (entry.legacyRenderer() != null) {
+                entry.legacyRenderer().render(gui, boss, x, y);
+            }
 
             if (entry.extraYPadding() != 0) {
                 event.setIncrement(event.getIncrement() + entry.extraYPadding());

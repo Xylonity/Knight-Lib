@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib;
 
+import dev.xylonity.knightlib.platform.KnightLibNetwork;
 import dev.xylonity.knightlib.registry.*;
 import dev.xylonity.knightlib.platform.KnightLibPlatform;
 import dev.xylonity.knightlib.platform.KnightLibRegistrar;
@@ -16,6 +17,7 @@ public class KnightLib {
 
     public static final KnightLibPlatform PLATFORM = ServiceLoader.load(KnightLibPlatform.class).findFirst().orElseThrow();
     public static final KnightLibRegistrar REGISTRAR = ServiceLoader.load(KnightLibRegistrar.class).findFirst().orElseThrow();
+    public static final KnightLibNetwork NETWORK = ServiceLoader.load(KnightLibNetwork.class).findFirst().orElseThrow();
 
     private static volatile EnumSet<Usage> ENABLED = EnumSet.noneOf(Usage.class);
 
@@ -25,6 +27,7 @@ public class KnightLib {
         KnightLibItems.ITEMS.init();
         KnightLibParticles.PARTICLES.init();
         KnightLibBlockEntities.BLOCK_ENTITIES.init();
+        KnightLibPackets.init();
     }
 
     /**

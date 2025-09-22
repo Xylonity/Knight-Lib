@@ -1,11 +1,9 @@
 package dev.xylonity.knightlib.impl.internal;
 
+import dev.xylonity.knightlib.api.bossbar.BossBarContext;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.LerpingBossEvent;
 
 @FunctionalInterface
 public interface CustomBossBarRenderer {
-
-    void render(GuiGraphics gui, LerpingBossEvent boss, int x, int y);
-
+    void render(GuiGraphics gui, BossBarContext ctx, int x, int y);
 }

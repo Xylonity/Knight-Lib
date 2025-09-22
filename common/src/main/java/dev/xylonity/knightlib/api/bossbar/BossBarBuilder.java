@@ -1,18 +1,21 @@
 package dev.xylonity.knightlib.api.bossbar;
 
 import dev.xylonity.knightlib.impl.internal.BossBarApi;
+import dev.xylonity.knightlib.impl.internal.LegacyCustomBossBarRenderer;
 import dev.xylonity.knightlib.impl.internal.CustomBossBarRenderer;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 
 import java.util.function.Predicate;
 
 /**
- * Client-sided abstraction. The boss bar instances should be registered on the client MOD bus on the forge loader
- * or either inside onInitializeClient on fabric.
+ * Client-sided abstraction. The boss bar instances should be registered on the client MOD bus on the forge loader or either
+ * inside onInitializeClient on fabric. Use either legacyMatching or normal matching, don't mix implementations.
  */
 public final class BossBarBuilder {
 
-    private Predicate<LerpingBossEvent> matcher;
+    private Predicate<LerpingBossEvent> legacyMatcher;
+    private Predicate<BossBarContext> matcher;
+    private LegacyCustomBossBarRenderer legacyRenderer;
     private CustomBossBarRenderer renderer;
     private int padding = 0;
     private boolean hideName = false;
@@ -21,10 +24,32 @@ public final class BossBarBuilder {
      * Literal name (not registry name) of the entity to apply.
      * @param matcher the string to match
      */
-    public static BossBarBuilder matcher(Predicate<LerpingBossEvent> matcher) {
+    public static BossBarBuilder legacyMatcher(Predicate<LerpingBossEvent> matcher) {
+        BossBarBuilder builder = new BossBarBuilder();
+        builder.legacyMatcher = matcher;
+        return builder;
+    }
+
+    /**
+     * Contains the literal entity to apply. This is a custom implementation that reproduces a custom bossbar
+     * using a BossBarContext as a bridge, that contains, through networking, the actual entity.
+     *
+     * @see TrackedServerBossEvent
+     * @param matcher the string to match
+     */
+    public static BossBarBuilder matcher(Predicate<BossBarContext> matcher) {
         BossBarBuilder builder = new BossBarBuilder();
         builder.matcher = matcher;
         return builder;
+    }
+
+    /**
+     * Custom rendering logic of the actual boss bar and its derivative components.
+     * @param renderer the renderer. Receives 4 params, as declared inside the abstract method of LegacyCustomBossBarRenderer
+     */
+    public BossBarBuilder legacyRenderer(LegacyCustomBossBarRenderer renderer) {
+        this.legacyRenderer = renderer;
+        return this;
     }
 
     /**
@@ -51,7 +76,7 @@ public final class BossBarBuilder {
     }
 
     public void register() {
-        BossBarApi.register(new BossBarApi.BossBarEntry(matcher, renderer, padding, hideName));
+        BossBarApi.register(new BossBarApi.BossBarEntry(legacyMatcher, matcher, legacyRenderer, renderer, padding, hideName));
     }
 
 }
