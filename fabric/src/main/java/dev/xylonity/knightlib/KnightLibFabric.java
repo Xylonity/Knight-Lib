@@ -5,6 +5,7 @@ import dev.xylonity.knightlib.common.event.KnightLibCommonEvents;
 import dev.xylonity.knightlib.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator;
+import dev.xylonity.knightlib.registry.KnightLibPackets;
 import dev.xylonity.knightlib.registry.KnightLibRecipes;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
@@ -22,12 +23,15 @@ public class KnightLibFabric implements ModInitializer, ClientModInitializer {
 
         KnightLibCommonEvents.init();
 
+        KnightLibPackets.registerC2S();
+
         KnightLib.init();
     }
 
     @Override
     public void onInitializeClient() {
         KnightLibClientEvents.init();
+        KnightLibPackets.registerS2C();
     }
 
 }

@@ -3,6 +3,7 @@ package dev.xylonity.knightlib;
 import dev.xylonity.knightlib.registry.KnightLibLootModifier;
 import dev.xylonity.knightlib.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
+import dev.xylonity.knightlib.registry.KnightLibPackets;
 import dev.xylonity.knightlib.registry.KnightLibRecipes;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -21,6 +22,8 @@ public class KnightLibForge {
         KnightLibRecipes.TYPES.register(modEventBus);
 
         ConfigComposer.registerConfig(KnightLibConfig.class, modEventBus);
+
+        KnightLibPackets.register();
 
         KnightLib.init();
     }

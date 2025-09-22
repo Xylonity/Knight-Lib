@@ -27,7 +27,6 @@ public class KnightLib {
         KnightLibItems.ITEMS.init();
         KnightLibParticles.PARTICLES.init();
         KnightLibBlockEntities.BLOCK_ENTITIES.init();
-        KnightLibPackets.init();
     }
 
     /**
