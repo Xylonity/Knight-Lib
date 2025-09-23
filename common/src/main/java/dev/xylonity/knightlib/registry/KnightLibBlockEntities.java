@@ -7,13 +7,14 @@ import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
 import dev.xylonity.knightlib.api.registrar.ResourceType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class KnightLibBlockEntities {
 
-    public static final ResourceRegistry<BlockEntityType<?>> BLOCK_ENTITIES = ResourceDispatcher.create(ResourceType.BLOCK_ENTITIES, KnightLib.MOD_ID);
+    public static final ResourceRegistry<BlockEntityType<?>> BLOCK_ENTITIES = ResourceDispatcher.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, KnightLib.MOD_ID);
 
     public static final ResourceEntry<BlockEntityType<GreatChaliceBlockEntity>> GREAT_CHALICE;
 

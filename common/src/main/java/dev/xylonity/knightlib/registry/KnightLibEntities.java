@@ -5,7 +5,7 @@ import dev.xylonity.knightlib.common.entity.projectile.GreatChaliceStartsetRing;
 import dev.xylonity.knightlib.api.registrar.ResourceDispatcher;
 import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
-import dev.xylonity.knightlib.api.registrar.ResourceType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 
@@ -13,7 +13,7 @@ import java.util.List;
 
 public class KnightLibEntities {
 
-    public static final ResourceRegistry<EntityType<?>> ENTITIES = ResourceDispatcher.create(ResourceType.ENTITIES, KnightLib.MOD_ID);
+    public static final ResourceRegistry<EntityType<?>> ENTITIES = ResourceDispatcher.create(BuiltInRegistries.ENTITY_TYPE, KnightLib.MOD_ID);
 
     public static final ResourceEntry<EntityType<GreatChaliceStartsetRing>> GREAT_CHALICE_STARSET_RING;
 

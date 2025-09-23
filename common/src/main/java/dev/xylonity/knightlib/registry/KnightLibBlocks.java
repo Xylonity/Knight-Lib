@@ -5,6 +5,7 @@ import dev.xylonity.knightlib.api.registrar.ResourceDispatcher;
 import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
 import dev.xylonity.knightlib.api.registrar.ResourceType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -12,7 +13,7 @@ import net.minecraft.world.level.material.MapColor;
 
 public class KnightLibBlocks {
 
-    public static final ResourceRegistry<Block> BLOCKS = ResourceDispatcher.create(ResourceType.BLOCKS, KnightLib.MOD_ID);
+    public static final ResourceRegistry<Block> BLOCKS = ResourceDispatcher.create(BuiltInRegistries.BLOCK, KnightLib.MOD_ID);
 
     public static final ResourceEntry<Block> GREAT_CHALICE =
             BLOCKS.register("great_chalice",

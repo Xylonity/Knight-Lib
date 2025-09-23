@@ -6,11 +6,12 @@ import dev.xylonity.knightlib.api.registrar.ResourceDispatcher;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
 import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import dev.xylonity.knightlib.api.registrar.ResourceType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 
 public class KnightLibItems {
 
-    public static final ResourceRegistry<Item> ITEMS = ResourceDispatcher.create(ResourceType.ITEMS, KnightLib.MOD_ID);
+    public static final ResourceRegistry<Item> ITEMS = ResourceDispatcher.create(BuiltInRegistries.ITEM, KnightLib.MOD_ID);
 
     public static final ResourceEntry<Item> SMALL_ESSENCE = ITEMS.register("small_essence", () -> new SmallEssenceItem(new Item.Properties()));
     public static final ResourceEntry<Item> GREAT_ESSENCE = ITEMS.register("great_essence", () -> new GreatEssenceItem(new Item.Properties()));
