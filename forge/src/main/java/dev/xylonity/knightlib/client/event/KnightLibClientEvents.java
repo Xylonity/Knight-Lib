@@ -1,6 +1,5 @@
 package dev.xylonity.knightlib.client.event;
 
-import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.KnightLibForge;
 import dev.xylonity.knightlib.api.bossbar.BossBarContext;
 import dev.xylonity.knightlib.api.camera.CameraShakeManager;
@@ -12,7 +11,7 @@ import dev.xylonity.knightlib.impl.internal.BossMusicRegistry;
 import dev.xylonity.knightlib.impl.internal.BossMusicManager;
 import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
 import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
-import dev.xylonity.knightlib.common.particle.StarsetParticle;
+import dev.xylonity.knightlib.client.particle.StarsetParticle;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibEntities;
 import dev.xylonity.knightlib.registry.KnightLibParticles;
@@ -21,7 +20,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;

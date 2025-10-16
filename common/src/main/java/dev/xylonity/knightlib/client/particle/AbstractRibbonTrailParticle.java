@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.common.particle;
+package dev.xylonity.knightlib.client.particle;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.PoseStack.Pose;
