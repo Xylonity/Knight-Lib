@@ -17,7 +17,6 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -30,12 +29,10 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
             Network.PROTOCOL::equals
     );
 
-    private static final AtomicInteger IDX = new AtomicInteger(0);
-
     @Override
     public <T> void registerClientbound(PacketType<T> type, Consumer<T> clientHandler) {
         CHANNEL.registerMessage(
-                IDX.getAndIncrement(),
+                discriminator(type.id()),
                 type.clazz(),
                 type.codec()::encode,
                 type.codec()::decode,
@@ -51,7 +48,7 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
     @Override
     public <T> void registerServerbound(PacketType<T> type, BiConsumer<T, ServerPlayer> serverHandler) {
         CHANNEL.registerMessage(
-                IDX.getAndIncrement(),
+                discriminator(type.id()),
                 type.clazz(),
                 type.codec()::encode,
                 type.codec()::decode,
@@ -113,6 +110,10 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
     @Override
     public <T> void sendToTracking(Entity entity, PacketType<T> type, T msg) {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), msg);
+    }
+
+    private static int discriminator(ResourceLocation id) {
+        return (31 * id.getNamespace().hashCode() + id.getPath().hashCode()) & 0x7fffffff;
     }
 
 }
