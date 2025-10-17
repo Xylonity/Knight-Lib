@@ -8,9 +8,11 @@ import dev.xylonity.knightlib.config.api.ConfigEntry;
 import dev.xylonity.knightlib.config.api.DecorationType;
 
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,11 +20,15 @@ public final class ConfigManager {
     private static Path CONFIG_DIR = Path.of("config");
     private static final Set<Class<?>> REGISTERED = new HashSet<>();
 
+    // Hard fix for different config files crashing onload due to a process lock
+    private static final ConcurrentHashMap<String, Object> FILE_LOCKS = new ConcurrentHashMap<>();
+
     public static void init(Path configDir, Class<?>... configs) {
         CONFIG_DIR = configDir;
         for (Class<?> clazz : configs) {
             loadOrCreate(clazz);
         }
+
     }
 
     private static void loadOrCreate(Class<?> clazz) {
@@ -35,72 +41,100 @@ public final class ConfigManager {
         String fileName = meta.file() + ".toml";
         Path tomlPath = CONFIG_DIR.resolve(fileName);
 
-        CommentedFileConfig cfg = CommentedFileConfig.builder(tomlPath, TomlFormat.instance()).autosave().preserveInsertionOrder().sync().build();
+        // Locks the current config file once (per config file)
+        Object lock = FILE_LOCKS.computeIfAbsent(fileName, k -> new Object());
 
-        // We create the config file
-        cfg.load();
-
-        // 'Cache' to avoid category duplication
-        Set<String> seenCats = new HashSet<>();
-
-        // Parses every single entry no matter what the order is, and we avoid category duplication (comment above)
-        for (Field field : clazz.getDeclaredFields()) {
-            ConfigEntry e = field.getAnnotation(ConfigEntry.class);
-            if (e == null) continue;
-
-            field.setAccessible(true);
-
-            String category = e.category();
-            // We search the entry name through reflexion, it's not saved directly inside the annotation per se
-            String entry = field.getName();
-            String path = category.isEmpty() ? entry : category + "." + entry;
-
-            String target = category.isEmpty() ? entry : category;
-            if (seenCats.add(category)) {
-                if (meta.categoryBanner()) {
-                    // We add a comment above the category's name
-                    cfg.setComment(target, wrapAndIndent(buildCategoryBanner(category, style)));
-                } else {
-                    // Or we set a blank comment if the categoryBanner is off
-                    cfg.setComment(target, "");
+        synchronized (lock) {
+            CommentedFileConfig cfg = null;
+            try {
+                if (!Files.exists(CONFIG_DIR)) {
+                    Files.createDirectories(CONFIG_DIR);
                 }
+
+                cfg = CommentedFileConfig.builder(tomlPath, TomlFormat.instance())
+                        .preserveInsertionOrder()
+                        .build();
+
+                // We create the config file
+                cfg.load();
+
+                // 'Cache' to avoid category duplication
+                Set<String> seenCats = new HashSet<>();
+
+                // Parses every single entry no matter what the order is, and we avoid category duplication (comment above)
+                for (Field field : clazz.getDeclaredFields()) {
+                    ConfigEntry e = field.getAnnotation(ConfigEntry.class);
+                    if (e == null) continue;
+
+                    field.setAccessible(true);
+
+                    String category = e.category();
+                    // We search the entry name through reflexion, it's not saved directly inside the annotation per se
+                    String entry = field.getName();
+                    String path = category.isEmpty() ? entry : category + "." + entry;
+
+                    String target = category.isEmpty() ? entry : category;
+                    if (seenCats.add(category)) {
+                        if (meta.categoryBanner()) {
+                            // We add a comment above the category's name
+                            cfg.setComment(target, wrapAndIndent(buildCategoryBanner(category, style)));
+                        }
+                        else {
+                            // Or we set a blank comment if the categoryBanner is off
+                            cfg.setComment(target, "");
+                        }
+
+                    }
+
+                    Object def;
+                    try {
+                        // We access the value (the default one) from the static att this way
+                        def = field.get(null);
+                    }
+                    catch (Exception ignore) {
+                        continue;
+                    }
+
+                    Object raw = cfg.get(path);
+                    Object oldDefault = parseDefFromComment(cfg.getComment(path), field.getType());
+
+                    // if the toml value is the same (or if it doesn't exist) as the config one I change it
+                    if (!cfg.contains(path) || (oldDefault != null && same(raw, oldDefault))) {
+                        cfg.set(path, def);
+                        // fallback if the config file isn't created, assign the default value
+                        raw = cfg.get(path);
+                    }
+
+                    // Now we build the current entry
+                    String entryComment = buildEntryComment(e, def, style);
+                    cfg.setComment(path, wrapAndIndent(entryComment));
+
+                    // Obtains the min/max value to avoid crashes in case the player decides to break the limits of the entry
+                    Object val = clamp(raw, e, field.getType());
+                    if (val == null) val = def;
+
+                    try {
+                        // If we set the value directly, the compiler would probably throw an exception, so we check the primitive type
+                        // the original value belongs to
+                        setPrimitive(field, val);
+                    }
+                    catch (Exception exception) {
+                        KnightLib.LOGGER.error("[CONFIG] Couldn't assign {}: {}", entry, exception.getMessage());
+                    }
+                }
+
+                cfg.save();
             }
-
-            Object def;
-            try {
-                // We access the value (the default one) from the static att this way
-                def = field.get(null);
-            } catch (Exception exception) {
-                continue;
+            catch (Exception e) {
+                KnightLib.LOGGER.error("[CONFIG] Error loading config for {}: {}", fileName, e.getMessage(), e);
             }
-
-            Object raw = cfg.get(path);
-            Object oldDefault = parseDefFromComment(cfg.getComment(path), field.getType());
-
-            // if the toml value is the same (or if it doesn't exist) as the config one I change it
-            if (!cfg.contains(path) || (oldDefault != null && same(raw, oldDefault))) {
-                cfg.set(path, def);
-                // fallback if the config file isn't created, assign the default value
-                raw = cfg.get(path);
-            }
-
-            // Now we build the current entry
-            String entryComment = buildEntryComment(e, def, style);
-            cfg.setComment(path, wrapAndIndent(entryComment));
-
-            // Obtains the min/max value to avoid crashes in case the player decides to break the limits of the entry
-            Object val = clamp(raw, e, field.getType());
-            if (val == null) val = def;
-            try {
-                // If we set the value directly, the compiler would probably throw an exception, so we check the primitive type
-                // the original value belongs to
-                setPrimitive(field, val);
-            } catch (Exception exception) {
-                KnightLib.LOGGER.error("[CONFIG] Couldn't assign {}: {}", entry, exception.getMessage());
+            finally {
+                if (cfg != null) {
+                    cfg.close();
+                }
             }
         }
 
-        cfg.save();
     }
 
     private static Object parseDefFromComment(String s, Class<?> clazz) {
@@ -119,7 +153,8 @@ public final class ConfigManager {
                 case "boolean"-> Boolean.parseBoolean(raw);
                 default -> raw;
             };
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             return null;
         }
 

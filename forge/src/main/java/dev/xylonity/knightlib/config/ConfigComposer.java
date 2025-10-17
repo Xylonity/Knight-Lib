@@ -15,6 +15,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 // such as Configured, detects this config. This should also work with hot-reloading
 public final class ConfigComposer {
     private static final Map<Field, ForgeConfigSpec.ConfigValue<?>> VALUES = new ConcurrentHashMap<>();
+    private static final Set<String> INITIALIZED_CONFIGS = ConcurrentHashMap.newKeySet();
 
     public static void registerConfig(Class<?> clazz, IEventBus modBus) {
         registerConfig(clazz, modBus, ModConfig.Type.COMMON);
@@ -30,23 +32,33 @@ public final class ConfigComposer {
 
     public static void registerConfig(Class<?> clazz, IEventBus modBus, ModConfig.Type type) {
         AutoConfig ac = clazz.getAnnotation(AutoConfig.class);
+        String configFileName = specName(clazz);
+
+        // Bypasses the config registrar if it's already initialized
+        if (!INITIALIZED_CONFIGS.add(configFileName)) {
+            return;
+        }
+
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         makeConfig(builder, clazz, ac.style(), ac.categoryBanner());
-        ModLoadingContext.get().registerConfig(type, builder.build(), specName(clazz));
+        ModLoadingContext.get().registerConfig(type, builder.build(), configFileName);
 
-        // On the (re)load stage of the config directory, we reapply the changes so the config file contains the newest changes
+        // Inits the config only once
+        ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
+
         modBus.addListener((ModConfigEvent.Loading e) -> {
-            if (e.getConfig().getFileName().equals(specName(clazz))) {
+            if (e.getConfig().getFileName().equals(configFileName)) {
                 applyFromSpec();
-                // Let's create the default config from the specified config class
-                ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
             }
         });
+
         modBus.addListener((ModConfigEvent.Reloading e) -> {
-            applyFromSpec();
-            ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
+            if (e.getConfig().getFileName().equals(configFileName)) {
+                applyFromSpec();
+            }
         });
+
     }
 
     private static String specName(Class<?> clazz) {
@@ -131,7 +143,8 @@ public final class ConfigComposer {
             }
 
             return b.define(name, field.get(null));
-        } catch (IllegalAccessException e) {
+        }
+        catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
 
@@ -141,7 +154,8 @@ public final class ConfigComposer {
         VALUES.forEach((field, value) -> {
             try {
                 field.set(null, value.get());
-            } catch (Exception ignore) { ;; }
+            }
+            catch (Exception ignore) { ;; }
         });
     }
 

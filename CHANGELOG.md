@@ -2,6 +2,7 @@
 - Added a brand-new registrar system
 - Updated license assets
 - Now the content that's not used by any mod won't be obtainable ingame
+- Fixed config composer creating multiple .bak files in the forge version
 - Added a brand-new ARGB wrapper and extra utilities
 - Added a brand-new networking API along with a custom tracking bossbar event
 - Refactor internal package distribution
