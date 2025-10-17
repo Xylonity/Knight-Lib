@@ -1,6 +1,7 @@
 # 1.4.0
 - Added a brand-new registrar system
 - Updated license assets
+- Now the content that's not used by any mod won't be obtainable ingame
 - Added a brand-new ARGB wrapper and extra utilities
 - Added a brand-new networking API along with a custom tracking bossbar event
 - Refactor internal package distribution
