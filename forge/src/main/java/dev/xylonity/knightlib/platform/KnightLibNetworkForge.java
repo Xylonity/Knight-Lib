@@ -12,11 +12,15 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -29,18 +33,21 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
             Network.PROTOCOL::equals
     );
 
+    private static final Map<Integer, Class<?>> USED = new ConcurrentHashMap<>();
+
     @Override
     public <T> void registerClientbound(PacketType<T> type, Consumer<T> clientHandler) {
         CHANNEL.registerMessage(
-                discriminator(type.id()),
+                discriminator(type, false),
                 type.clazz(),
                 type.codec()::encode,
                 type.codec()::decode,
                 (message, sup) -> {
-                    NetworkEvent.Context ctx = sup.get();
+                    var ctx = sup.get();
                     ctx.enqueueWork(() -> clientHandler.accept(message));
                     ctx.setPacketHandled(true);
-                }
+                },
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT)
         );
 
     }
@@ -48,19 +55,20 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
     @Override
     public <T> void registerServerbound(PacketType<T> type, BiConsumer<T, ServerPlayer> serverHandler) {
         CHANNEL.registerMessage(
-                discriminator(type.id()),
+                discriminator(type, true),
                 type.clazz(),
                 type.codec()::encode,
                 type.codec()::decode,
                 (message, sup) -> {
                     NetworkEvent.Context ctx = sup.get();
-                    ServerPlayer player = ctx.getSender();
-                    if (player != null) {
-                        ctx.enqueueWork(() -> serverHandler.accept(message, player));
+                    var sender = ctx.getSender();
+                    if (sender != null) {
+                        ctx.enqueueWork(() -> serverHandler.accept(message, sender));
                     }
 
                     ctx.setPacketHandled(true);
-                }
+                },
+                Optional.of(NetworkDirection.PLAY_TO_SERVER)
         );
 
     }
@@ -112,8 +120,18 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), msg);
     }
 
-    private static int discriminator(ResourceLocation id) {
-        return (31 * id.getNamespace().hashCode() + id.getPath().hashCode()) & 0x7fffffff;
+    private static int discriminator(PacketType<?> type, boolean c2s) {
+        ResourceLocation id = type.id();
+        int base = 31 * id.getNamespace().hashCode() + id.getPath().hashCode();
+        int discriminator = (base ^ (c2s ? 0x433253 : 0x533243)) & 0x7fffffff;
+
+        Class<?> prev = USED.putIfAbsent(discriminator, type.clazz());
+        if (prev != null && prev != type.clazz()) {
+            discriminator = (31 * base + type.clazz().getName().hashCode()) & 0x7fffffff;
+            USED.put(discriminator, type.clazz());
+        }
+
+        return discriminator;
     }
 
 }
