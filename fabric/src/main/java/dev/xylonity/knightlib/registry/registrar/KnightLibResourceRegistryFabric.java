@@ -2,10 +2,7 @@ package dev.xylonity.knightlib.registry.registrar;
 
 import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
-import dev.xylonity.knightlib.api.registrar.ResourceType;
 import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;

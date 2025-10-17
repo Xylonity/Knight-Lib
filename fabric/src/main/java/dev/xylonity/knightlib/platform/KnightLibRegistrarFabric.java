@@ -1,7 +1,6 @@
 package dev.xylonity.knightlib.platform;
 
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
-import dev.xylonity.knightlib.api.registrar.ResourceType;
 import dev.xylonity.knightlib.registry.registrar.KnightLibResourceRegistryFabric;
 import net.minecraft.core.Registry;
 
