@@ -1,18 +1,24 @@
 import net.darkhax.curseforgegradle.TaskPublishCurseForge
 
+import java.util.regex.Pattern
+
 plugins {
-    id 'multiloader-loader'
+    id 'java'
+    id 'idea'
+    id 'maven-publish'
     id 'fabric-loom'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'net.darkhax.curseforgegradle' version '1.1.26'
     id "com.modrinth.minotaur" version "2.+"
 }
-
+base {
+    archivesName = "${mod_id}-fabric-${minecraft_version}"
+}
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.layered {
         officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
+        parchment("org.parchmentmc.data:parchment-1.20.1:2023.09.03@zip")
     }
     modImplementation("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
     //modImplementation "curse.maven:knight-quest-fabric-1016595:6025270"
@@ -27,7 +33,6 @@ dependencies {
 
     implementation project(":common")
 }
-
 configurations {
     shadow
     implementation.extendsFrom shadow
@@ -36,15 +41,13 @@ configurations {
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import net.fabricmc.loom.task.RemapJarTask
 
-import java.util.regex.Pattern
-
 def shadowJarTask = tasks.named('shadowJar', ShadowJar)
 
 shadowJarTask.configure {
     archiveClassifier.set('dev-shadow')
     configurations = [project.configurations.shadow]
 
-    relocate 'com.electronwill.nightconfig', "dev.xylonity.tooltipoverhaul.nightconfig"
+    relocate 'com.electronwill.nightconfig', "dev.xylonity.nightconfig"
 
     exclude 'META-INF/LICENSE*', 'META-INF/NOTICE*'
 }
@@ -80,6 +83,31 @@ loom {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    source(project(":common").sourceSets.main.allSource)
+}
+tasks.withType(Javadoc).configureEach {
+    source(project(":common").sourceSets.main.allJava)
+}
+tasks.named("sourcesJar", Jar) {
+    from(project(":common").sourceSets.main.allSource)
+}
+
+processResources {
+    from project(":common").sourceSets.main.resources
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId base.archivesName.get()
+            from components.java
+        }
+    }
+    repositories {
+        maven { url = uri("file:///C:/maven") }
+    }
+}
 
 def extractChangelogForVersion = { File file, String version ->
     if (!file || !file.exists()) {
@@ -131,7 +159,7 @@ def changelogSection = extractChangelogForVersion(project.file('../CHANGELOG.md'
 tasks.register('publishCurseForge', TaskPublishCurseForge) {
     group = 'publishing'
     apiToken = System.getenv("CURSEFORGE_TOKEN")
-    def mainFile = upload("1105855", remapJar)
+    def mainFile = upload("1105855", jar)
 
     mainFile.displayName = "[FABRIC] Knight Lib " + project.property('version').toString() + "-" + minecraft_version
 
@@ -155,7 +183,7 @@ modrinth {
     loaders = ["fabric"]
     gameVersions = ["1.20", "1.20.1"]
 
-    uploadFile = remapJar
+    uploadFile = jar
     versionNumber = project.property('version').toString()
     versionType = "release"
 

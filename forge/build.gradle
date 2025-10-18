@@ -3,12 +3,17 @@ import net.darkhax.curseforgegradle.TaskPublishCurseForge
 import java.util.regex.Pattern
 
 plugins {
-    id 'multiloader-loader'
-    id 'net.neoforged.moddev.legacyforge' version '2.0.105'
+    id 'idea'
+    id 'maven-publish'
+    id 'net.minecraftforge.gradle'
+    id 'org.spongepowered.mixin'
+    id 'org.parchmentmc.librarian.forgegradle' version '1.+'
     id 'net.darkhax.curseforgegradle' version '1.1.26'
     id "com.modrinth.minotaur" version "2.+"
 }
-
+base {
+    archivesName = "${mod_id}-forge-${minecraft_version}"
+}
 mixin {
     add(sourceSets.main, "${mod_id}.refmap.json")
 
@@ -16,35 +21,57 @@ mixin {
     config("${mod_id}.forge.mixins.json")
 }
 
-legacyForge {
-    version = "${minecraft_version}-${forge_version}"
+minecraft {
+    mappings("parchment", "2023.09.03-1.20.1")
 
-    validateAccessTransformers = true
+    copyIdeResources = true
 
-    def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
-    if (at.exists()) {
-        accessTransformers = [at.absolutePath]
+    if (file('src/main/resources/META-INF/accesstransformer.cfg').exists()) {
+        accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     }
-    parchment {
-        minecraftVersion = parchment_minecraft
-        mappingsVersion = parchment_version
-    }
+
     runs {
         client {
-            client()
+            workingDirectory project.file('run')
+            ideaModule "${rootProject.name}.${project.name}.main"
+            taskName 'Client'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            mods {
+                modClientRun {
+                    source sourceSets.main
+                    source project(":common").sourceSets.main
+                }
+            }
         }
-        data {
-            data()
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
-        }
-        server {
-            server()
-        }
-    }
 
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
+        server {
+            workingDirectory project.file('run')
+            ideaModule "${rootProject.name}.${project.name}.main"
+            taskName 'Server'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            mods {
+                modServerRun {
+                    source sourceSets.main
+                    source project(":common").sourceSets.main
+                }
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+            ideaModule "${rootProject.name}.${project.name}.main"
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            taskName 'Data'
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            mods {
+                modDataRun {
+                    source sourceSets.main
+                    source project(":common").sourceSets.main
+                }
+            }
         }
     }
 }
@@ -52,18 +79,50 @@ legacyForge {
 sourceSets.main.resources.srcDir 'src/generated/resources'
 
 dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     compileOnly project(":common")
 
     //implementation fg.deobf("curse.maven:knight-quest-reforged-1018043:6018677")
-    modImplementation ("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
+    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
 
     // compile against the JEI API but do not include it at runtime
-    modCompileOnly("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}")
+    compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))
     // at runtime, use the full JEI jar for Forge
     //runtimeOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}"))
-    modImplementation("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
+    implementation fg.deobf("mezz.jei:jei-${minecraft_version}-forge:${jei_version}")
 
     annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    source(project(":common").sourceSets.main.allSource)
+}
+tasks.withType(Javadoc).configureEach {
+    source(project(":common").sourceSets.main.allJava)
+}
+tasks.named("sourcesJar", Jar) {
+    from(project(":common").sourceSets.main.allSource)
+}
+
+processResources {
+    from project(":common").sourceSets.main.resources
+}
+
+jar.finalizedBy('reobfJar')
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId base.archivesName.get()
+            from components.java
+            fg.component(it)
+        }
+    }
+    repositories {
+        maven {
+            url = uri("file:///C:/maven")
+        }
+    }
 }
 
 def extractChangelogForVersion = { File file, String version ->
@@ -116,7 +175,7 @@ def changelogSection = extractChangelogForVersion(project.file('../CHANGELOG.md'
 tasks.register('publishCurseForge', TaskPublishCurseForge) {
     group = 'publishing'
     apiToken = System.getenv("CURSEFORGE_TOKEN")
-    def mainFile = upload("1105855", reobfJar)
+    def mainFile = upload("1105855", jar)
 
     mainFile.displayName = "[FORGE] Knight Lib " + project.property('version').toString() + "-" + minecraft_version
 
@@ -140,7 +199,7 @@ modrinth {
     loaders = ["forge"]
     gameVersions = ["1.20", "1.20.1"]
 
-    uploadFile = reobfJar
+    uploadFile = jar
     versionNumber = project.property('version').toString()
     versionType = "release"
 
