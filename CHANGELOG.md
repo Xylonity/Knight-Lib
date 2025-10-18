@@ -1,3 +1,6 @@
+# 1.4.1
+- Fixed a crash using the camera shake utility
+
 # 1.4.0
 - Added a brand-new registrar system
 - Updated license assets
