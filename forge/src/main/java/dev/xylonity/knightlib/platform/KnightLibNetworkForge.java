@@ -12,6 +12,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
@@ -43,7 +45,7 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
                 type.codec()::encode,
                 type.codec()::decode,
                 (message, sup) -> {
-                    var ctx = sup.get();
+                    NetworkEvent.Context ctx = sup.get();
                     ctx.enqueueWork(() -> clientHandler.accept(message));
                     ctx.setPacketHandled(true);
                 },
@@ -61,7 +63,7 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
                 type.codec()::decode,
                 (message, sup) -> {
                     NetworkEvent.Context ctx = sup.get();
-                    var sender = ctx.getSender();
+                    ServerPlayer sender = ctx.getSender();
                     if (sender != null) {
                         ctx.enqueueWork(() -> serverHandler.accept(message, sender));
                     }
@@ -85,21 +87,33 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     @Override
     public <T> void sendToServer(T message) {
-        CHANNEL.sendToServer(message);
+        Boolean canSend = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            return mc != null && mc.getConnection() != null;
+        });
+
+        if (Boolean.TRUE.equals(canSend)) {
+            CHANNEL.sendToServer(message);
+        }
+
     }
 
     @Override
     public <T> void sendTo(ServerPlayer player, PacketType<T> type, T message) {
+        if (player == null) return;
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
     }
 
     @Override
     public <T> void sendToAll(MinecraftServer server, PacketType<T> type, T message) {
+        if (server == null) return;
         CHANNEL.send(PacketDistributor.ALL.noArg(), message);
     }
 
     @Override
     public <T> void sendToPlayers(Level level, PacketType<T> type, T message) {
+        if (level == null || level.isClientSide) return;
+
         for (ServerPlayer player : level.players().stream().map(ServerPlayer.class::cast).toList()) {
             CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
         }
@@ -108,6 +122,8 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     @Override
     public <T> void sendToTracking(Level level, BlockPos pos, PacketType<T> type, T message) {
+        if (level == null || level.isClientSide || !level.isLoaded(pos)) return;
+
         LevelChunk chunk = level.getChunkAt(pos);
         if (chunk != null) {
             CHANNEL.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), message);
@@ -117,6 +133,8 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     @Override
     public <T> void sendToTracking(Entity entity, PacketType<T> type, T msg) {
+        if (entity == null || entity.level().isClientSide) return;
+
         CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), msg);
     }
 

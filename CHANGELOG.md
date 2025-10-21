@@ -1,3 +1,6 @@
+# 1.4.2
+- Fixed a crash caused by the networking stack
+
 # 1.4.1
 - Fixed a crash using the camera shake utility
 
