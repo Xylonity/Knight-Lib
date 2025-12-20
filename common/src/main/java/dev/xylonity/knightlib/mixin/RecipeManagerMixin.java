@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.mixin;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.xylonity.knightlib.KnightLib;
@@ -36,27 +37,36 @@ public class RecipeManagerMixin {
     @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD"))
     private void knightlib$apply(Map<?, ?> map, ResourceManager resourceManager, ProfilerFiller profilerFiller, CallbackInfo ci) {
 
-        if (map == null || map.isEmpty()) return;
+        if (map == null || map.isEmpty()) {
+            return;
+        }
 
         boolean greatChalice = !KnightLib.isEnabled(KnightLib.Usage.GREAT_CHALICE);
         boolean homunculus = !KnightLib.isEnabled(KnightLib.Usage.HOMUNCULUS);
         boolean emptyGrail = !KnightLib.isEnabled(KnightLib.Usage.COPPER_GRAILS);
         boolean essences = !KnightLib.isEnabled(KnightLib.Usage.GREEN_ESSENCES);
-        if (!greatChalice && !homunculus && !emptyGrail && !essences) return;
+        if (!greatChalice && !homunculus && !emptyGrail && !essences) {
+            return;
+        }
 
         Object entry = null;
-        for (Object v : map.values()) {
-            entry = v;
+        for (Object value : map.values()) {
+            entry = value;
             break;
         }
 
-        if (entry == null) return;
+        if (entry == null) {
+            return;
+        }
 
+        // apply receives a pair RL-JsonElement
         if (entry instanceof JsonElement) {
             Iterator<Map.Entry<ResourceLocation, JsonElement>> iterator = ((Map<ResourceLocation, JsonElement>) map).entrySet().iterator();
             while (iterator.hasNext()) {
 
                 Map.Entry<ResourceLocation, JsonElement> element = iterator.next();
+
+                // Some recipes may not be JsonObjects
                 if (!(element.getValue() instanceof JsonObject object)) {
                     continue;
                 }
@@ -65,18 +75,36 @@ public class RecipeManagerMixin {
 
                 // Output
                 if (!remove) {
-                    if (essences && (knightlib$jsonResultIs(object, knightlib$SMALL_ESSENCE) || knightlib$jsonResultIs(object, knightlib$GREAT_ESSENCE))) remove = true;
-                    else if (greatChalice && knightlib$jsonResultIs(object, knightlib$GREAT_CHALICE)) remove = true;
-                    else if (homunculus && knightlib$jsonResultIs(object, knightlib$HOMUNCULUS)) remove = true;
-                    else if (emptyGrail && knightlib$jsonResultIs(object, knightlib$EMPTY_GRAIL)) remove = true;
+                    if (essences && (knightlib$jsonResultIs(object, knightlib$SMALL_ESSENCE) || knightlib$jsonResultIs(object, knightlib$GREAT_ESSENCE))) {
+                        remove = true;
+                    }
+                    else if (greatChalice && knightlib$jsonResultIs(object, knightlib$GREAT_CHALICE)) {
+                        remove = true;
+                    }
+                    else if (homunculus && knightlib$jsonResultIs(object, knightlib$HOMUNCULUS)) {
+                        remove = true;
+                    }
+                    else if (emptyGrail && knightlib$jsonResultIs(object, knightlib$EMPTY_GRAIL)) {
+                        remove = true;
+                    }
+
                 }
 
                 // Input
                 if (!remove) {
-                    if (essences && (knightlib$jsonHasIngredient(object, knightlib$SMALL_ESSENCE) || knightlib$jsonHasIngredient(object, knightlib$GREAT_ESSENCE))) remove = true;
-                    else if (greatChalice && knightlib$jsonHasIngredient(object, knightlib$GREAT_CHALICE)) remove = true;
-                    else if (homunculus && knightlib$jsonHasIngredient(object, knightlib$HOMUNCULUS)) remove = true;
-                    else if (emptyGrail && knightlib$jsonHasIngredient(object, knightlib$EMPTY_GRAIL)) remove = true;
+                    if (essences && (knightlib$jsonHasIngredient(object, knightlib$SMALL_ESSENCE) || knightlib$jsonHasIngredient(object, knightlib$GREAT_ESSENCE))) {
+                        remove = true;
+                    }
+                    else if (greatChalice && knightlib$jsonHasIngredient(object, knightlib$GREAT_CHALICE)) {
+                        remove = true;
+                    }
+                    else if (homunculus && knightlib$jsonHasIngredient(object, knightlib$HOMUNCULUS)) {
+                        remove = true;
+                    }
+                    else if (emptyGrail && knightlib$jsonHasIngredient(object, knightlib$EMPTY_GRAIL)) {
+                        remove = true;
+                    }
+
                 }
 
                 if (remove) {
@@ -87,13 +115,22 @@ public class RecipeManagerMixin {
             return;
         }
 
+        // After deserializing, apply receives a map without JsonObjects, thus we delete the relevant recipes
         if (entry instanceof Map) {
             Collection<Map<ResourceLocation, ?>> byType = (Collection<Map<ResourceLocation, ?>>) map.values();
             for (Map<ResourceLocation, ?> byId : byType) {
-                if (greatChalice) byId.remove(new ResourceLocation(KnightLib.MOD_ID, "great_chalice"));
-                if (homunculus) byId.remove(new ResourceLocation(KnightLib.MOD_ID, "homunculus"));
-                if (emptyGrail) byId.remove(new ResourceLocation(KnightLib.MOD_ID, "empty_grail"));
+                if (greatChalice) {
+                    byId.remove(new ResourceLocation(KnightLib.MOD_ID, "great_chalice"));
+                }
+                if (homunculus) {
+                    byId.remove(new ResourceLocation(KnightLib.MOD_ID, "homunculus"));
+                }
+                if (emptyGrail) {
+                    byId.remove(new ResourceLocation(KnightLib.MOD_ID, "empty_grail"));
+                }
+
             }
+
         }
 
     }
@@ -123,6 +160,7 @@ public class RecipeManagerMixin {
                     if (target.equals(elem.getAsString())) {
                         return true;
                     }
+
                 }
                 else if (elem.isJsonObject()) {
                     if (target.equals(knightlib$first(elem.getAsJsonObject(), "item", "id", "result", "output"))) {
@@ -130,6 +168,7 @@ public class RecipeManagerMixin {
                     }
 
                 }
+
             }
 
         }
@@ -138,41 +177,38 @@ public class RecipeManagerMixin {
     }
 
     @Unique
-    private static boolean knightlib$jsonHasIngredient(JsonObject jo, String target) {
+    private static boolean knightlib$jsonHasIngredient(JsonObject jsonObject, String target) {
         // shapeless
-        if (knightlib$arrayHasItem(jo.get("ingredients"), target)) {
+        if (knightlib$arrayHasItem(knightlib$getArray(jsonObject, "ingredients"), target)) {
             return true;
         }
 
-        // smelting
-        if (knightlib$hasItem(jo.get("ingredient"), target)) {
+        // smelting/blasting/smoking/etc.
+        if (knightlib$hasItem(knightlib$get(jsonObject, "ingredient"), target)) {
             return true;
         }
 
         // shaped
-        if (knightlib$objectHasItem(jo.getAsJsonObject("key"), target)) {
+        if (knightlib$objectHasItem(knightlib$getObject(jsonObject, "key"), target)) {
             return true;
         }
 
         // smithing
-        if (knightlib$hasItem(jo.get("base"), target)) {
+        if (knightlib$hasItem(knightlib$get(jsonObject, "base"), target)) {
             return true;
         }
-
-        if (knightlib$hasItem(jo.get("addition"), target)) {
+        if (knightlib$hasItem(knightlib$get(jsonObject, "addition"), target)) {
             return true;
         }
-
-        if (knightlib$hasItem(jo.get("template"), target)) {
+        if (knightlib$hasItem(knightlib$get(jsonObject, "template"), target)) {
             return true;
         }
 
         // etc
-        if (knightlib$hasItem(jo.get("input"), target)) {
+        if (knightlib$hasItem(knightlib$get(jsonObject, "input"), target)) {
             return true;
         }
-
-        if (knightlib$arrayHasItem(jo.get("inputs"), target)) {
+        if (knightlib$arrayHasItem(knightlib$getArray(jsonObject, "inputs"), target)) {
             return true;
         }
 
@@ -181,7 +217,6 @@ public class RecipeManagerMixin {
 
     @Unique
     private static boolean knightlib$objectHasItem(JsonObject object, String target) {
-
         if (object == null) {
             return false;
         }
@@ -198,7 +233,6 @@ public class RecipeManagerMixin {
 
     @Unique
     private static boolean knightlib$arrayHasItem(JsonElement element, String target) {
-
         if (element == null || !element.isJsonArray()) {
             return false;
         }
@@ -214,7 +248,6 @@ public class RecipeManagerMixin {
 
     @Unique
     private static boolean knightlib$hasItem(JsonElement element, String target) {
-
         if (element == null) {
             return false;
         }
@@ -225,20 +258,24 @@ public class RecipeManagerMixin {
 
         if (element.isJsonObject()) {
             JsonObject object = element.getAsJsonObject();
-            if (target.equals(knightlib$first(object, "item", "id"))) {
+
+            String direct = knightlib$first(object, "item", "id");
+            if (target.equals(direct)) {
                 return true;
             }
 
-            JsonElement items = object.get("items");
-            if (items != null && items.isJsonArray()) {
-                for (JsonElement elem : items.getAsJsonArray()) {
+            JsonArray items = knightlib$getArray(object, "items");
+            if (items != null) {
+                for (JsonElement elem : items) {
                     if (elem.isJsonPrimitive() && elem.getAsJsonPrimitive().isString()) {
                         if (target.equals(elem.getAsString())) {
                             return true;
                         }
+
                     }
                     else if (elem.isJsonObject()) {
-                        if (target.equals(knightlib$first(elem.getAsJsonObject(), "item", "id"))) {
+                        String nested = knightlib$first(elem.getAsJsonObject(), "item", "id");
+                        if (target.equals(nested)) {
                             return true;
                         }
                     }
@@ -272,6 +309,35 @@ public class RecipeManagerMixin {
                 }
             }
 
+        }
+
+        return null;
+    }
+
+    @Unique
+    private static JsonElement knightlib$get(JsonObject jsonObject, String key) {
+        if (jsonObject == null) {
+            return null;
+        }
+
+        return jsonObject.get(key);
+    }
+
+    @Unique
+    private static JsonObject knightlib$getObject(JsonObject jsonObject, String key) {
+        JsonElement jsonElement = knightlib$get(jsonObject, key);
+        if (jsonElement != null && jsonElement.isJsonObject()) {
+            return jsonElement.getAsJsonObject();
+        }
+
+        return null;
+    }
+
+    @Unique
+    private static JsonArray knightlib$getArray(JsonObject jsonObject, String key) {
+        JsonElement jsonElement = knightlib$get(jsonObject, key);
+        if (jsonElement != null && jsonElement.isJsonArray()) {
+            return jsonElement.getAsJsonArray();
         }
 
         return null;

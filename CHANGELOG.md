@@ -1,3 +1,6 @@
+# 1.4.3
+- Fixed a crash when booting with the mod Immersive Engineering in the same pack
+
 # 1.4.2
 - Fixed a crash caused by the networking stack
 
