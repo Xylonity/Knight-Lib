@@ -1,9 +1,12 @@
 package dev.xylonity.knightlib;
 
+import dev.xylonity.knightlib.api.network.NetworkEndpoint;
+import dev.xylonity.knightlib.network.NetworkInternal;
 import dev.xylonity.knightlib.platform.KnightLibNetwork;
 import dev.xylonity.knightlib.registry.*;
 import dev.xylonity.knightlib.platform.KnightLibPlatform;
 import dev.xylonity.knightlib.platform.KnightLibRegistrar;
+import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +22,8 @@ public class KnightLib {
     public static final KnightLibRegistrar REGISTRAR = ServiceLoader.load(KnightLibRegistrar.class).findFirst().orElseThrow();
     public static final KnightLibNetwork NETWORK = ServiceLoader.load(KnightLibNetwork.class).findFirst().orElseThrow();
 
+    public static final NetworkEndpoint NET = NetworkInternal.knightlib();
+
     private static volatile EnumSet<Usage> ENABLED = EnumSet.noneOf(Usage.class);
 
     protected static void init() {
@@ -27,6 +32,10 @@ public class KnightLib {
         KnightLibItems.ITEMS.init();
         KnightLibParticles.PARTICLES.init();
         KnightLibBlockEntities.BLOCK_ENTITIES.init();
+    }
+
+    public static ResourceLocation of(String path) {
+        return new ResourceLocation(MOD_ID, path);
     }
 
     /**

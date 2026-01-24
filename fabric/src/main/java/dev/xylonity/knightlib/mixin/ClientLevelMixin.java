@@ -13,14 +13,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientLevelMixin {
 
     @Inject(method = "addEntity(ILnet/minecraft/world/entity/Entity;)V", at = @At("TAIL"))
-    private void onAddEntity(int id, Entity entity, CallbackInfo ci) {
+    private void knightlib$onAddEntity(int id, Entity entity, CallbackInfo ci) {
         if (entity instanceof IBossMusicProvider prov) {
             BossMusicRegistry.register(prov);
         }
     }
 
     @Inject(method = "removeEntity", at = @At("HEAD"))
-    private void onRemoveEntity(int entityId, Entity.RemovalReason reason, CallbackInfo ci) {
+    private void knightlib$onRemoveEntity(int entityId, Entity.RemovalReason reason, CallbackInfo ci) {
         BossMusicRegistry.unregisterById(entityId);
     }
 

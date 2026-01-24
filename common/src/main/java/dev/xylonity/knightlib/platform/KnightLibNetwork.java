@@ -13,6 +13,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public interface KnightLibNetwork {
+
+    KnightLibNetwork createEndpoint(String modId, String protocol);
+
     <T> void registerClientbound(PacketType<T> type, Consumer<T> clientHandler);
     <T> void registerServerbound(PacketType<T> type, BiConsumer<T, ServerPlayer> serverHandler);
     <T> void register(ClientboundPacketType<T> type);

@@ -1,17 +1,19 @@
 package dev.xylonity.knightlib.registry;
 
-import dev.xylonity.knightlib.api.network.Network;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.network.packets.BossBarLinkS2C;
+import dev.xylonity.knightlib.network.packets.CameraShakeS2C;
 
 public class KnightLibPackets {
 
-    public static void register() {
+    public static void registerAll() {
         registerS2C();
         registerC2S();
     }
 
     public static void registerS2C() {
-        Network.register(BossBarLinkS2C.TYPE);
+        KnightLib.NET.register(BossBarLinkS2C.TYPE);
+        KnightLib.NET.register(CameraShakeS2C.TYPE);
     }
 
     public static void registerC2S() {

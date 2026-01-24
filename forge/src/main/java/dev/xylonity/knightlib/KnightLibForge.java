@@ -23,7 +23,7 @@ public class KnightLibForge {
 
         ConfigComposer.registerConfig(KnightLibConfig.class, modEventBus);
 
-        KnightLibPackets.register();
+        KnightLibPackets.registerAll();
 
         KnightLib.init();
     }

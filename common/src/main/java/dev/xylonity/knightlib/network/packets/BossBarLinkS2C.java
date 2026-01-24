@@ -12,16 +12,22 @@ import java.util.UUID;
 /**
  * Clientbound packet that links a bossbar entry with an entity reference on the client
  */
-public record BossBarLinkS2C(UUID bossEventId, int entityId, UUID entityUuid, ResourceLocation entityType, ResourceLocation dimension) {
+public record BossBarLinkS2C(
+        UUID bossEventId,
+        int entityId,
+        UUID entityUuid,
+        ResourceLocation entityType,
+        ResourceLocation dimension
+) {
 
-    public static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "bossbar_link");
+    public static final ResourceLocation ID = KnightLib.of("bossbar_link");
 
     public static final ClientboundPacketType<BossBarLinkS2C> TYPE =
             PacketType.clientbound(
                     ID,
                     BossBarLinkS2C.class,
                     PacketCodec.of(BossBarLinkS2C::encode, BossBarLinkS2C::decode),
-                    msg -> BossBarLinks.INSTANCE.put(msg.bossEventId(), new BossBarLinks.Ref(msg.entityId(), msg.entityUuid(), msg.entityType(), msg.dimension()))
+                    message -> BossBarLinks.INSTANCE.put(message.bossEventId(), new BossBarLinks.Ref(message.entityId(), message.entityUuid(), message.entityType(), message.dimension()))
             );
 
     public static void encode(BossBarLinkS2C packet, FriendlyByteBuf buf) {

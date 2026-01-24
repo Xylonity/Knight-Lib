@@ -47,7 +47,6 @@ public class KnightLibClientEvents {
         @SubscribeEvent
         public static void registerEntityRenderers(FMLClientSetupEvent event) {
             EntityRenderers.register(KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(), GreatChaliceStarsetRingRenderer::new);
-
             BlockEntityRenderers.register(KnightLibBlockEntities.GREAT_CHALICE.get(), GreatChaliceRenderer::new);
         }
 
@@ -55,7 +54,6 @@ public class KnightLibClientEvents {
         public static void registerParticleFactories(final RegisterParticleProvidersEvent event) {
             event.registerSpriteSet(KnightLibParticles.STARSET.get(), StarsetParticle.Provider::new);
         }
-
     }
 
     @Mod.EventBusSubscriber(modid = KnightLibForge.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
@@ -69,7 +67,10 @@ public class KnightLibClientEvents {
             BossMusicManager.clientTick(minecraft);
 
             Level level = minecraft.level;
-            if (level == null) return;
+            if (level == null) {
+                CameraShakeManager.clearAll();
+                return;
+            }
 
             TickScheduler.clean();
             TickScheduler.incrementTick(level);
@@ -78,44 +79,44 @@ public class KnightLibClientEvents {
         }
 
         @SubscribeEvent
-        public static void onLevelTick(TickEvent.LevelTickEvent e) {
-            if (e.phase == TickEvent.Phase.END && e.level.isClientSide()) {
-                CameraShakeManager.clear();
+        public static void onCamera(ViewportEvent.ComputeCameraAngles event) {
+            if (event.getCamera().getEntity() instanceof Player p) {
+                CameraShakeManager.applyShakeIfPresent(p, event.getCamera(), (float) event.getPartialTick());
             }
 
         }
 
         @SubscribeEvent
-        public static void onCamera(ViewportEvent.ComputeCameraAngles e) {
-            if (e.getCamera().getEntity() instanceof Player p) {
-                CameraShakeManager.applyShakeIfPresent(p, e.getCamera());
+        public static void onEntityJoin(EntityJoinLevelEvent event) {
+            if (!event.getLevel().isClientSide()) {
+                return;
             }
 
-        }
-
-        @SubscribeEvent
-        public static void onEntityJoin(EntityJoinLevelEvent e) {
-            if (!e.getLevel().isClientSide()) return;
-            if (e.getEntity() instanceof IBossMusicProvider prov) {
+            if (event.getEntity() instanceof IBossMusicProvider prov) {
                 BossMusicRegistry.register(prov);
             }
 
         }
 
         @SubscribeEvent
-        public static void onEntityLeave(EntityLeaveLevelEvent e) {
-            if (!e.getLevel().isClientSide()) return;
-            if (e.getEntity() instanceof IBossMusicProvider prov) {
+        public static void onEntityLeave(EntityLeaveLevelEvent event) {
+            if (!event.getLevel().isClientSide()) {
+                return;
+            }
+
+            if (event.getEntity() instanceof IBossMusicProvider prov) {
                 BossMusicRegistry.unregister(prov);
             }
 
         }
 
         @SubscribeEvent
-        public static void onWorldUnload(LevelEvent.Unload e) {
-            if (e.getLevel().isClientSide()) {
+        public static void onWorldUnload(LevelEvent.Unload event) {
+            if (event.getLevel().isClientSide()) {
                 BossMusicRegistry.clear();
                 BossMusicManager.clear();
+
+                CameraShakeManager.clearAll();
             }
 
         }
@@ -124,6 +125,8 @@ public class KnightLibClientEvents {
         public static void onReload(RegisterClientReloadListenersEvent e) {
             BossMusicRegistry.clear();
             BossMusicManager.clear();
+
+            CameraShakeManager.clearAll();
         }
 
         @SubscribeEvent
@@ -156,7 +159,6 @@ public class KnightLibClientEvents {
                 event.setIncrement(event.getIncrement() + entry.extraYPadding());
             }
 
-            // hideVanillaName option temporary disabled
         }
 
     }

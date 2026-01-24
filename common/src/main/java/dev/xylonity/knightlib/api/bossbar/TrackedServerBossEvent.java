@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.api.bossbar;
 
-import dev.xylonity.knightlib.api.network.Network;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.network.packets.BossBarLinkS2C;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerBossEvent;
@@ -31,7 +31,7 @@ public class TrackedServerBossEvent extends ServerBossEvent {
                 owner.level().dimension().location()
         );
 
-        Network.sendTo(player, BossBarLinkS2C.TYPE.base(), packet);
+        KnightLib.NET.sendTo(player, BossBarLinkS2C.TYPE.base(), packet);
     }
 
 }

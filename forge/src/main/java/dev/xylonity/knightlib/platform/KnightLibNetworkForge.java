@@ -20,27 +20,43 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class KnightLibNetworkForge implements KnightLibNetwork {
 
-    private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(KnightLib.MOD_ID, "main"),
-            () -> Network.PROTOCOL,
-            Network.PROTOCOL::equals,
-            Network.PROTOCOL::equals
-    );
+    private final SimpleChannel channel;
 
-    private static final Map<Integer, Class<?>> USED = new ConcurrentHashMap<>();
+    private final AtomicInteger nextS2C = new AtomicInteger(0);
+    private final AtomicInteger nextC2S = new AtomicInteger(0);
+
+    public KnightLibNetworkForge() {
+        this(KnightLib.MOD_ID, Network.PROTOCOL);
+    }
+
+    public KnightLibNetworkForge(String channelNamespace, String protocol) {
+        this.channel = NetworkRegistry.newSimpleChannel(
+                new ResourceLocation(channelNamespace, "main"),
+                () -> protocol,
+                protocol::equals,
+                protocol::equals
+        );
+
+    }
+
+    @Override
+    public KnightLibNetwork createEndpoint(String modId, String protocol) {
+        return new KnightLibNetworkForge(modId, protocol);
+    }
 
     @Override
     public <T> void registerClientbound(PacketType<T> type, Consumer<T> clientHandler) {
-        CHANNEL.registerMessage(
-                discriminator(type, false),
+        int id = nextS2C.getAndIncrement();
+
+        channel.registerMessage(
+                id,
                 type.clazz(),
                 type.codec()::encode,
                 type.codec()::decode,
@@ -56,19 +72,21 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     @Override
     public <T> void registerServerbound(PacketType<T> type, BiConsumer<T, ServerPlayer> serverHandler) {
-        CHANNEL.registerMessage(
-                discriminator(type, true),
+        int id = nextC2S.getAndIncrement();
+
+        channel.registerMessage(
+                id,
                 type.clazz(),
                 type.codec()::encode,
                 type.codec()::decode,
                 (message, sup) -> {
-                    NetworkEvent.Context ctx = sup.get();
-                    ServerPlayer sender = ctx.getSender();
+                    NetworkEvent.Context context = sup.get();
+                    ServerPlayer sender = context.getSender();
                     if (sender != null) {
-                        ctx.enqueueWork(() -> serverHandler.accept(message, sender));
+                        context.enqueueWork(() -> serverHandler.accept(message, sender));
                     }
 
-                    ctx.setPacketHandled(true);
+                    context.setPacketHandled(true);
                 },
                 Optional.of(NetworkDirection.PLAY_TO_SERVER)
         );
@@ -88,68 +106,63 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
     @Override
     public <T> void sendToServer(T message) {
         Boolean canSend = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> {
-            var mc = net.minecraft.client.Minecraft.getInstance();
-            return mc != null && mc.getConnection() != null;
+            var minecraft = net.minecraft.client.Minecraft.getInstance();
+            return minecraft != null && minecraft.getConnection() != null;
         });
 
         if (Boolean.TRUE.equals(canSend)) {
-            CHANNEL.sendToServer(message);
+            channel.sendToServer(message);
         }
-
     }
 
     @Override
     public <T> void sendTo(ServerPlayer player, PacketType<T> type, T message) {
-        if (player == null) return;
-        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
+        if (player == null) {
+            return;
+        }
+
+        channel.send(PacketDistributor.PLAYER.with(() -> player), message);
     }
 
     @Override
     public <T> void sendToAll(MinecraftServer server, PacketType<T> type, T message) {
-        if (server == null) return;
-        CHANNEL.send(PacketDistributor.ALL.noArg(), message);
+        if (server == null) {
+            return;
+        }
+
+        channel.send(PacketDistributor.ALL.noArg(), message);
     }
 
     @Override
     public <T> void sendToPlayers(Level level, PacketType<T> type, T message) {
-        if (level == null || level.isClientSide) return;
+        if (level == null || level.isClientSide) {
+            return;
+        }
 
         for (ServerPlayer player : level.players().stream().map(ServerPlayer.class::cast).toList()) {
-            CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
+            channel.send(PacketDistributor.PLAYER.with(() -> player), message);
         }
-
     }
 
     @Override
-    public <T> void sendToTracking(Level level, BlockPos pos, PacketType<T> type, T message) {
-        if (level == null || level.isClientSide || !level.isLoaded(pos)) return;
+    public <T> void sendToTracking(Level level, BlockPos blockPos, PacketType<T> type, T message) {
+        if (level == null || level.isClientSide || !level.isLoaded(blockPos)) {
+            return;
+        }
 
-        LevelChunk chunk = level.getChunkAt(pos);
+        LevelChunk chunk = level.getChunkAt(blockPos);
         if (chunk != null) {
-            CHANNEL.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), message);
+            channel.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), message);
         }
-
     }
 
     @Override
-    public <T> void sendToTracking(Entity entity, PacketType<T> type, T msg) {
-        if (entity == null || entity.level().isClientSide) return;
-
-        CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), msg);
-    }
-
-    private static int discriminator(PacketType<?> type, boolean c2s) {
-        ResourceLocation id = type.id();
-        int base = 31 * id.getNamespace().hashCode() + id.getPath().hashCode();
-        int discriminator = (base ^ (c2s ? 0x433253 : 0x533243)) & 0x7fffffff;
-
-        Class<?> prev = USED.putIfAbsent(discriminator, type.clazz());
-        if (prev != null && prev != type.clazz()) {
-            discriminator = (31 * base + type.clazz().getName().hashCode()) & 0x7fffffff;
-            USED.put(discriminator, type.clazz());
+    public <T> void sendToTracking(Entity entity, PacketType<T> type, T message) {
+        if (entity == null || entity.level().isClientSide) {
+            return;
         }
 
-        return discriminator;
+        channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
     }
 
 }

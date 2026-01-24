@@ -15,13 +15,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class CameraMixin {
 
     @Inject(method = "setup", at = @At("TAIL"))
-    private void onSetup(BlockGetter level, Entity cameraEntity, boolean detached, boolean thirdPersonReverse, float partialTick, CallbackInfo ci) {
-
-        if (!(level instanceof Level lvl) || !lvl.isClientSide) return;
-
-        if (cameraEntity instanceof Player player) {
-            CameraShakeManager.clear();
-            CameraShakeManager.applyShakeIfPresent(player, (Camera)(Object) this);
+    private void knightlib$onSetup(BlockGetter blockGetter, Entity cameraEntity, boolean detached, boolean thirdPersonReverse, float partialTick, CallbackInfo ci) {
+        if (blockGetter instanceof Level && cameraEntity instanceof Player player) {
+            CameraShakeManager.applyShakeIfPresent(player, (Camera) (Object) this, partialTick);
         }
 
     }

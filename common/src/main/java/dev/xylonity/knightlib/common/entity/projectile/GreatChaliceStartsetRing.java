@@ -20,7 +20,6 @@ public class GreatChaliceStartsetRing extends BaseProjectile implements GeoEntit
         super.tick();
 
         this.setPos(px, py, pz);
-
     }
 
     @Override

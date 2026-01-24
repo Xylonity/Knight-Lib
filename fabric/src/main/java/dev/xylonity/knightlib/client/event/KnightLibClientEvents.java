@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.client.event;
 
+import dev.xylonity.knightlib.api.camera.CameraShakeManager;
 import dev.xylonity.knightlib.api.music.IBossMusicProvider;
 import dev.xylonity.knightlib.impl.internal.BossMusicRegistry;
 import dev.xylonity.knightlib.impl.internal.BossMusicManager;
@@ -22,17 +23,31 @@ import net.minecraft.world.level.Level;
 public final class KnightLibClientEvents {
 
     public static void init() {
-        EntityRendererRegistry.register(KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(), GreatChaliceStarsetRingRenderer::new);
+        EntityRendererRegistry.register(
+                KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(),
+                GreatChaliceStarsetRingRenderer::new
+        );
 
-        BlockEntityRendererRegistry.register(KnightLibBlockEntities.GREAT_CHALICE.get(), ctx -> new GreatChaliceRenderer(null));
+        BlockEntityRendererRegistry.register(
+                KnightLibBlockEntities.GREAT_CHALICE.get(),
+                context -> new GreatChaliceRenderer(null)
+        );
 
-        ParticleFactoryRegistry.getInstance().register(KnightLibParticles.STARSET.get(), StarsetParticle.Provider::new);
+        ParticleFactoryRegistry.getInstance().register(
+                KnightLibParticles.STARSET.get(),
+                StarsetParticle.Provider::new
+        );
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             BossMusicManager.clientTick(Minecraft.getInstance());
 
             Level level = client.level;
-            if (level == null) return;
+            if (level == null) {
+                BossMusicRegistry.clear();
+                BossMusicManager.clear();
+                CameraShakeManager.clearAll();
+                return;
+            }
 
             TickScheduler.clean();
             TickScheduler.incrementTick(level);
@@ -42,12 +57,17 @@ public final class KnightLibClientEvents {
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             BossMusicRegistry.clear();
+            BossMusicManager.clear();
+            CameraShakeManager.clearAll();
+
             if (client.level != null) {
                 for (Entity e : client.level.entitiesForRendering()) {
                     if (e instanceof IBossMusicProvider prov) {
                         BossMusicRegistry.register(prov);
                     }
+
                 }
+
             }
 
         });
@@ -55,6 +75,7 @@ public final class KnightLibClientEvents {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             BossMusicRegistry.clear();
             BossMusicManager.clear();
+            CameraShakeManager.clearAll();
         });
 
     }
