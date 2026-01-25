@@ -20,22 +20,31 @@ public abstract class AbstractPostShader<PSS extends PostShaderSettings> impleme
      * Runs a PostChain safely, binding the main render target before and after, restoring the viewport and the common render state
      */
     protected final void process(PostChain chain, float partialTicks, Runnable beforeProcess) {
+        if (chain == null) {
+            return;
+        }
+
         final Minecraft minecraft = Minecraft.getInstance();
         final RenderTarget mainRenderTarget = minecraft.getMainRenderTarget();
 
+        // The render system may mutate the same instance later on, so a copy of the projection is made
         final Matrix4f oldProjection = RenderSystem.getProjectionMatrix();
+        final Matrix4f oldProjectionCopy = (oldProjection == null) ? null : new Matrix4f(oldProjection);
+
+        // Provides a safe identity projection for full-screen passes
         final boolean projectionWasNull = (oldProjection == null);
         if (projectionWasNull) {
             RenderSystem.setProjectionMatrix(new Matrix4f().identity(), VertexSorting.DISTANCE_TO_ORIGIN);
         }
 
+        // Forces identity model-view for full-screen quad space and then restores afterward
         final PoseStack modelViewStack = RenderSystem.getModelViewStack();
         modelViewStack.pushPose();
         modelViewStack.setIdentity();
         RenderSystem.applyModelViewMatrix();
 
         try {
-            // Ensures "minecraft:main" is the current main target
+            // Ensures "minecraft:main" is bound and viewport matches it
             mainRenderTarget.bindWrite(true);
             RenderSystem.viewport(0, 0, mainRenderTarget.width, mainRenderTarget.height);
 
@@ -44,16 +53,19 @@ public abstract class AbstractPostShader<PSS extends PostShaderSettings> impleme
             }
 
             chain.process(partialTicks);
+
         }
         finally {
-            // Restores the matrices
+            // Restores the model-view
             modelViewStack.popPose();
             RenderSystem.applyModelViewMatrix();
-            if (!projectionWasNull) {
-                RenderSystem.setProjectionMatrix(oldProjection, VertexSorting.DISTANCE_TO_ORIGIN);
+
+            // Restores the projection
+            if (!projectionWasNull && oldProjectionCopy != null) {
+                RenderSystem.setProjectionMatrix(oldProjectionCopy, VertexSorting.DISTANCE_TO_ORIGIN);
             }
 
-            // Restores the framebuffer/viewport for the rest of the frame
+            // Rebinds main and restores the viewport for anything rendered after the postchain
             mainRenderTarget.bindWrite(true);
             RenderSystem.viewport(0, 0, mainRenderTarget.width, mainRenderTarget.height);
 
