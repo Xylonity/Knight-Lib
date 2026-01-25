@@ -1,18 +1,21 @@
 package dev.xylonity.knightlib;
 
+import dev.xylonity.knightlib.api.event.KnightLibEvents;
+import dev.xylonity.knightlib.client.event.KnightLibClientEvents;
+import dev.xylonity.knightlib.common.event.KnightLibServerEvents;
 import dev.xylonity.knightlib.registry.KnightLibLootModifier;
 import dev.xylonity.knightlib.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibPackets;
 import dev.xylonity.knightlib.registry.KnightLibRecipes;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 @Mod(KnightLib.MOD_ID)
 public class KnightLibForge {
-
-    public static final String MOD_ID = KnightLib.MOD_ID;
 
     public KnightLibForge() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -24,6 +27,11 @@ public class KnightLibForge {
         ConfigComposer.registerConfig(KnightLibConfig.class, modEventBus);
 
         KnightLibPackets.registerAll();
+
+        KnightLibEvents.SERVER.register(KnightLibServerEvents.class);
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () ->
+                KnightLibEvents.CLIENT.register(KnightLibClientEvents.class)
+        );
 
         KnightLib.init();
     }

@@ -1,7 +1,12 @@
 package dev.xylonity.knightlib;
 
+import dev.xylonity.knightlib.api.event.KnightLibEvents;
+import dev.xylonity.knightlib.api.event.impl.client.RegisterPostShadersEvent;
 import dev.xylonity.knightlib.client.event.KnightLibClientEvents;
-import dev.xylonity.knightlib.common.event.KnightLibCommonEvents;
+import dev.xylonity.knightlib.client.event.KnightLibFabricClientEvents;
+import dev.xylonity.knightlib.client.shader.post.PostShaderManager;
+import dev.xylonity.knightlib.common.event.KnightLibFabricServerEvents;
+import dev.xylonity.knightlib.common.event.KnightLibServerEvents;
 import dev.xylonity.knightlib.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator;
@@ -12,8 +17,6 @@ import net.fabricmc.api.ModInitializer;
 
 public class KnightLibFabric implements ModInitializer, ClientModInitializer {
 
-    public static final String MOD_ID = KnightLib.MOD_ID;
-
     @Override
     public void onInitialize() {
         KnightLibRecipes.init();
@@ -21,17 +24,23 @@ public class KnightLibFabric implements ModInitializer, ClientModInitializer {
 
         ConfigComposer.registerConfig(KnightLibConfig.class);
 
-        KnightLibCommonEvents.init();
-
         KnightLibPackets.registerC2S();
+
+        KnightLibEvents.SERVER.register(KnightLibServerEvents.class);
+
+        KnightLibFabricServerEvents.init();
 
         KnightLib.init();
     }
 
     @Override
     public void onInitializeClient() {
-        KnightLibClientEvents.init();
+        KnightLibFabricClientEvents.init();
         KnightLibPackets.registerS2C();
+
+        KnightLibEvents.CLIENT.dispatch(new RegisterPostShadersEvent(PostShaderManager::register));
+
+        KnightLibEvents.CLIENT.register(KnightLibClientEvents.class);
     }
 
 }

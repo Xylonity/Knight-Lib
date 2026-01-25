@@ -45,7 +45,7 @@ public class KnightLibResourceRegistryFabric<T> implements ResourceRegistry<T> {
     }
 
     /**
-     * Entries are registered through static instancing anyways
+     * Entries are registered through static instancing anyway
      */
     @Override
     public void init() { ;; }

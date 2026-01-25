@@ -3,6 +3,7 @@ package dev.xylonity.knightlib.compat.jei;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.KnightLibFabric;
 import dev.xylonity.knightlib.api.interop.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
@@ -36,9 +37,9 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFillingRecipe> {
 
-    public static final ResourceLocation UID = new ResourceLocation(KnightLibFabric.MOD_ID, "block_filling");
+    public static final ResourceLocation UID = new ResourceLocation(KnightLib.MOD_ID, "block_filling");
     public static final RecipeType<ChaliceFillingRecipe> TYPE = new RecipeType<>(UID, ChaliceFillingRecipe.class);
-    public static final ResourceLocation SHADOW = new ResourceLocation(KnightLibFabric.MOD_ID, "textures/gui/shadow.png");
+    public static final ResourceLocation SHADOW = new ResourceLocation(KnightLib.MOD_ID, "textures/gui/shadow.png");
 
     private GreatChaliceBlockEntity cachedBlockEntity;
     private GreatChaliceStartsetRing cachedEntity;

@@ -1,7 +1,9 @@
 package dev.xylonity.knightlib.mixin;
 
-import dev.xylonity.knightlib.api.camera.CameraShakeManager;
+import dev.xylonity.knightlib.api.event.KnightLibEvents;
+import dev.xylonity.knightlib.api.event.impl.client.ClientComputeCameraAnglesEvent;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
@@ -16,8 +18,9 @@ public class CameraMixin {
 
     @Inject(method = "setup", at = @At("TAIL"))
     private void knightlib$onSetup(BlockGetter blockGetter, Entity cameraEntity, boolean detached, boolean thirdPersonReverse, float partialTick, CallbackInfo ci) {
-        if (blockGetter instanceof Level && cameraEntity instanceof Player player) {
-            CameraShakeManager.applyShakeIfPresent(player, (Camera) (Object) this, partialTick);
+        if (blockGetter instanceof Level && cameraEntity instanceof Player) {
+            final Minecraft minecraft = Minecraft.getInstance();
+            KnightLibEvents.CLIENT.dispatch(new ClientComputeCameraAnglesEvent(minecraft, (Camera) (Object) this, cameraEntity, partialTick));
         }
 
     }

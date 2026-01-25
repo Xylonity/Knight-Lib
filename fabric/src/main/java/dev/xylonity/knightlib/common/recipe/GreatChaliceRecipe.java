@@ -1,6 +1,7 @@
 package dev.xylonity.knightlib.common.recipe;
 
 import com.google.gson.JsonObject;
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.KnightLibFabric;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.core.RegistryAccess;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
 
-    private static final ResourceLocation ID = new ResourceLocation(KnightLibFabric.MOD_ID, "great_chalice_interaction");
+    private static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "great_chalice_interaction");
 
     public static final RecipeSerializer<GreatChaliceRecipe> SERIALIZER = new Serializer();
     public static final RecipeType<GreatChaliceRecipe> RECIPE_TYPE = new Type();

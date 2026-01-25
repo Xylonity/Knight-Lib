@@ -91,6 +91,7 @@ public final class TickScheduler {
 
                 LEVELS_TO_CLEAN.clear();
             }
+
         }
 
     }
