@@ -3,6 +3,7 @@ package dev.xylonity.knightlib;
 import dev.xylonity.knightlib.api.network.NetworkEndpoint;
 import dev.xylonity.knightlib.network.NetworkInternal;
 import dev.xylonity.knightlib.platform.KnightLibNetwork;
+import dev.xylonity.knightlib.proxy.IProxy;
 import dev.xylonity.knightlib.registry.*;
 import dev.xylonity.knightlib.platform.KnightLibPlatform;
 import dev.xylonity.knightlib.platform.KnightLibRegistrar;
@@ -25,6 +26,8 @@ public class KnightLib {
     public static final NetworkEndpoint NET = NetworkInternal.knightlib();
 
     private static volatile EnumSet<Usage> ENABLED = EnumSet.noneOf(Usage.class);
+
+    public static IProxy PROXY;
 
     protected static void init() {
         KnightLibEntities.ENTITIES.init();
