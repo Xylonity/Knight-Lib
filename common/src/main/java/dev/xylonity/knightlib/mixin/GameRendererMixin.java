@@ -1,9 +1,9 @@
 package dev.xylonity.knightlib.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.xylonity.knightlib.client.shader.post.PostShaderManager;
-import dev.xylonity.knightlib.client.shader.post.PostShaderRenderContext;
-import dev.xylonity.knightlib.client.shader.post.PostShaderRenderStage;
+import dev.xylonity.knightlib.client.shader.post.internal.PostShaderManager;
+import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderContext;
+import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderStage;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;

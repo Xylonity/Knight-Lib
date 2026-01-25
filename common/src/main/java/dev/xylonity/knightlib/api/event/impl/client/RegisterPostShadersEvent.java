@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.api.event.impl.client;
 
 import dev.xylonity.knightlib.api.event.KnightLibEvent;
-import dev.xylonity.knightlib.client.shader.post.PostShader;
+import dev.xylonity.knightlib.client.shader.post.internal.PostShader;
 
 /**
  * Fired once during initialization to register custom post-processing shaders

@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.client.shader.post;
+package dev.xylonity.knightlib.client.shader.post.internal;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import net.minecraft.client.Minecraft;

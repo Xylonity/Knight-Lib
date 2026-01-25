@@ -4,7 +4,7 @@ import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
-import dev.xylonity.knightlib.client.shader.post.PostShaderRenderStage;
+import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderStage;
 import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
 import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
 import dev.xylonity.knightlib.client.particle.StarsetParticle;

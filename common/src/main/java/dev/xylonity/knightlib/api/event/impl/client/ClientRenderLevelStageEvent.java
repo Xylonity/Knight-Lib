@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.api.event.impl.client;
 
 import dev.xylonity.knightlib.api.event.KnightLibEvent;
-import dev.xylonity.knightlib.client.shader.post.PostShaderRenderStage;
+import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderStage;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
