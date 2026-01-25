@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Main networking abstraction for creating new endpoints to the C2S & S2C internal functionality.
+ * Main networking abstraction for creating new endpoints to the C2S/S2C internal functionality.
  * <br><br>
  * In order to make a new networking endpoint, you must create the following attribute in any common class:
  * <br><br>
