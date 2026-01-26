@@ -50,6 +50,21 @@ public final class PostShaderManager {
 
     }
 
+    public static void stop(ResourceLocation id) {
+        final PostShader<?> postShader = POST_SHADERS.get(id);
+        if (postShader != null) {
+            postShader.clear();
+        }
+
+    }
+
+    public static void stopAll() {
+        for (PostShader<?> postShader : POST_SHADERS.values()) {
+            postShader.clear();
+        }
+
+    }
+
     /**
      * Per-tick update for all shaders present in the current level
      */
