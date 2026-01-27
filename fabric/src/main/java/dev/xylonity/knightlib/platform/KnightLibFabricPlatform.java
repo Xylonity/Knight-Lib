@@ -5,8 +5,10 @@ import dev.xylonity.knightlib.common.item.blockitem.GreatChaliceBlockItem;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.minecraft.core.particles.ParticleType;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -42,6 +44,11 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
     @Override
     public <T extends BlockEntity> Supplier<BlockEntityType<T>> createBlockEntityType(KnightLibBlockEntities.BlockEntityFactory<T> supplier, Supplier<Block> block, String id) {
         return () -> BlockEntityType.Builder.of(supplier::create, block.get()).build(null);
+    }
+
+    @Override
+    public CreativeModeTab.Builder creativeTabBuilder() {
+        return FabricItemGroup.builder();
     }
 
 }

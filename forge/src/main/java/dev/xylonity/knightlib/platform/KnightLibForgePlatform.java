@@ -7,6 +7,7 @@ import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -42,6 +43,11 @@ public class KnightLibForgePlatform implements KnightLibPlatform {
     @Override
     public <T extends BlockEntity> Supplier<BlockEntityType<T>> createBlockEntityType(KnightLibBlockEntities.BlockEntityFactory<T> supplier, Supplier<Block> block, String id) {
         return () -> BlockEntityType.Builder.of(supplier::create, block.get()).build(null);
+    }
+
+    @Override
+    public CreativeModeTab.Builder creativeTabBuilder() {
+        return CreativeModeTab.builder();
     }
 
 }
