@@ -116,6 +116,9 @@ public class KnightLibForgeClientEvents {
             else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {
                 stage = PostShaderRenderStage.AFTER_LEVEL;
             }
+            else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
+                stage = PostShaderRenderStage.AFTER_ENTITIES;
+            }
             else {
                 return;
             }

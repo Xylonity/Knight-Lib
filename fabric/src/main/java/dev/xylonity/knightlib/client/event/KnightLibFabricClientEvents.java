@@ -103,6 +103,30 @@ public final class KnightLibFabricClientEvents {
     }
 
     private static void onRenderLevelEvents() {
+        WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+            final Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.level == null) {
+                return;
+            }
+
+            final float partialTick = context.tickDelta();
+
+            final Matrix4f projection = new Matrix4f(context.projectionMatrix());
+            final Matrix4f modelView  = new Matrix4f(context.matrixStack().last().pose());
+
+            final Vec3 cameraPosition = context.camera().getPosition();
+
+            KnightLibEvents.CLIENT.dispatch(new ClientRenderLevelStageEvent(
+                    minecraft,
+                    PostShaderRenderStage.AFTER_ENTITIES,
+                    partialTick,
+                    projection,
+                    modelView,
+                    context.camera(),
+                    cameraPosition
+            ));
+        });
+
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
             final Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.level == null) {
