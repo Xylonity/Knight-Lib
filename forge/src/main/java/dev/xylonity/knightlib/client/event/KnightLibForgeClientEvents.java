@@ -110,7 +110,13 @@ public class KnightLibForgeClientEvents {
         @SubscribeEvent
         public static void onRenderLevel(RenderLevelStageEvent event) {
             PostShaderRenderStage stage;
-            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
+                stage = PostShaderRenderStage.FRAME_BEGIN;
+            }
+            else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS) {
+                stage = PostShaderRenderStage.DEPTH_READY;
+            }
+            else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
                 stage = PostShaderRenderStage.AFTER_TRANSLUCENT_BLOCKS;
             }
             else if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_LEVEL) {

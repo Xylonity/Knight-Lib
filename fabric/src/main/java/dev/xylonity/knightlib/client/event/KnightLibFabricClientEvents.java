@@ -15,10 +15,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.*;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.Minecraft;
@@ -29,6 +26,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
+
+import java.util.function.BiConsumer;
 
 public final class KnightLibFabricClientEvents {
 
@@ -103,79 +102,51 @@ public final class KnightLibFabricClientEvents {
     }
 
     private static void onRenderLevelEvents() {
+        BiConsumer<WorldRenderContext, PostShaderRenderStage> dispatch =
+                (context, stage) -> {
+                    final Minecraft minecraft = Minecraft.getInstance();
+                    if (minecraft.level == null) {
+                        return;
+                    }
+
+                    final float partialTick = context.tickDelta();
+
+                    final Matrix4f projection = new Matrix4f(context.projectionMatrix());
+                    final Matrix4f modelView  = new Matrix4f(context.matrixStack().last().pose());
+
+                    final Vec3 cameraPosition = context.camera().getPosition();
+
+                    KnightLibEvents.CLIENT.dispatch(new ClientRenderLevelStageEvent(
+                            minecraft,
+                            stage,
+                            partialTick,
+                            projection,
+                            modelView,
+                            context.camera(),
+                            cameraPosition
+                    ));
+
+                };
+
+        WorldRenderEvents.START.register(context -> {
+            dispatch.accept(context, PostShaderRenderStage.FRAME_BEGIN);
+        });
+
+        WorldRenderEvents.BEFORE_ENTITIES.register(context -> {
+            dispatch.accept(context, PostShaderRenderStage.DEPTH_READY);
+        });
+
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
-            final Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.level == null) {
-                return;
-            }
-
-            final float partialTick = context.tickDelta();
-
-            final Matrix4f projection = new Matrix4f(context.projectionMatrix());
-            final Matrix4f modelView  = new Matrix4f(context.matrixStack().last().pose());
-
-            final Vec3 cameraPosition = context.camera().getPosition();
-
-            KnightLibEvents.CLIENT.dispatch(new ClientRenderLevelStageEvent(
-                    minecraft,
-                    PostShaderRenderStage.AFTER_ENTITIES,
-                    partialTick,
-                    projection,
-                    modelView,
-                    context.camera(),
-                    cameraPosition
-            ));
+            dispatch.accept(context, PostShaderRenderStage.AFTER_ENTITIES);
         });
 
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
-            final Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.level == null) {
-                return;
-            }
-
-            final float partialTick = context.tickDelta();
-
-            final Matrix4f projection = new Matrix4f(context.projectionMatrix());
-            final Matrix4f modelView  = new Matrix4f(context.matrixStack().last().pose());
-
-            final Vec3 cameraPosition = context.camera().getPosition();
-
-            KnightLibEvents.CLIENT.dispatch(new ClientRenderLevelStageEvent(
-                    minecraft,
-                    PostShaderRenderStage.AFTER_TRANSLUCENT_BLOCKS,
-                    partialTick,
-                    projection,
-                    modelView,
-                    context.camera(),
-                    cameraPosition
-            ));
+            dispatch.accept(context, PostShaderRenderStage.AFTER_TRANSLUCENT_BLOCKS);
         });
 
         WorldRenderEvents.END.register(context -> {
-            final Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.level == null) {
-                return;
-            }
-
-            final float partialTick = context.tickDelta();
-
-            final Matrix4f projection = new Matrix4f(context.projectionMatrix());
-            final Matrix4f modelView  = new Matrix4f(context.matrixStack().last().pose());
-
-            final Vec3 cameraPosition = context.camera().getPosition();
-
-            KnightLibEvents.CLIENT.dispatch(new ClientRenderLevelStageEvent(
-                    minecraft,
-                    PostShaderRenderStage.AFTER_LEVEL,
-                    partialTick,
-                    projection,
-                    modelView,
-                    context.camera(),
-                    cameraPosition
-            ));
-
+            dispatch.accept(context, PostShaderRenderStage.AFTER_LEVEL);
         });
-
     }
 
     private static void onClientLevelTrackingEvents() {
