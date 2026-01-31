@@ -10,7 +10,9 @@
   "client": [
     "AbstractTickableSoundInstanceAccessor",
     "CameraAccessor",
-    "GameRendererMixin"
+    "GameRendererMixin",
+    "PostChainAccessor",
+    "PostPassAccessor"
   ],
   "server": [
   ],

@@ -15,19 +15,20 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 /**
  * Base class for post-processing shaders.
  * Provides a "safe" PostChain execution that restores framebuffer, viewport and the common GL state.
  */
 public abstract class AbstractPostShader<PSS extends PostShaderSettings> implements PostShader<PSS> {
 
-    private int lastW = -1;
-    private int lastH = -1;
+    private final Map<PostChain, Long> chainSizeCache = new WeakHashMap<>();
 
     @Override
     public void initOrReload(TextureManager textures, ResourceManager resources, RenderTarget target) {
-        this.lastW = -1;
-        this.lastH = -1;
+        chainSizeCache.clear();
     }
 
     /**
@@ -100,20 +101,32 @@ public abstract class AbstractPostShader<PSS extends PostShaderSettings> impleme
      * Resizes the shader depending on the window size. Must be called before processing the shader
      */
     protected final void ensureSized(PostChain chain) {
+        ensureSizedChanged(chain);
+    }
+
+    /**
+     * Same as ensureSized, but returns whether a resize actually happened
+     */
+    protected final boolean ensureSizedChanged(PostChain chain) {
         if (chain == null) {
-            return;
+            return false;
         }
 
         final Minecraft minecraft = Minecraft.getInstance();
         final int width = minecraft.getWindow().getWidth();
         final int height = minecraft.getWindow().getHeight();
 
-        if (width != lastW || height != lastH) {
+        final long current = (((long) width) << 32) | (height & 0xffffffffL);
+        final Long previous = chainSizeCache.get(chain);
+
+        if (previous == null || previous != current) {
             chain.resize(width, height);
-            lastW = width;
-            lastH = height;
+            chainSizeCache.put(chain, current);
+
+            return true;
         }
 
+        return false;
     }
 
     protected final void setUniformInt(EffectInstance effectInstance, String name, int value) {
