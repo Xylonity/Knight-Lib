@@ -1,17 +1,21 @@
 package dev.xylonity.knightlib.common.event;
 
 import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.api.event.KnightLibEvent;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
+import dev.xylonity.knightlib.api.event.impl.server.EntityAttributeRegistrationEvent;
 import dev.xylonity.knightlib.api.event.impl.server.ServerTickEvent;
 import dev.xylonity.knightlib.api.event.impl.server.ServerWorldLoadEvent;
 import dev.xylonity.knightlib.api.event.impl.server.ServerWorldUnloadEvent;
+import dev.xylonity.knightlib.common.event.impl.EntityAttributeRegistrationEventForge;
 import dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraftforge.data.event.GatherDataEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -27,6 +31,14 @@ public class KnightLibForgeServerEvents {
             PackOutput packOutput = generator.getPackOutput();
 
             generator.addProvider(event.includeServer(), new KnightLibLootModifierGenerator(packOutput));
+        }
+
+        @SubscribeEvent
+        public static void registerEntityAttributes(EntityAttributeCreationEvent event) {
+            EntityAttributeRegistrationEventForge attributeEvent = new EntityAttributeRegistrationEventForge();
+            KnightLibEvents.SERVER.dispatch(attributeEvent);
+
+            attributeEvent.applyToForgeEvent(event);
         }
 
     }

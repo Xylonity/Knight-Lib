@@ -4,17 +4,12 @@ import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
+import dev.xylonity.knightlib.client.event.impl.*;
+import dev.xylonity.knightlib.client.shader.post.internal.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderStage;
-import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
-import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
-import dev.xylonity.knightlib.client.particle.StarsetParticle;
-import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
-import dev.xylonity.knightlib.registry.KnightLibEntities;
-import dev.xylonity.knightlib.registry.KnightLibParticles;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.*;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
@@ -34,21 +29,6 @@ public final class KnightLibFabricClientEvents {
     private static Level lastLevel = null;
 
     public static void init() {
-        EntityRendererRegistry.register(
-                KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(),
-                GreatChaliceStarsetRingRenderer::new
-        );
-
-        BlockEntityRendererRegistry.register(
-                KnightLibBlockEntities.GREAT_CHALICE.get(),
-                GreatChaliceRenderer::new
-        );
-
-        ParticleFactoryRegistry.getInstance().register(
-                KnightLibParticles.STARSET.get(),
-                StarsetParticle.Provider::new
-        );
-
         onEntityLoadOrUnloadEvents();
         onLogoutOrLoginEvents();
         onRenderGuiEvents();
@@ -56,6 +36,59 @@ public final class KnightLibFabricClientEvents {
         onRenderLevelEvents();
         onClientLevelTrackingEvents();
         onClientResourcesReloadEvents();
+    }
+
+    public static void dispatchRegistrationEvents() {
+        registerRenderers();
+        registerBlockEntityRenderers();
+        registerParticles();
+        registerAdditionalModels();
+        registerMenuScreens();
+        registerRenderLayers();
+        registerKeyMappings();
+        registerPostShaders();
+    }
+
+    private static void registerRenderers() {
+        EntityRendererRegistrationEventFabric event = new EntityRendererRegistrationEventFabric();
+        KnightLibEvents.CLIENT.dispatch(event);
+    }
+
+    private static void registerBlockEntityRenderers() {
+        BlockEntityRendererRegistrationEventFabric event = new BlockEntityRendererRegistrationEventFabric();
+        KnightLibEvents.CLIENT.dispatch(event);
+    }
+
+    private static void registerParticles() {
+        ParticleProviderRegistrationEventFabric event = new ParticleProviderRegistrationEventFabric();
+        KnightLibEvents.CLIENT.dispatch(event);
+    }
+
+    private static void registerAdditionalModels() {
+        AdditionalModelsRegistrationEventFabric event = new AdditionalModelsRegistrationEventFabric();
+        KnightLibEvents.CLIENT.dispatch(event);
+
+        event.applyToFabric();
+    }
+
+    private static void registerMenuScreens() {
+        MenuScreenRegistrationEventFabric event = new MenuScreenRegistrationEventFabric();
+        KnightLibEvents.CLIENT.dispatch(event);
+    }
+
+    private static void registerRenderLayers() {
+        RenderLayerRegistrationEventFabric event = new RenderLayerRegistrationEventFabric();
+        KnightLibEvents.CLIENT.dispatch(event);
+    }
+
+    private static void registerKeyMappings() {
+        KeyMappingRegistrationEventFabric event = new KeyMappingRegistrationEventFabric();
+        KnightLibEvents.CLIENT.dispatch(event);
+    }
+
+    private static void registerPostShaders() {
+        RegisterPostShadersEvent event = new RegisterPostShadersEvent(PostShaderManager::register);
+        KnightLibEvents.CLIENT.dispatch(event);
     }
 
     private static void onEntityLoadOrUnloadEvents() {

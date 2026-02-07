@@ -18,9 +18,9 @@ public class KnightLibFabricClient implements ClientModInitializer {
         KnightLibFabricClientEvents.init();
         KnightLibPackets.registerS2C();
 
-        KnightLibEvents.CLIENT.dispatch(new RegisterPostShadersEvent(PostShaderManager::register));
-
         KnightLibEvents.CLIENT.register(KnightLibClientEvents.class);
+
+        KnightLibFabricClientEvents.dispatchRegistrationEvents();
     }
 
 }

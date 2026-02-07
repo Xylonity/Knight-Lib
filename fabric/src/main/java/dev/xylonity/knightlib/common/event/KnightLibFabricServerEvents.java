@@ -5,6 +5,7 @@ import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.api.event.impl.server.ServerTickEvent;
 import dev.xylonity.knightlib.api.event.impl.server.ServerWorldLoadEvent;
 import dev.xylonity.knightlib.api.event.impl.server.ServerWorldUnloadEvent;
+import dev.xylonity.knightlib.common.event.impl.EntityAttributeRegistrationEventFabric;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 
@@ -27,6 +28,8 @@ public final class KnightLibFabricServerEvents {
                 KnightLibEvents.SERVER.dispatch(new ServerWorldLoadEvent(server, level))
         );
 
+        EntityAttributeRegistrationEventFabric attributeEvent = new EntityAttributeRegistrationEventFabric();
+        KnightLibEvents.SERVER.dispatch(attributeEvent);
     }
 
 }

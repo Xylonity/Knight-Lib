@@ -6,10 +6,16 @@ import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.api.music.IBossMusicProvider;
 import dev.xylonity.knightlib.api.scheduler.TickScheduler;
+import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
+import dev.xylonity.knightlib.client.particle.StarsetParticle;
+import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
 import dev.xylonity.knightlib.client.shader.post.internal.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderContext;
 import dev.xylonity.knightlib.impl.internal.BossMusicManager;
 import dev.xylonity.knightlib.impl.internal.BossMusicRegistry;
+import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
+import dev.xylonity.knightlib.registry.KnightLibEntities;
+import dev.xylonity.knightlib.registry.KnightLibParticles;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
@@ -106,6 +112,21 @@ public class KnightLibClientEvents {
     public static void onResourcesReloaded(final ClientResourcesReloadedEvent event) {
         PostShaderManager.onLogout();
 
+    }
+
+    @RegisterEvent(priority = 100)
+    public static void registerEntityRenderers(final EntityRendererRegistrationEvent event) {
+        event.register(KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(), GreatChaliceStarsetRingRenderer::new);
+    }
+
+    @RegisterEvent(priority = 100)
+    public static void registerBlockEntityRenderers(final BlockEntityRendererRegistrationEvent event) {
+        event.register(KnightLibBlockEntities.GREAT_CHALICE.get(), GreatChaliceRenderer::new);
+    }
+
+    @RegisterEvent(priority = 100)
+    public static void registerParticleProviders(final ParticleProviderRegistrationEvent event) {
+        event.register(KnightLibParticles.STARSET.get(), StarsetParticle.Provider::new);
     }
 
 }

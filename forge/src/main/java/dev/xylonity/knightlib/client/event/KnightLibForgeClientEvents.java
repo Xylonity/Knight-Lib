@@ -5,21 +5,14 @@ import dev.xylonity.knightlib.api.bossbar.BossBarContext;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
+import dev.xylonity.knightlib.client.event.impl.*;
 import dev.xylonity.knightlib.client.shader.post.internal.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderStage;
 import dev.xylonity.knightlib.impl.internal.BossBarApi;
 import dev.xylonity.knightlib.impl.internal.BossBarLinks;
-import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
-import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
-import dev.xylonity.knightlib.client.particle.StarsetParticle;
-import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
-import dev.xylonity.knightlib.registry.KnightLibEntities;
-import dev.xylonity.knightlib.registry.KnightLibParticles;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
-import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -48,13 +41,41 @@ public class KnightLibForgeClientEvents {
 
         @SubscribeEvent
         public static void registerEntityRenderers(FMLClientSetupEvent event) {
-            EntityRenderers.register(KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(), GreatChaliceStarsetRingRenderer::new);
-            BlockEntityRenderers.register(KnightLibBlockEntities.GREAT_CHALICE.get(), GreatChaliceRenderer::new);
+            EntityRendererRegistrationEventForge rendererEvent = new EntityRendererRegistrationEventForge();
+            KnightLibEvents.CLIENT.dispatch(rendererEvent);
+
+            BlockEntityRendererRegistrationEventForge beRendererEvent = new BlockEntityRendererRegistrationEventForge();
+            KnightLibEvents.CLIENT.dispatch(beRendererEvent);
+
+            MenuScreenRegistrationEventForge menuScreenEvent = new MenuScreenRegistrationEventForge();
+            KnightLibEvents.CLIENT.dispatch(menuScreenEvent);
+
+            RenderLayerRegistrationEventForge renderLayerEvent = new RenderLayerRegistrationEventForge();
+            KnightLibEvents.CLIENT.dispatch(renderLayerEvent);
         }
 
         @SubscribeEvent
         public static void registerParticleFactories(final RegisterParticleProvidersEvent event) {
-            event.registerSpriteSet(KnightLibParticles.STARSET.get(), StarsetParticle.Provider::new);
+            ParticleProviderRegistrationEventForge particleEvent = new ParticleProviderRegistrationEventForge();
+            KnightLibEvents.CLIENT.dispatch(particleEvent);
+
+            particleEvent.applyToForgeEvent(event);
+        }
+
+        @SubscribeEvent
+        public static void onRegisterAdditionalModels(ModelEvent.RegisterAdditional event) {
+            AdditionalModelsRegistrationEventForge modelsEvent = new AdditionalModelsRegistrationEventForge();
+            KnightLibEvents.CLIENT.dispatch(modelsEvent);
+
+            modelsEvent.applyToForgeEvent(event);
+        }
+
+        @SubscribeEvent(priority = EventPriority.HIGH)
+        public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
+            KeyMappingRegistrationEventForge keyEvent = new KeyMappingRegistrationEventForge();
+            KnightLibEvents.CLIENT.dispatch(keyEvent);
+
+            keyEvent.applyToForgeEvent(event);
         }
 
         @SubscribeEvent
