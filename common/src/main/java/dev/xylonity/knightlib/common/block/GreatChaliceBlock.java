@@ -2,6 +2,7 @@ package dev.xylonity.knightlib.common.block;
 
 import dev.xylonity.knightlib.api.interop.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
+import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
@@ -66,13 +67,19 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
     @Override
     public @NotNull InteractionResult use(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull Player pPlayer, @NotNull InteractionHand pHand, @NotNull BlockHitResult pHit) {
 
-        if (pLevel.isClientSide) return InteractionResult.PASS;
+        if (pLevel.isClientSide) {
+            return InteractionResult.PASS;
+        }
 
-        if (!(pLevel.getBlockEntity(pPos) instanceof GreatChaliceBlockEntity chalice)) return InteractionResult.PASS;
+        if (!(pLevel.getBlockEntity(pPos) instanceof GreatChaliceBlockEntity chalice)) {
+            return InteractionResult.PASS;
+        }
 
         ItemStack stack = pPlayer.getItemInHand(pHand);
         if (stack.getItem() instanceof IGreatChaliceInteractable actor) {
-            if (!actor.canInteract(chalice, pLevel, pPlayer)) return InteractionResult.PASS;
+            if (!actor.canInteract(chalice, pLevel, pPlayer)) {
+                return InteractionResult.PASS;
+            }
 
             actor.onPreInteraction(chalice, pPlayer, pLevel, pHit);
 
@@ -85,16 +92,26 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
             if (!pPlayer.getAbilities().instabuild) stack.shrink(actor.shrinkItemAmount());
 
             if (!actor.getRewards().isEmpty()) {
-                for (ItemStack e : actor.getRewards()) {
-                    Entity entity = new ItemEntity(pLevel, pPos.getX() + 0.5, pPos.getY() + pPlayer.getBbHeight() * 0.5, pPos.getZ(), e);
-                    pLevel.addFreshEntity(entity);
+                for (ItemStack reward : actor.getRewards()) {
+                    if (KnightLibConfig.YEET_GRAIL_WHEN_FILLED) {
+                        spawnReward(pLevel, pPos, reward, pPlayer);
+                    }
+                    else {
+                        if (!pPlayer.getInventory().add(reward)) {
+                            spawnReward(pLevel, pPos, reward, pPlayer);
+                        }
+
+                    }
+
                 }
+
             }
 
             if (!actor.getInteractionSounds().isEmpty()) {
                 for (SoundEvent sound : actor.getInteractionSounds()) {
                     pLevel.playSound(null, pPos, sound, SoundSource.BLOCKS, 1f, 1f);
                 }
+
             }
 
             if (chalice.getCharges() == IGreatChaliceInteractable.MAX_CHARGES) {
@@ -107,6 +124,11 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
         }
 
         return super.use(pState, pLevel, pPos, pPlayer, pHand, pHit);
+    }
+
+    private void spawnReward(Level level, BlockPos pPos, ItemStack reward, Player player) {
+        Entity entity = new ItemEntity(level, pPos.getX() + 0.5, pPos.getY() + player.getBbHeight() * 0.5, pPos.getZ(), reward);
+        level.addFreshEntity(entity);
     }
 
 }

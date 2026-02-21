@@ -29,4 +29,10 @@ public final class KnightLibConfig {
     )
     public static double GREAT_ESSENCE_DROP_RATE = 0.05d;
 
+    @ConfigEntry(
+            category = "Great Chalice",
+            comment = "Spawns the filled grail (or other rewards) as an item on top of the great chalice. If the option is disabled, the item will be given to the player automatically."
+    )
+    public static boolean YEET_GRAIL_WHEN_FILLED = true;
+
 }
