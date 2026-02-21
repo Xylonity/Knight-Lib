@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.KnightLibForge;
 import dev.xylonity.knightlib.api.interop.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
 import dev.xylonity.knightlib.common.entity.projectile.GreatChaliceStartsetRing;
@@ -24,6 +23,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -164,9 +164,18 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
         GreatChaliceStartsetRing entity = getOrCreateEntity();
 
         GeoBlockRenderer<GreatChaliceBlockEntity> blockRenderer = (GeoBlockRenderer<GreatChaliceBlockEntity>) Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(blockEntity);
-        GeoEntityRenderer<GreatChaliceStartsetRing> entityRenderer = entity != null ? (GeoEntityRenderer<GreatChaliceStartsetRing>) Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity) : null;
+        GeoEntityRenderer<GreatChaliceStartsetRing> entityRenderer = null;
+        if (entity != null) {
+            EntityRenderer<?> rawRenderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
+            if (rawRenderer instanceof GeoEntityRenderer<?>) {
+                entityRenderer = (GeoEntityRenderer<GreatChaliceStartsetRing>) rawRenderer;
+            }
 
-        if (blockRenderer == null) return;
+        }
+
+        if (blockRenderer == null) {
+            return;
+        }
 
         PoseStack pose = guiGraphics.pose();
         MultiBufferSource.BufferSource buffer = guiGraphics.bufferSource();
@@ -197,7 +206,7 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
         pose.popPose();
 
         // entity
-        if (entity != null && (System.currentTimeMillis() - lastEntityAppearTime < ENTITY_VISIBLE_DURATION)) {
+        if (entity != null && (System.currentTimeMillis() - lastEntityAppearTime < ENTITY_VISIBLE_DURATION) && entityRenderer != null) {
             pose.pushPose();
             pose.translate(60, 66, 27.5);
             pose.scale(24f, 24f, 24f);
