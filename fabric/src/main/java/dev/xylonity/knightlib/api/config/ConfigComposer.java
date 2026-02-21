@@ -1,6 +1,5 @@
-package dev.xylonity.knightlib.config;
+package dev.xylonity.knightlib.api.config;
 
-import dev.xylonity.knightlib.config.api.AutoConfig;
 import dev.xylonity.knightlib.config.interop.ConfigManager;
 import dev.xylonity.knightlib.config.interop.ConfigRegistry;
 import net.fabricmc.loader.api.FabricLoader;
@@ -10,7 +9,7 @@ import net.fabricmc.loader.api.FabricLoader;
  *
  * <h3>Usage from any mod:</h3>
  * <pre>{@code
- * // In your mod initializer:
+ * // In your mod initializer (either server or client):
  * ConfigComposer.registerConfig(YourMod.MOD_ID, Config.class);
  * ConfigComposer.registerConfig(YourMod.MOD_ID, Config2.class);
  * ...

@@ -1,6 +1,7 @@
 package dev.xylonity.knightlib.config;
 
-import dev.xylonity.knightlib.config.api.*;
+import dev.xylonity.knightlib.api.config.AutoConfig;
+import dev.xylonity.knightlib.api.config.ConfigEntry;
 
 @AutoConfig(
         file = "knightlib",

@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.client.screen.config;
 
-import dev.xylonity.knightlib.config.api.AutoConfig;
+import dev.xylonity.knightlib.api.config.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;

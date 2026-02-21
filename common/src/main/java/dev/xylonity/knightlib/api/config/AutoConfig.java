@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.config.api;
+package dev.xylonity.knightlib.api.config;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

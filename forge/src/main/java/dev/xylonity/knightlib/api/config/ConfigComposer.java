@@ -1,6 +1,5 @@
-package dev.xylonity.knightlib.config;
+package dev.xylonity.knightlib.api.config;
 
-import dev.xylonity.knightlib.config.api.AutoConfig;
 import dev.xylonity.knightlib.config.interop.ConfigManager;
 import dev.xylonity.knightlib.config.interop.ConfigRegistry;
 import net.minecraftforge.client.ConfigScreenHandler;

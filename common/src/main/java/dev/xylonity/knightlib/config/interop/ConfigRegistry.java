@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.config.interop;
 
-import dev.xylonity.knightlib.config.api.AutoConfig;
+import dev.xylonity.knightlib.api.config.AutoConfig;
 import dev.xylonity.knightlib.client.screen.config.ConfigBridgeScreen;
 import dev.xylonity.knightlib.client.screen.config.KnightLibConfigScreen;
 import net.minecraft.client.gui.screens.Screen;

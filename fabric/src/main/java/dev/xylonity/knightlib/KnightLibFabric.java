@@ -4,7 +4,7 @@ import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.common.CommonProxy;
 import dev.xylonity.knightlib.common.event.KnightLibFabricServerEvents;
 import dev.xylonity.knightlib.common.event.KnightLibServerEvents;
-import dev.xylonity.knightlib.config.ConfigComposer;
+import dev.xylonity.knightlib.api.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator;
 import dev.xylonity.knightlib.registry.KnightLibPackets;

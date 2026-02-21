@@ -4,9 +4,9 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.ParsingException;
 import com.electronwill.nightconfig.toml.TomlFormat;
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.config.api.AutoConfig;
-import dev.xylonity.knightlib.config.api.ConfigEntry;
-import dev.xylonity.knightlib.config.api.DecorationType;
+import dev.xylonity.knightlib.api.config.AutoConfig;
+import dev.xylonity.knightlib.api.config.ConfigEntry;
+import dev.xylonity.knightlib.api.config.DecorationType;
 
 import java.io.IOException;
 import java.lang.reflect.Field;

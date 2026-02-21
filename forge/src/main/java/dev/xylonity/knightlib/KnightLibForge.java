@@ -5,7 +5,7 @@ import dev.xylonity.knightlib.client.ClientProxy;
 import dev.xylonity.knightlib.common.CommonProxy;
 import dev.xylonity.knightlib.common.event.KnightLibServerEvents;
 import dev.xylonity.knightlib.registry.KnightLibLootModifier;
-import dev.xylonity.knightlib.config.ConfigComposer;
+import dev.xylonity.knightlib.api.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibPackets;
 import dev.xylonity.knightlib.registry.KnightLibRecipes;
