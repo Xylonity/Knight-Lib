@@ -35,4 +35,5 @@ public record CameraShakeS2C(
     public static CameraShakeS2C decode(FriendlyByteBuf buf) {
         return new CameraShakeS2C(ShakeSettings.decode(buf), buf.readBoolean());
     }
+
 }

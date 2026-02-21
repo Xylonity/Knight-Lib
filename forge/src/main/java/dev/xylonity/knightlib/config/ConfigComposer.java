@@ -1,162 +1,59 @@
 package dev.xylonity.knightlib.config;
 
 import dev.xylonity.knightlib.config.api.AutoConfig;
-import dev.xylonity.knightlib.config.api.ConfigEntry;
-import dev.xylonity.knightlib.config.api.DecorationType;
-import dev.xylonity.knightlib.config.impl.ConfigManager;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.eventbus.api.IEventBus;
+import dev.xylonity.knightlib.config.interop.ConfigManager;
+import dev.xylonity.knightlib.config.interop.ConfigRegistry;
+import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-// Abstraction of the config api to use ForgeConfigSpec, so any mod that adds a general config GUI,
-// such as Configured, detects this config. This should also work with hot-reloading
+/**
+ * Forge entry point for the KnightLib configuration system.
+ *
+ * <h3>Usage from any mod:</h3>
+ * <pre>{@code
+ * // In your mod constructor:
+ * ConfigComposer.registerConfig(YourMod.MOD_ID, Config.class);
+ * ConfigComposer.registerConfig(YourMod.MOD_ID, Config2.class);
+ * ...
+ * }</pre>
+ *
+ * <p>If a mod registers multiple config classes, the screen factory will show a
+ * bridge/selector screen. Otherwise, it will open the individual config directly.</p>
+ */
 public final class ConfigComposer {
-    private static final Map<Field, ForgeConfigSpec.ConfigValue<?>> VALUES = new ConcurrentHashMap<>();
-    private static final Set<String> INITIALIZED_CONFIGS = ConcurrentHashMap.newKeySet();
 
-    public static void registerConfig(Class<?> clazz, IEventBus modBus) {
-        registerConfig(clazz, modBus, ModConfig.Type.COMMON);
+    /**
+     * Registers a config class under the given mod ID.
+     *
+     * @param modId the mod ID that owns this config
+     * @param configClazz the class annotated with {@link AutoConfig}
+     */
+    public static void registerConfig(String modId, Class<?> configClazz) {
+        ConfigManager.init(FMLPaths.CONFIGDIR.get(), configClazz);
+
+        // Tracks the class in the registrar (for screen creation)
+        ConfigRegistry.register(modId, configClazz);
+
+        // Registers the Forge config screen factory
+        registerScreenFactory(modId);
     }
 
-    public static void registerConfig(Class<?> clazz, IEventBus modBus, ModConfig.Type type) {
-        AutoConfig ac = clazz.getAnnotation(AutoConfig.class);
-        String configFileName = specName(clazz);
-
-        // Bypasses the config registrar if it's already initialized
-        if (!INITIALIZED_CONFIGS.add(configFileName)) {
-            return;
-        }
-
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
-
-        makeConfig(builder, clazz, ac.style(), ac.categoryBanner());
-        ModLoadingContext.get().registerConfig(type, builder.build(), configFileName);
-
-        // Inits the config only once
-        ConfigManager.init(FMLPaths.CONFIGDIR.get(), clazz);
-
-        modBus.addListener((ModConfigEvent.Loading e) -> {
-            if (e.getConfig().getFileName().equals(configFileName)) {
-                applyFromSpec();
-            }
-        });
-
-        modBus.addListener((ModConfigEvent.Reloading e) -> {
-            if (e.getConfig().getFileName().equals(configFileName)) {
-                applyFromSpec();
-            }
-        });
-
-    }
-
-    private static String specName(Class<?> clazz) {
-        return clazz.getAnnotation(AutoConfig.class).file() + ".toml";
-    }
-
-    private static void makeConfig(ForgeConfigSpec.Builder b, Class<?> clazz, DecorationType style, boolean categoryBanner) {
-        // We sort by category so the entry insertion order won't matter at all
-        Map<String, List<Field>> byCategory = Arrays.stream(clazz.getDeclaredFields())
-                .filter(f -> f.isAnnotationPresent(ConfigEntry.class))
-                .collect(Collectors.groupingBy(f -> f.getAnnotation(ConfigEntry.class).category()));
-
-        for (var catEntry : byCategory.entrySet()) {
-            String category = catEntry.getKey();
-            if (!category.isEmpty()) {
-                if (categoryBanner) {
-                    String[] bannerLines = ConfigManager.buildCategoryBanner(category, style).split("\n");
-                    b.comment(bannerLines);
-                }
-
-                b.push(category);
-            }
-
-            for (Field field : catEntry.getValue()) {
-                ConfigEntry meta = field.getAnnotation(ConfigEntry.class);
-                field.setAccessible(true);
-                Object defaultVal;
-
-                try {
-                    defaultVal = field.get(null);
-                } catch (IllegalAccessException e) {
-                    defaultVal = null;
-                }
-
-                // Raw comments and such
-                String rawComment = ConfigManager.buildEntryComment(meta, defaultVal, style);
-                String wrapped = ConfigManager.wrapText(rawComment);
-                b.comment(wrapped.split("\n"));
-
-                // We 'simulate' the actual entry typedef for the config stack
-                ForgeConfigSpec.ConfigValue<?> cfgValue = defineValue(b, field, meta);
-                VALUES.put(field, cfgValue);
-            }
-
-            if (!category.isEmpty()) {
-                b.pop();
-            }
-        }
-
-    }
-
-    private static ForgeConfigSpec.ConfigValue<?> defineValue(ForgeConfigSpec.Builder b, Field field, ConfigEntry entry) {
+    private static void registerScreenFactory(String modId) {
         try {
-            String name = field.getName();
-            Class<?> type = field.getType();
+            ModLoadingContext.get().registerExtensionPoint(
+                    ConfigScreenHandler.ConfigScreenFactory.class,
+                    () -> new ConfigScreenHandler.ConfigScreenFactory(
+                            (minecraft, screen) -> ConfigRegistry.createScreen(modId, screen)
+                    )
 
-            // Cap predicates to hard bypass forge's stack adding duplicated comments
-            Predicate<Object> inIntRange = v -> v instanceof Integer i && i >= entry.min() && i <= entry.max();
-            Predicate<Object> inLongRange = v -> v instanceof Long l && l >= (long) entry.min() && l <= (long) entry.max();
-            Predicate<Object> inFloatRange = v -> v instanceof Float f && f >= (float) entry.min() && f <= (float) entry.max();
-            Predicate<Object> inDoubleRange = v -> v instanceof Double d && d >= entry.min() && d <= entry.max();
+            );
 
-            if (type == int.class) {
-                return b.define(name, field.getInt(null), inIntRange);
-            }
-
-            if (type == double.class) {
-                return b.define(name, field.getDouble(null), inDoubleRange);
-            }
-
-            // float types may not work correctly on some gui config mods
-            if (type == float.class) {
-                return b.define(name, field.getFloat(null), inFloatRange);
-            }
-
-            if (type == long.class) {
-                return b.define(name, field.getLong(null), inLongRange);
-            }
-
-            if (type == boolean.class) {
-                return b.define(name, field.getBoolean(null));
-            }
-
-            return b.define(name, field.get(null));
         }
-        catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+        catch (Exception ignored) {
+            ;;
         }
 
-    }
-
-    private static void applyFromSpec() {
-        VALUES.forEach((field, value) -> {
-            try {
-                field.set(null, value.get());
-            }
-            catch (Exception ignore) { ;; }
-        });
     }
 
 }

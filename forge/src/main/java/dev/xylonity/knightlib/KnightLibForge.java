@@ -26,7 +26,7 @@ public class KnightLibForge {
         KnightLibRecipes.SERIALIZERS.register(modEventBus);
         KnightLibRecipes.TYPES.register(modEventBus);
 
-        ConfigComposer.registerConfig(KnightLibConfig.class, modEventBus);
+        ConfigComposer.registerConfig(KnightLib.MOD_ID, KnightLibConfig.class);
 
         KnightLibPackets.registerAll();
 

@@ -20,7 +20,7 @@ public class KnightLibFabric implements ModInitializer {
         KnightLibRecipes.init();
         KnightLibLootModifierGenerator.init();
 
-        ConfigComposer.registerConfig(KnightLibConfig.class);
+        ConfigComposer.registerConfig(KnightLib.MOD_ID, KnightLibConfig.class);
 
         KnightLibPackets.registerC2S();
 

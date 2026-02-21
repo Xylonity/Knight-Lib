@@ -26,6 +26,9 @@
         ],
         "fabric-datagen": [
             "dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator"
+        ],
+        "modmenu": [
+            "dev.xylonity.knightlib.compat.modmenu.KnightLibModMenuIntegration"
         ]
     },
     "mixins": [
