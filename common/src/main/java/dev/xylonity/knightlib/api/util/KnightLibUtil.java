@@ -19,7 +19,9 @@ import java.util.stream.Collectors;
 
 public class KnightLibUtil {
 
-    private KnightLibUtil() { ;; }
+    private KnightLibUtil() {
+        ;;
+    }
 
     /**
      * Checks if an entity is behind the specified one. The fov is discriminatory, not inclusive, so only
@@ -306,6 +308,20 @@ public class KnightLibUtil {
             o[i] = ((IntTag) list.get(i)).getAsInt();
         }
 
+    }
+
+    /**
+     * Parses a string with values divided by commas (a, b, c, d, e, etc.) into a generic list
+     */
+    public static Set<String> parseList(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return Set.of();
+        }
+
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(string -> !string.isEmpty())
+                .collect(Collectors.toSet());
     }
 
 }

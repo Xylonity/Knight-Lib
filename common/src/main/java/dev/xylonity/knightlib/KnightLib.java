@@ -35,6 +35,8 @@ public class KnightLib {
         KnightLibItems.ITEMS.init();
         KnightLibParticles.PARTICLES.init();
         KnightLibBlockEntities.BLOCK_ENTITIES.init();
+
+        initialize();
     }
 
     public static ResourceLocation of(String path) {

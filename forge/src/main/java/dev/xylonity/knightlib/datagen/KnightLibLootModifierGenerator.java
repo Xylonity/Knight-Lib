@@ -20,6 +20,7 @@ public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
                 KnightLibItems.SMALL_ESSENCE.get(),
                 (float) KnightLibConfig.SMALL_ESSENCE_DROP_RATE
         ));
+
     }
 
 }
