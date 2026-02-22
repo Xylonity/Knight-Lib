@@ -5,8 +5,11 @@
 - The networking system has been generalized so that each mod represents its own communication channel instead of using knightlib to register and send its own packets, which led to untimely crashes and packets that never arrived
 - Added utilities to work with post shaders (and accumulating multitarget post shaders) more uniformly
 - Completely rewritten the camera shaking system to make it more configurable and less limited to a simple randomized "vibration"
+- Added some convenience S2C packets to facilitate the use of certain utilities
+- Added a configuration option to prevent the filled grail from getting yeeted when using the empty grail in the great chalice, and to automatically add it to the player's inventory.
 - Potentially fixed issues with config file locks that caused the game to crash
-- Fixed a crash that could occur when generating camera shake due to an illegal thread access
+- Fixed a crash due to an illegal thread access that could randomly occur when generating camera shake
+- Fixed a crash that occurred when rendering the starset ring in a JEI menu when the mod lazyyyy was present. This occurs due to an incompatibility with geckolib, not with knightlib, so now the ring causing the crash is not rendered if lazyyyy is in the modpack.
 
 # 1.4.3
 - Fixed a crash when booting with the mod Immersive Engineering in the same pack
