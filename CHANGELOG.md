@@ -6,8 +6,10 @@
 - Added utilities to work with post shaders (and accumulating multitarget post shaders) more uniformly
 - Completely rewritten the camera shaking system to make it more configurable and less limited to a simple randomized "vibration"
 - Added some convenience S2C packets to facilitate the use of certain utilities
-- Added a configuration option to prevent the filled grail from getting yeeted when using the empty grail in the great chalice, and to automatically add it to the player's inventory.
+- Added a config option to prevent the filled grail from getting yeeted when using the empty grail in the great chalice, and to automatically add it to the player's inventory.
+- Added a config option to allow entities to be added to a whitelist or blacklist, in order to avoid unnecessary essence drops on all entities.
 - Potentially fixed issues with config file locks that caused the game to crash
+- Fixed a bug in forge where too much essence was dropped when an explosion occurred, such as when a creeper exploded. This happened because all blocks in the explosion were automatically taken into account, each of which also calculated the drop probability separately.
 - Fixed a crash due to an illegal thread access that could randomly occur when generating camera shake
 - Fixed a crash that occurred when rendering the starset ring in a JEI menu when the mod lazyyyy was present. This occurs due to an incompatibility with geckolib, not with knightlib, so now the ring causing the crash is not rendered if lazyyyy is in the modpack.
 - Fixed icons texture breaking mipmaps (fix by pokesmells)
