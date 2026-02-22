@@ -1412,13 +1412,16 @@ public class KnightLibConfigScreen extends Screen {
             int offsetY = (this.height - lineHeight) / 2 + 1;
             int paddingX = 5;
 
-            graphics.pose().pushPose();
+            graphics.enableScissor(x0 + 1, y0 + 1, x1 - 1, y1 - 1);
 
+            graphics.pose().pushPose();
             graphics.pose().translate(paddingX, offsetY, 0);
             super.renderWidget(graphics, mx - paddingX, my - offsetY, partialTick);
-
             graphics.pose().popPose();
+
+            graphics.disableScissor();
         }
+
     }
 
     static class FlatButton extends Button {
