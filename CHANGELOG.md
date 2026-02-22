@@ -10,6 +10,7 @@
 - Potentially fixed issues with config file locks that caused the game to crash
 - Fixed a crash due to an illegal thread access that could randomly occur when generating camera shake
 - Fixed a crash that occurred when rendering the starset ring in a JEI menu when the mod lazyyyy was present. This occurs due to an incompatibility with geckolib, not with knightlib, so now the ring causing the crash is not rendered if lazyyyy is in the modpack.
+- Fixed icons texture breaking mipmaps (fix by pokesmells)
 
 # 1.4.3
 - Fixed a crash when booting with the mod Immersive Engineering in the same pack

@@ -14,7 +14,7 @@
     },
     {
       "type": "bitmap",
-      "file": "knightlib:icons/icons.png",
+      "file": "knightlib:fonts/fonts.png",
       "ascent": 9,
       "height": 11,
       "chars": [ "\uEA0B\uEA0C\uEA0D\uEA0E\uEA0F\uEA10\uEA11\uEA12\uEA13" ]
