@@ -2,6 +2,7 @@
 - The internal configuration system has been completely rewritten. In addition to specifying more information per se in the configuration entries, now KnightLib automatically creates a configuration screen/menu for each configuration file that a mod (that uses KnightLib) has in use
 - The forge version no longer replicates its own configuration system, avoiding irrelevant alerts in the logs
 - Added a common event bus abstraction that automatically derives registration and execution calls to their loader-specific derivatives, with sticky system applicability (mainly for fabric)
+- Added an automaton system (finite state machine) for handling complex entity logic.
 - The networking system has been generalized so that each mod represents its own communication channel instead of using knightlib to register and send its own packets, which led to untimely crashes and packets that never arrived
 - Added utilities to work with post shaders (and accumulating multitarget post shaders) more uniformly
 - Completely rewritten the camera shaking system to make it more configurable and less limited to a simple randomized "vibration"
