@@ -1,13 +1,13 @@
 package dev.xylonity.knightlib.common.entity.projectile;
 
-import dev.xylonity.knightlib.common.entity.BaseProjectile;
+import dev.xylonity.knightlib.common.entity.AbstractProjectile;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import software.bernie.geckolib.animatable.GeoEntity;
 
-public class GreatChaliceStartsetRing extends BaseProjectile implements GeoEntity {
+public class GreatChaliceStartsetRing extends AbstractProjectile implements GeoEntity {
 
-    public GreatChaliceStartsetRing(EntityType<? extends BaseProjectile> pEntityType, Level pLevel) {
+    public GreatChaliceStartsetRing(EntityType<? extends AbstractProjectile> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
     }
 
@@ -20,11 +20,6 @@ public class GreatChaliceStartsetRing extends BaseProjectile implements GeoEntit
         super.tick();
 
         this.setPos(px, py, pz);
-    }
-
-    @Override
-    public boolean shouldRender(double pX, double pY, double pZ) {
-        return true;
     }
 
     @Override
