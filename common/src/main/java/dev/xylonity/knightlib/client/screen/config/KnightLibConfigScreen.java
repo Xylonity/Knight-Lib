@@ -1366,8 +1366,8 @@ public class KnightLibConfigScreen extends Screen {
             graphics.drawString(minecraft.font, text, x0 + (width - minecraft.font.width(text)) / 2, y0 + (height - minecraft.font.lineHeight) / 2 + 1, 0xFFD0D0D0, false);
 
             final int alphaY = y0 + (height - minecraft.font.lineHeight) / 2 + 1;
-            graphics.drawString(minecraft.font, "←", x0 + 3, alphaY, border, false);
-            graphics.drawString(minecraft.font, "→", x0 + width - 10, alphaY, border, false);
+            graphics.drawString(minecraft.font, "\u2190", x0 + 3, alphaY, border, false);
+            graphics.drawString(minecraft.font, "\u2192", x0 + width - 10, alphaY, border, false);
         }
 
         @Override
