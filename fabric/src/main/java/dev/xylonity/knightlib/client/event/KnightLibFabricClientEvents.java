@@ -9,11 +9,13 @@ import dev.xylonity.knightlib.client.shader.post.internal.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderStage;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.*;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -33,9 +35,11 @@ public final class KnightLibFabricClientEvents {
         onLogoutOrLoginEvents();
         onRenderGuiEvents();
         onClientTickEvents();
+        onClientPlayerTickEvents();
         onRenderLevelEvents();
         onClientLevelTrackingEvents();
         onClientResourcesReloadEvents();
+        onItemTooltipEvents();
     }
 
     public static void dispatchRegistrationEvents() {
@@ -134,6 +138,25 @@ public final class KnightLibFabricClientEvents {
 
     }
 
+    private static void onClientPlayerTickEvents() {
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            final LocalPlayer player = client.player;
+            if (player != null) {
+                KnightLibEvents.CLIENT.dispatch(new ClientPlayerTickEvent(client, player, TickPhase.START));
+            }
+
+        });
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            final LocalPlayer player = client.player;
+            if (player != null) {
+                KnightLibEvents.CLIENT.dispatch(new ClientPlayerTickEvent(client, player, TickPhase.END));
+            }
+
+        });
+
+    }
+
     private static void onRenderLevelEvents() {
         BiConsumer<WorldRenderContext, PostShaderRenderStage> dispatch =
                 (context, stage) -> {
@@ -221,7 +244,15 @@ public final class KnightLibFabricClientEvents {
                     }
 
                 }
+
         );
+
+    }
+
+    private static void onItemTooltipEvents() {
+        ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
+            KnightLibEvents.CLIENT.dispatch(new ItemStackTooltipEvent(stack, lines, context));
+        });
 
     }
 

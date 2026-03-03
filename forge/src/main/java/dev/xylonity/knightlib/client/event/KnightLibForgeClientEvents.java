@@ -13,6 +13,7 @@ import dev.xylonity.knightlib.impl.internal.BossBarLinks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -24,6 +25,7 @@ import net.minecraftforge.client.event.*;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -117,6 +119,36 @@ public class KnightLibForgeClientEvents {
             else {
                 KnightLibEvents.CLIENT.dispatch(new ClientTickEvent(minecraft, TickPhase.START));
             }
+
+        }
+
+        @SubscribeEvent
+        public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
+            if (!event.player.level().isClientSide()) {
+                return;
+            }
+
+            final Minecraft minecraft = Minecraft.getInstance();
+            final LocalPlayer localPlayer = minecraft.player;
+
+            if (localPlayer == null || localPlayer != event.player) {
+                return;
+            }
+
+            TickPhase phase = event.phase == TickEvent.Phase.END ? TickPhase.END : TickPhase.START;
+            KnightLibEvents.CLIENT.dispatch(new ClientPlayerTickEvent(minecraft, localPlayer, phase));
+        }
+
+        @SubscribeEvent
+        public static void onKeyInput(InputEvent.Key event) {
+            KnightLibEvents.CLIENT.dispatch(new ClientKeyInputEvent(event.getKey(), event.getScanCode(), event.getAction(), event.getModifiers()));
+        }
+
+        @SubscribeEvent
+        public static void onItemTooltip(ItemTooltipEvent event) {
+            KnightLibEvents.CLIENT.dispatch(new ItemStackTooltipEvent(
+                    event.getItemStack(), event.getToolTip(), event.getFlags()
+            ));
 
         }
 
