@@ -7,6 +7,7 @@
 - Added utilities to work with post shaders (and accumulating multitarget post shaders) more uniformly
 - Added utilities to manage the spawning of entities in specific biomes in a simpler and more centralized way
 - Added utilities to manage entity loot tables in a simpler and more centralized way
+- Added utilities to manage persistent sounds
 - Completely rewritten the camera shaking system to make it more configurable and less limited to a simple randomized "vibration"
 - Added some convenience S2C packets to facilitate the use of certain utilities
 - Added a config option to prevent the filled grail from getting yeeted when using the empty grail in the great chalice, and to automatically add it to the player's inventory.
