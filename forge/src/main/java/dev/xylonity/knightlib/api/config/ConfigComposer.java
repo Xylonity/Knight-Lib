@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.api.config;
 
+import dev.xylonity.knightlib.client.screen.config.factory.ConfigScreenCreator;
 import dev.xylonity.knightlib.config.interop.ConfigManager;
 import dev.xylonity.knightlib.config.interop.ConfigRegistry;
 import net.minecraftforge.client.ConfigScreenHandler;
@@ -43,7 +44,7 @@ public final class ConfigComposer {
             ModLoadingContext.get().registerExtensionPoint(
                     ConfigScreenHandler.ConfigScreenFactory.class,
                     () -> new ConfigScreenHandler.ConfigScreenFactory(
-                            (minecraft, screen) -> ConfigRegistry.createScreen(modId, screen)
+                            (minecraft, screen) -> ConfigScreenCreator.createScreen(modId, screen)
                     )
 
             );

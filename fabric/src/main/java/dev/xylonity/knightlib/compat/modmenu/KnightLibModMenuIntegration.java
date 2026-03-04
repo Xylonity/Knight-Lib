@@ -3,6 +3,7 @@ package dev.xylonity.knightlib.compat.modmenu;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.client.screen.config.factory.ConfigScreenCreator;
 import dev.xylonity.knightlib.config.interop.ConfigRegistry;
 
 import java.util.HashMap;
@@ -12,7 +13,7 @@ public class KnightLibModMenuIntegration implements ModMenuApi {
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return screen -> ConfigRegistry.createScreen(KnightLib.MOD_ID, screen);
+        return screen -> ConfigScreenCreator.createScreen(KnightLib.MOD_ID, screen);
     }
 
     @Override
@@ -20,7 +21,7 @@ public class KnightLibModMenuIntegration implements ModMenuApi {
         // Provides screens for all mods that are registered via the ConfigComposer
         Map<String, ConfigScreenFactory<?>> screenFactoryHashMap = new HashMap<>();
         for (String modId : ConfigRegistry.getRegisteredMods()) {
-            screenFactoryHashMap.put(modId, screen -> ConfigRegistry.createScreen(modId, screen));
+            screenFactoryHashMap.put(modId, screen -> ConfigScreenCreator.createScreen(modId, screen));
         }
 
         return screenFactoryHashMap;
