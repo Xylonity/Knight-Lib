@@ -56,7 +56,7 @@ public final class EntityBiomeSpawnBuilder<T extends Mob> {
     }
 
     /**
-     * Finalizes and registers this spawn entry with KnightLib.
+     * Finalizes and registers this spawn entry.
      * MUST be called during mod initialization.
      */
     public EntityBiomeSpawnEntry<T> submit() {

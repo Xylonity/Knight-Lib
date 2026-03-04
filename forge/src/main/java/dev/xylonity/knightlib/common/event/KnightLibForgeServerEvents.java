@@ -4,6 +4,8 @@ import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.api.event.impl.server.*;
+import dev.xylonity.knightlib.api.loot.EntityLootEntry;
+import dev.xylonity.knightlib.api.loot.KnightLibLoot;
 import dev.xylonity.knightlib.common.event.impl.EntityAttributeRegistrationEventForge;
 import dev.xylonity.knightlib.common.event.impl.SpawnPlacementRegistrationEventForge;
 import dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator;
@@ -11,7 +13,9 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraftforge.data.event.GatherDataEvent;
+import net.minecraftforge.event.LootTableLoadEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
@@ -87,6 +91,24 @@ public class KnightLibForgeServerEvents {
             KnightLibEvents.SERVER.dispatch(new CommandRegistrationEvent(
                     event.getDispatcher(), event.getBuildContext(), event.getCommandSelection()
             ));
+
+        }
+
+        @SubscribeEvent
+        public static void onLootTableLoad(LootTableLoadEvent event) {
+            final LootTableModifyEvent lootTableModifyEvent = new LootTableModifyEvent(event.getName());
+            KnightLibEvents.SERVER.dispatch(lootTableModifyEvent);
+
+            for (LootPool.Builder pool : lootTableModifyEvent.getPendingPools()) {
+                event.getTable().addPool(pool.build());
+            }
+
+            if (event.getName().getPath().startsWith("entities/")) {
+                for (EntityLootEntry entityLootEntry : KnightLibLoot.getEntityEntries()) {
+                    event.getTable().addPool(KnightLibLoot.buildPool(entityLootEntry).build());
+                }
+
+            }
 
         }
 
