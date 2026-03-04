@@ -1,6 +1,6 @@
-package dev.xylonity.knightlib.impl.internal;
+package dev.xylonity.knightlib.client.sound.music.internal;
 
-import dev.xylonity.knightlib.api.music.IBossMusicProvider;
+import dev.xylonity.knightlib.api.sound.music.IBossMusicProvider;
 import net.minecraft.world.entity.Entity;
 
 import java.util.Collection;
@@ -15,16 +15,18 @@ public final class BossMusicRegistry {
 
     private static final Map<Integer, IBossMusicProvider> ENTITIES = new ConcurrentHashMap<>();
 
-    private BossMusicRegistry() { ;; }
+    private BossMusicRegistry() {
+        ;;
+    }
 
     public static void register(IBossMusicProvider provider) {
-        Entity e = (Entity) provider;
-        ENTITIES.put(e.getId(), provider);
+        final Entity entity = (Entity) provider;
+        ENTITIES.put(entity.getId(), provider);
     }
 
     public static void unregister(IBossMusicProvider provider) {
-        Entity e = (Entity) provider;
-        ENTITIES.remove(e.getId());
+        final Entity entity = (Entity) provider;
+        ENTITIES.remove(entity.getId());
     }
 
     public static void unregisterById(int entityId) {

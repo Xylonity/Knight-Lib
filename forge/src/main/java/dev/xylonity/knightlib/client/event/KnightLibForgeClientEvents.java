@@ -8,8 +8,8 @@ import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.client.event.impl.*;
 import dev.xylonity.knightlib.client.shader.post.internal.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderStage;
-import dev.xylonity.knightlib.impl.internal.BossBarApi;
-import dev.xylonity.knightlib.impl.internal.BossBarLinks;
+import dev.xylonity.knightlib.client.screen.bossbar.BossBarApi;
+import dev.xylonity.knightlib.client.screen.bossbar.BossBarLinks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;
@@ -272,11 +272,11 @@ public class KnightLibForgeClientEvents {
 
             event.setCanceled(true);
 
-            BossBarLinks.Ref reference = BossBarLinks.INSTANCE.get(boss.getId());
+            BossBarLinks.Reference reference = BossBarLinks.INSTANCE.get(boss.getId());
             Entity entity = reference != null ? reference.resolve() : null;
 
             BossBarApi.BossBarEntry entry = match.get();
-            BossBarContext context = new BossBarContext(boss, entity, reference != null ? reference.entityType : null);
+            BossBarContext context = new BossBarContext(boss, entity, reference != null ? reference.entityType() : null);
 
             if (entry.renderer() != null) {
                 entry.renderer().render(gui, context, x, y);

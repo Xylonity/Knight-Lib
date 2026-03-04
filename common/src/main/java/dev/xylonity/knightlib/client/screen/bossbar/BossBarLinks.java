@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.impl.internal;
+package dev.xylonity.knightlib.client.screen.bossbar;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
@@ -12,23 +12,17 @@ import java.util.UUID;
 public final class BossBarLinks {
 
     public static final BossBarLinks INSTANCE = new BossBarLinks();
-    private final Map<UUID, Ref> byBossId = new Object2ObjectOpenHashMap<>();
+    private final Map<UUID, Reference> byBossId = new Object2ObjectOpenHashMap<>();
 
-    public static final class Ref {
-        public final int entityId;
-        public final UUID entityUuid;
-        public final ResourceLocation entityType;
-        public final ResourceLocation dimension;
-
-        public Ref(int id, UUID uuid, ResourceLocation type, ResourceLocation dimension) {
-            this.entityId = id;
-            this.entityUuid = uuid;
-            this.entityType = type;
-            this.dimension = dimension;
-        }
+    public record Reference(
+            int entityId,
+            UUID entityUuid,
+            ResourceLocation entityType,
+            ResourceLocation dimension
+    ) {
 
         public @Nullable Entity resolve() {
-            Minecraft minecraft = Minecraft.getInstance();
+            final Minecraft minecraft = Minecraft.getInstance();
 
             if (minecraft.level == null) {
                 return null;
@@ -43,11 +37,11 @@ public final class BossBarLinks {
 
     }
 
-    public void put(UUID bossId, Ref ref) {
-        byBossId.put(bossId, ref);
+    public void put(UUID bossId, Reference reference) {
+        byBossId.put(bossId, reference);
     }
 
-    public @Nullable Ref get(UUID bossId) {
+    public @Nullable BossBarLinks.Reference get(UUID bossId) {
         return byBossId.get(bossId);
     }
 

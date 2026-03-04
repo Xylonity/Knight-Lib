@@ -39,6 +39,8 @@ public class KnightLibForge {
         KnightLibEvents.SERVER.register(KnightLibServerEvents.class);
         KnightLib.PROXY.registerClientEvents();
 
+        KnightLib.PROXY.updatePersistentSoundsEngine();
+
         KnightLib.init();
     }
 

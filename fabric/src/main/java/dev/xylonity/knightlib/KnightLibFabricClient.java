@@ -23,6 +23,8 @@ public class KnightLibFabricClient implements ClientModInitializer {
         // Internal event registrar
         KnightLibEvents.CLIENT.register(KnightLibClientEvents.class);
 
+        KnightLib.PROXY.updatePersistentSoundsEngine();
+
         // Event hooks
         KnightLibFabricClientEvents.dispatchRegistrationEvents();
     }

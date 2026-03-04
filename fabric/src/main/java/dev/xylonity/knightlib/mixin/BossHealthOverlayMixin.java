@@ -1,8 +1,8 @@
 package dev.xylonity.knightlib.mixin;
 
 import dev.xylonity.knightlib.api.bossbar.BossBarContext;
-import dev.xylonity.knightlib.impl.internal.BossBarApi;
-import dev.xylonity.knightlib.impl.internal.BossBarLinks;
+import dev.xylonity.knightlib.client.screen.bossbar.BossBarApi;
+import dev.xylonity.knightlib.client.screen.bossbar.BossBarLinks;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.BossHealthOverlay;
@@ -39,9 +39,9 @@ public abstract class BossHealthOverlayMixin {
         if (match.isPresent()) {
             BossBarApi.BossBarEntry entry = match.get();
 
-            BossBarLinks.Ref reference = BossBarLinks.INSTANCE.get(boss.getId());
+            BossBarLinks.Reference reference = BossBarLinks.INSTANCE.get(boss.getId());
             Entity entity = reference != null ? reference.resolve() : null;
-            BossBarContext ctx = new BossBarContext(boss, entity, reference != null ? reference.entityType : null);
+            BossBarContext ctx = new BossBarContext(boss, entity, reference != null ? reference.entityType() : null);
 
             this.knightlib$skipNextName = entry.hideVanillaName();
 

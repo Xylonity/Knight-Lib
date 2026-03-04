@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.network.packets;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.impl.internal.BossBarLinks;
+import dev.xylonity.knightlib.client.screen.bossbar.BossBarLinks;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
@@ -27,7 +27,7 @@ public record BossBarLinkS2C(
                     ID,
                     BossBarLinkS2C.class,
                     PacketCodec.of(BossBarLinkS2C::encode, BossBarLinkS2C::decode),
-                    message -> BossBarLinks.INSTANCE.put(message.bossEventId(), new BossBarLinks.Ref(message.entityId(), message.entityUuid(), message.entityType(), message.dimension()))
+                    message -> BossBarLinks.INSTANCE.put(message.bossEventId(), new BossBarLinks.Reference(message.entityId(), message.entityUuid(), message.entityType(), message.dimension()))
             );
 
     public static void encode(BossBarLinkS2C packet, FriendlyByteBuf buf) {

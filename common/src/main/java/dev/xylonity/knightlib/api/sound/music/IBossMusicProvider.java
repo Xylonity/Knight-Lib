@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.api.music;
+package dev.xylonity.knightlib.api.sound.music;
 
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -17,15 +17,16 @@ public interface IBossMusicProvider {
      * The music must be an instance of AbstractLoopSound
      * @return the music to play
      */
-    @NotNull SoundEvent getBossMusic();
+    @NotNull
+    SoundEvent getBossMusic();
 
     /**
      * Predicate if the player selected should play the boss music or not
      * @param listener the player that listens to the music
      */
     default boolean shouldPlayBossMusic(Player listener) {
-        Entity e = (Entity) this;
-        return e.isAlive() && listener.distanceToSqr(e) <= getMusicRangeSqr();
+        final Entity entity = (Entity) this;
+        return entity.isAlive() && listener.distanceToSqr(entity) <= getMusicRangeSqr();
     }
 
     default SoundSource soundSource() {

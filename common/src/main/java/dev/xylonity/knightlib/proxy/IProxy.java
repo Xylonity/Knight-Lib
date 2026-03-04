@@ -6,4 +6,8 @@ public interface IProxy {
         ;;
     }
 
+    default void updatePersistentSoundsEngine() {
+        ;;
+    }
+
 }
