@@ -4,6 +4,7 @@ import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.client.ClientProxy;
 import dev.xylonity.knightlib.common.CommonProxy;
 import dev.xylonity.knightlib.common.event.KnightLibServerEvents;
+import dev.xylonity.knightlib.common.spawn.internal.KnightLibSpawnBiomeModifier;
 import dev.xylonity.knightlib.registry.KnightLibLootModifier;
 import dev.xylonity.knightlib.api.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
@@ -20,7 +21,7 @@ public class KnightLibForge {
     public KnightLibForge() {
         KnightLib.PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
 
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         KnightLibLootModifier.LOOT_MODIFIER_SERIALIZERS.register(modEventBus);
         KnightLibRecipes.SERIALIZERS.register(modEventBus);
@@ -30,6 +31,11 @@ public class KnightLibForge {
 
         KnightLibPackets.registerAll();
 
+        // Entity biome spawn modifiers hook
+        KnightLibSpawnBiomeModifier.BIOME_MODIFIER_SERIALIZERS.register(modEventBus);
+        KnightLibSpawnBiomeModifier.register();
+
+        // Internal event registrar
         KnightLibEvents.SERVER.register(KnightLibServerEvents.class);
         KnightLib.PROXY.registerClientEvents();
 

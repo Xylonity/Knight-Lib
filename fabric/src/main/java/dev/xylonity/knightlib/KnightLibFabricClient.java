@@ -15,11 +15,15 @@ public class KnightLibFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         KnightLib.PROXY = new ClientProxy();
 
+        // Event hooks
         KnightLibFabricClientEvents.init();
+
         KnightLibPackets.registerS2C();
 
+        // Internal event registrar
         KnightLibEvents.CLIENT.register(KnightLibClientEvents.class);
 
+        // Event hooks
         KnightLibFabricClientEvents.dispatchRegistrationEvents();
     }
 

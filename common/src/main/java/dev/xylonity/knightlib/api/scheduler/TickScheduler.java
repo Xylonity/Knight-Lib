@@ -75,6 +75,7 @@ public final class TickScheduler {
             synchronized (LEVELS_TO_CLEAN) {
                 LEVELS_TO_CLEAN.add(level);
             }
+            
         }
 
     }
@@ -115,11 +116,15 @@ public final class TickScheduler {
     public static void processServerTasks(Level level) {
         PriorityQueue<ScheduledTask> queue = SERVER_TASKS.get(level);
 
-        if (queue == null || queue.isEmpty()) return;
+        if (queue == null || queue.isEmpty()) {
+            return;
+        }
 
         while (!queue.isEmpty()) {
             ScheduledTask top = queue.peek();
-            if (top.execAt > getOrCreateTickCounter(level)) break;
+            if (top.execAt > getOrCreateTickCounter(level)) {
+                break;
+            }
 
             queue.poll();
             top.execute();
@@ -130,12 +135,16 @@ public final class TickScheduler {
     public static void processClientTasks(Level level) {
         PriorityQueue<ScheduledTask> queue = CLIENT_TASKS.get(level);
 
-        if (queue == null || queue.isEmpty()) return;
+        if (queue == null || queue.isEmpty()) {
+            return;
+        }
 
         while (!queue.isEmpty()) {
             ScheduledTask top = queue.peek();
 
-            if (top.execAt > getOrCreateTickCounter(level)) break;
+            if (top.execAt > getOrCreateTickCounter(level)) {
+                break;
+            }
 
             queue.poll();
             top.execute();
@@ -146,12 +155,16 @@ public final class TickScheduler {
     public static void processCommonTasks(Level level) {
         PriorityQueue<ScheduledTask> queue = COMMON_TASKS.get(level);
 
-        if (queue == null || queue.isEmpty()) return;
+        if (queue == null || queue.isEmpty()) {
+            return;
+        }
 
         while (!queue.isEmpty()) {
             ScheduledTask top = queue.peek();
 
-            if (top.execAt > getOrCreateTickCounter(level)) break;
+            if (top.execAt > getOrCreateTickCounter(level)) {
+                break;
+            }
 
             queue.poll();
             top.execute();
@@ -160,6 +173,7 @@ public final class TickScheduler {
     }
 
     public static final class ScheduledTask implements Comparable<ScheduledTask> {
+
         private final long execAt;
         private final Runnable runnable;
 
