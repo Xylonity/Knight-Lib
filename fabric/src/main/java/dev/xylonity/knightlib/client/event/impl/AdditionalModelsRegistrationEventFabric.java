@@ -17,10 +17,6 @@ public class AdditionalModelsRegistrationEventFabric extends AdditionalModelsReg
     }
 
     public void applyToFabric() {
-        if (models.isEmpty()) {
-            return;
-        }
-
         ModelLoadingPlugin.register(pluginContext -> {
             for (ResourceLocation model : models) {
                 pluginContext.addModels(model);
