@@ -17,7 +17,7 @@ public class KnightLibPackets {
     }
 
     public static void registerC2S() {
-
+        ;;
     }
 
 }

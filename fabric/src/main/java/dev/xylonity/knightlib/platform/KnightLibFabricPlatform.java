@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.platform;
 
+import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
 import dev.xylonity.knightlib.common.block.GreatChaliceBlock;
 import dev.xylonity.knightlib.common.item.blockitem.GreatChaliceBlockItem;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
@@ -7,7 +8,10 @@ import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.core.particles.ParticleType;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -44,6 +48,11 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
     @Override
     public <T extends BlockEntity> Supplier<BlockEntityType<T>> createBlockEntityType(KnightLibBlockEntities.BlockEntityFactory<T> supplier, Supplier<Block> block, String id) {
         return () -> BlockEntityType.Builder.of(supplier::create, block.get()).build(null);
+    }
+
+    @Override
+    public <T extends AbstractContainerMenu> MenuType<T> createMenuFactory(ResourceRegistry.MenuFactory<T> supplier) {
+        return new ExtendedScreenHandlerType<>(supplier::create);
     }
 
     @Override

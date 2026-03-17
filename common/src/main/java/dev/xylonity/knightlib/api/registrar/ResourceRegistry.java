@@ -1,9 +1,14 @@
 package dev.xylonity.knightlib.api.registrar;
 
+import dev.xylonity.knightlib.KnightLib;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -30,7 +35,8 @@ public interface ResourceRegistry<T> {
     <I extends T> ResourceEntry<I> register(String name, Supplier<? extends I> object);
 
     /**
-     * Entity registrar helper. Defers the call to the main register abstract
+     * Entity registrar helper.
+     *
      * @param name name of the entity
      * @param entity entity to register
      * @param category category of the entity
@@ -52,10 +58,31 @@ public interface ResourceRegistry<T> {
 
             return builder.build(new ResourceLocation(getNamespace(), name).toString());
         });
+
     }
 
     default <X extends Entity> ResourceEntry<EntityType<X>> registerEntity(String name, EntityType.EntityFactory<X> entity, MobCategory category, float width, float height) {
         return this.registerEntity(name, entity, category, width, height, null);
+    }
+
+    /**
+     * Menu registrar helper.
+     *
+     * @param name registry name
+     * @param factory menu constructor (syncId, playerInv, buf)
+     * @return the encapsulated MenuType entry
+     */
+    @SuppressWarnings("unchecked")
+    default <M extends AbstractContainerMenu> ResourceEntry<MenuType<M>> registerMenu(String name, MenuFactory<M> factory) {
+        return ((ResourceRegistry<MenuType<M>>) this).register(name, () ->
+                KnightLib.PLATFORM.createMenuFactory(factory::create)
+        );
+
+    }
+
+    @FunctionalInterface
+    interface MenuFactory<M extends AbstractContainerMenu> {
+        M create(int syncId, Inventory playerInv, FriendlyByteBuf buf);
     }
 
     /**
