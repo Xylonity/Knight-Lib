@@ -42,7 +42,7 @@ public class KnightLibForgeClientEvents {
     public static class KnightLibClientModBus {
 
         @SubscribeEvent
-        public static void registerEntityRenderers(FMLClientSetupEvent event) {
+        public static void clientSetup(FMLClientSetupEvent event) {
             EntityRendererRegistrationEventForge rendererEvent = new EntityRendererRegistrationEventForge();
             KnightLibEvents.CLIENT.dispatch(rendererEvent);
 
@@ -51,6 +51,9 @@ public class KnightLibForgeClientEvents {
 
             MenuScreenRegistrationEventForge menuScreenEvent = new MenuScreenRegistrationEventForge();
             KnightLibEvents.CLIENT.dispatch(menuScreenEvent);
+
+            BossBarRegistrationEvent bossBarEvent = new BossBarRegistrationEvent();
+            KnightLibEvents.CLIENT.dispatch(bossBarEvent);
 
             RenderLayerRegistrationEventForge renderLayerEvent = new RenderLayerRegistrationEventForge();
             KnightLibEvents.CLIENT.dispatch(renderLayerEvent);

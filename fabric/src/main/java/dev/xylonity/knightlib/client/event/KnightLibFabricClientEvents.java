@@ -51,6 +51,7 @@ public final class KnightLibFabricClientEvents {
         registerRenderLayers();
         registerKeyMappings();
         registerPostShaders();
+        registerBossBars();
     }
 
     private static void registerRenderers() {
@@ -92,6 +93,11 @@ public final class KnightLibFabricClientEvents {
 
     private static void registerPostShaders() {
         RegisterPostShadersEvent event = new RegisterPostShadersEvent(PostShaderManager::register);
+        KnightLibEvents.CLIENT.dispatch(event);
+    }
+
+    private static void registerBossBars() {
+        BossBarRegistrationEvent event = new BossBarRegistrationEvent();
         KnightLibEvents.CLIENT.dispatch(event);
     }
 
