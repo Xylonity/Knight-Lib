@@ -13,7 +13,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public interface KnightLibNetwork {
-
     KnightLibNetwork createEndpoint(String modId, String protocol);
 
     <T> void registerClientbound(PacketType<T> type, Consumer<T> clientHandler);

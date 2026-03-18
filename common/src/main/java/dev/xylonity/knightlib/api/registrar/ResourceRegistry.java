@@ -75,7 +75,7 @@ public interface ResourceRegistry<T> {
     @SuppressWarnings("unchecked")
     default <M extends AbstractContainerMenu> ResourceEntry<MenuType<M>> registerMenu(String name, MenuFactory<M> factory) {
         return ((ResourceRegistry<MenuType<M>>) this).register(name, () ->
-                KnightLib.PLATFORM.createMenuFactory(factory::create)
+                KnightLib.PLATFORM.createMenuFactory(factory)
         );
 
     }
