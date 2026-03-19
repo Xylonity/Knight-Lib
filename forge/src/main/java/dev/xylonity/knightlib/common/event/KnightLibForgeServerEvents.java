@@ -13,6 +13,7 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraftforge.data.event.GatherDataEvent;
 import net.minecraftforge.event.LootTableLoadEvent;
@@ -22,7 +23,9 @@ import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
+import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -166,6 +169,46 @@ public class KnightLibForgeServerEvents {
                 KnightLibEvents.SERVER.dispatch(new ServerWorldLoadEvent(level.getServer(), level));
             }
 
+        }
+
+        @SubscribeEvent
+        public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+            final LivingHurtEvent hurtEvent = new LivingHurtEvent(event.getEntity(), event.getSource(), event.getAmount());
+            KnightLibEvents.SERVER.dispatch(hurtEvent);
+
+            event.setAmount(hurtEvent.getAmount());
+            if (hurtEvent.isCancelled()) {
+                event.setCanceled(true);
+            }
+        }
+
+        @SubscribeEvent
+        public static void onLivingUseItemFinish(LivingEntityUseItemEvent.Finish event) {
+            final LivingUseItemFinishEvent knightEvent = new LivingUseItemFinishEvent(event.getEntity(), event.getItem(), event.getResultStack());
+            KnightLibEvents.SERVER.dispatch(knightEvent);
+
+            event.setResultStack(knightEvent.getResult());
+        }
+
+        @SubscribeEvent
+        public static void onEntityPlaceBlock(BlockEvent.EntityPlaceEvent event) {
+            if (!(event.getLevel() instanceof Level level)) {
+                return;
+            }
+
+            final EntityPlaceBlockEvent knightEvent = new EntityPlaceBlockEvent(
+                    level, event.getPos(), event.getPlacedBlock(), event.getEntity()
+            );
+            KnightLibEvents.SERVER.dispatch(knightEvent);
+
+            if (knightEvent.isCancelled()) {
+                event.setCanceled(true);
+            }
+        }
+
+        @SubscribeEvent
+        public static void onPlayerItemCrafted(PlayerEvent.ItemCraftedEvent event) {
+            KnightLibEvents.SERVER.dispatch(new PlayerItemCraftedEvent(event.getEntity(), event.getCrafting(), event.getInventory()));
         }
 
     }
