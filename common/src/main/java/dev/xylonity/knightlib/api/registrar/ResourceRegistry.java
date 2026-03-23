@@ -10,6 +10,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -19,6 +20,7 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -89,13 +91,13 @@ public interface ResourceRegistry<T> {
      * BlockEntity registrar helper.
      *
      * @param name registry name
-     * @param factory factory of the block entity to register
-     * @param block block linked to that block entity
+     * @param factory factory of the BlockEntity to register
+     * @param block block linked to that BlockEntity
      * @return the encapsulated BlockEntityType
      */
     @SuppressWarnings("unchecked")
-    default <M extends BlockEntity> ResourceEntry<BlockEntityType<M>> registerBlockEntity(String name, ResourceRegistry.BlockEntityFactory<M> factory, Supplier<Block> block) {
-        return ((ResourceRegistry<BlockEntityType<M>>) this).register(name, () ->
+    default <BE extends BlockEntity> ResourceEntry<BlockEntityType<BE>> registerBlockEntity(String name, ResourceRegistry.BlockEntityFactory<BE> factory, Supplier<Block> block) {
+        return ((ResourceRegistry<BlockEntityType<BE>>) this).register(name, () ->
                 KnightLib.PLATFORM.createBlockEntityType(factory, block)
         );
 
@@ -105,16 +107,32 @@ public interface ResourceRegistry<T> {
      * BlockEntity registrar helper.
      *
      * @param name registry name
-     * @param factory factory of the block entity to register
-     * @param blocks blocks linked to that block entity
+     * @param factory factory of the BlockEntity to register
+     * @param blocks blocks linked to that BlockEntity
      * @return the encapsulated BlockEntityType
      */
     @SuppressWarnings("unchecked")
-    default <M extends BlockEntity> ResourceEntry<BlockEntityType<M>> registerBlockEntity(String name, ResourceRegistry.BlockEntityFactory<M> factory, Supplier<Block>... blocks) {
-        return ((ResourceRegistry<BlockEntityType<M>>) this).register(name, () ->
+    default <BE extends BlockEntity> ResourceEntry<BlockEntityType<BE>> registerBlockEntity(String name, ResourceRegistry.BlockEntityFactory<BE> factory, Supplier<Block>... blocks) {
+        return ((ResourceRegistry<BlockEntityType<BE>>) this).register(name, () ->
                 KnightLib.PLATFORM.createBlockEntityType(factory, blocks)
         );
 
+    }
+
+    /**
+     * Block registrar helper that also registers an associated BlockItem.
+     *
+     * @param name registry name
+     * @param block block supplier
+     * @param itemRegistry the item ResourceRegistry to register the BlockItem in
+     * @param itemFactory creates the item given the resolved block
+     * @return the encapsulated Block entry
+     */
+    @SuppressWarnings("unchecked")
+    default <B extends Block> ResourceEntry<B> registerBlock(String name, Supplier<? extends B> block, ResourceRegistry<Item> itemRegistry, Function<B, ? extends Item> itemFactory) {
+        final ResourceEntry<B> blockEntry = ((ResourceRegistry<B>) this).register(name, block);
+        itemRegistry.register(name, () -> itemFactory.apply(blockEntry.get()));
+        return blockEntry;
     }
 
     @FunctionalInterface
@@ -123,8 +141,8 @@ public interface ResourceRegistry<T> {
     }
 
     @FunctionalInterface
-    interface BlockEntityFactory<T extends BlockEntity> {
-        T create(BlockPos pos, BlockState state);
+    interface BlockEntityFactory<BE extends BlockEntity> {
+        BE create(BlockPos pos, BlockState state);
     }
 
     /**
