@@ -15,15 +15,7 @@ public class KnightLibBlockEntities {
 
     public static final ResourceRegistry<BlockEntityType<?>> BLOCK_ENTITIES = ResourceDispatcher.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, KnightLib.MOD_ID);
 
-    public static final ResourceEntry<BlockEntityType<GreatChaliceBlockEntity>> GREAT_CHALICE;
-
-    static {
-        GREAT_CHALICE = BLOCK_ENTITIES.register("great_chalice", KnightLib.PLATFORM.createBlockEntityType(GreatChaliceBlockEntity::new, KnightLibBlocks.GREAT_CHALICE, "great_chalice"));
-    }
-
-    @FunctionalInterface
-    public interface BlockEntityFactory<T extends BlockEntity> {
-        T create(BlockPos pos, BlockState state);
-    }
+    public static final ResourceEntry<BlockEntityType<GreatChaliceBlockEntity>> GREAT_CHALICE =
+            BLOCK_ENTITIES.registerBlockEntity("great_chalice", GreatChaliceBlockEntity::new, KnightLibBlocks.GREAT_CHALICE);
 
 }

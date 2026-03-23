@@ -1,6 +1,7 @@
 package dev.xylonity.knightlib.api.registrar;
 
 import dev.xylonity.knightlib.KnightLib;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -9,6 +10,10 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -80,9 +85,46 @@ public interface ResourceRegistry<T> {
 
     }
 
+    /**
+     * BlockEntity registrar helper.
+     *
+     * @param name registry name
+     * @param factory factory of the block entity to register
+     * @param block block linked to that block entity
+     * @return the encapsulated BlockEntityType
+     */
+    @SuppressWarnings("unchecked")
+    default <M extends BlockEntity> ResourceEntry<BlockEntityType<M>> registerBlockEntity(String name, ResourceRegistry.BlockEntityFactory<M> factory, Supplier<Block> block) {
+        return ((ResourceRegistry<BlockEntityType<M>>) this).register(name, () ->
+                KnightLib.PLATFORM.createBlockEntityType(factory, block)
+        );
+
+    }
+
+    /**
+     * BlockEntity registrar helper.
+     *
+     * @param name registry name
+     * @param factory factory of the block entity to register
+     * @param blocks blocks linked to that block entity
+     * @return the encapsulated BlockEntityType
+     */
+    @SuppressWarnings("unchecked")
+    default <M extends BlockEntity> ResourceEntry<BlockEntityType<M>> registerBlockEntity(String name, ResourceRegistry.BlockEntityFactory<M> factory, Block... blocks) {
+        return ((ResourceRegistry<BlockEntityType<M>>) this).register(name, () ->
+                KnightLib.PLATFORM.createBlockEntityType(factory, blocks)
+        );
+
+    }
+
     @FunctionalInterface
     interface MenuFactory<M extends AbstractContainerMenu> {
         M create(int syncId, Inventory playerInv, FriendlyByteBuf buf);
+    }
+
+    @FunctionalInterface
+    interface BlockEntityFactory<T extends BlockEntity> {
+        T create(BlockPos pos, BlockState state);
     }
 
     /**

@@ -58,8 +58,13 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
     }
 
     @Override
-    public <T extends BlockEntity> Supplier<BlockEntityType<T>> createBlockEntityType(KnightLibBlockEntities.BlockEntityFactory<T> supplier, Supplier<Block> block, String id) {
-        return () -> BlockEntityType.Builder.of(supplier::create, block.get()).build(null);
+    public <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ResourceRegistry.BlockEntityFactory<T> supplier, Supplier<Block> block) {
+        return BlockEntityType.Builder.of(supplier::create, block.get()).build(null);
+    }
+
+    @Override
+    public <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ResourceRegistry.BlockEntityFactory<T> supplier, Block... blocks) {
+        return BlockEntityType.Builder.of(supplier::create, blocks).build(null);
     }
 
     @Override

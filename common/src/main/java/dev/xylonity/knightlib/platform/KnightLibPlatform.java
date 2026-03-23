@@ -24,12 +24,13 @@ public interface KnightLibPlatform {
     <T extends ParticleType<?>> Supplier<T> createParticle(boolean overrideLimiter);
     <T extends Block> Supplier<T> createBlock(String id, BlockBehaviour.Properties properties, KnightLibBlocks.BlockType blockType);
     <T extends Item> Supplier<T> createItem(String id, Item.Properties properties, KnightLibItems.ItemType itemType);
-    <T extends BlockEntity> Supplier<BlockEntityType<T>> createBlockEntityType(KnightLibBlockEntities.BlockEntityFactory<T> factory, Supplier<Block> block, String id);
+
+    <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ResourceRegistry.BlockEntityFactory<T> factory, Supplier<Block> block);
+    <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ResourceRegistry.BlockEntityFactory<T> factory, Block... blocks);
 
     <T extends AbstractContainerMenu> MenuType<T> createMenuFactory(ResourceRegistry.MenuFactory<T> supplier);
 
     void openMenu(ServerPlayer player, MenuProvider provider, Consumer<FriendlyByteBuf> extraData);
-
     boolean isPhysicalClient();
 
     CreativeModeTab.Builder creativeTabBuilder();
