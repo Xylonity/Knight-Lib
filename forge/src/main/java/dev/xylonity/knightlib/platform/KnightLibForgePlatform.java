@@ -21,9 +21,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.extensions.IForgeMenuType;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.network.NetworkHooks;
 
+import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -58,8 +62,12 @@ public class KnightLibForgePlatform implements KnightLibPlatform {
     }
 
     @Override
-    public <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ResourceRegistry.BlockEntityFactory<T> supplier, Block... blocks) {
-        return BlockEntityType.Builder.of(supplier::create, blocks).build(null);
+    public <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ResourceRegistry.BlockEntityFactory<T> supplier, Supplier<Block>... blocks) {
+        final Block[] blocksArray = Arrays.stream(blocks)
+                .map(Supplier::get)
+                .toArray(Block[]::new);
+
+        return BlockEntityType.Builder.of(supplier::create, blocksArray).build(null);
     }
 
     @Override
@@ -75,6 +83,21 @@ public class KnightLibForgePlatform implements KnightLibPlatform {
     @Override
     public boolean isPhysicalClient() {
         return FMLEnvironment.dist == Dist.CLIENT;
+    }
+
+    @Override
+    public boolean isModLoaded(String modid) {
+        return ModList.get().isLoaded(modid);
+    }
+
+    @Override
+    public Path resolveConfigFile(String config) {
+        return FMLPaths.CONFIGDIR.get().resolve(config);
+    }
+
+    @Override
+    public Path getConfigPath() {
+        return FMLPaths.CONFIGDIR.get();
     }
 
     @Override

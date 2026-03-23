@@ -110,7 +110,7 @@ public interface ResourceRegistry<T> {
      * @return the encapsulated BlockEntityType
      */
     @SuppressWarnings("unchecked")
-    default <M extends BlockEntity> ResourceEntry<BlockEntityType<M>> registerBlockEntity(String name, ResourceRegistry.BlockEntityFactory<M> factory, Block... blocks) {
+    default <M extends BlockEntity> ResourceEntry<BlockEntityType<M>> registerBlockEntity(String name, ResourceRegistry.BlockEntityFactory<M> factory, Supplier<Block>... blocks) {
         return ((ResourceRegistry<BlockEntityType<M>>) this).register(name, () ->
                 KnightLib.PLATFORM.createBlockEntityType(factory, blocks)
         );

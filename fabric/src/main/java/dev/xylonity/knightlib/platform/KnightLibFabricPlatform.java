@@ -30,6 +30,9 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -63,8 +66,12 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
     }
 
     @Override
-    public <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ResourceRegistry.BlockEntityFactory<T> supplier, Block... blocks) {
-        return BlockEntityType.Builder.of(supplier::create, blocks).build(null);
+    public <T extends BlockEntity> BlockEntityType<T> createBlockEntityType(ResourceRegistry.BlockEntityFactory<T> supplier, Supplier<Block>... blocks) {
+        final Block[] blocksArray = Arrays.stream(blocks)
+                .map(Supplier::get)
+                .toArray(Block[]::new);
+
+        return BlockEntityType.Builder.of(supplier::create, blocksArray).build(null);
     }
 
     @Override
@@ -97,6 +104,21 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
     @Override
     public boolean isPhysicalClient() {
         return FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT;
+    }
+
+    @Override
+    public boolean isModLoaded(String modid) {
+        return FabricLoader.getInstance().isModLoaded(modid);
+    }
+
+    @Override
+    public Path resolveConfigFile(String configFileName) {
+        return FabricLoader.getInstance().getConfigDir().resolve(configFileName);
+    }
+
+    @Override
+    public Path getConfigPath() {
+        return FabricLoader.getInstance().getConfigDir();
     }
 
     @Override
