@@ -76,6 +76,26 @@ public class KnightLibForgeServerEvents {
         }
 
         @SubscribeEvent
+        public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+            if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+                KnightLibEvents.SERVER.dispatch(new PlayerChangedDimensionEvent(
+                        serverPlayer.server, serverPlayer, event.getFrom(), event.getTo()
+                ));
+            }
+
+        }
+
+        @SubscribeEvent
+        public static void onLivingDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+            final LivingDeathEvent deathEvent = new LivingDeathEvent(event.getEntity(), event.getSource());
+            KnightLibEvents.SERVER.dispatch(deathEvent);
+
+            if (deathEvent.isCancelled()) {
+                event.setCanceled(true);
+            }
+        }
+
+        @SubscribeEvent
         public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
             if (event.player.level().isClientSide()) {
                 return;
@@ -85,7 +105,7 @@ public class KnightLibForgeServerEvents {
                 return;
             }
 
-            TickPhase phase = event.phase == TickEvent.Phase.END ? TickPhase.END : TickPhase.START;
+            final TickPhase phase = event.phase == TickEvent.Phase.END ? TickPhase.END : TickPhase.START;
             KnightLibEvents.SERVER.dispatch(new ServerPlayerTickEvent(serverPlayer.server, serverPlayer, phase));
         }
 

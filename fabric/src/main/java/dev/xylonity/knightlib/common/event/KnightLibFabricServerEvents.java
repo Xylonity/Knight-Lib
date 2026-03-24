@@ -8,6 +8,8 @@ import dev.xylonity.knightlib.api.loot.KnightLibLoot;
 import dev.xylonity.knightlib.common.event.impl.EntityAttributeRegistrationEventFabric;
 import dev.xylonity.knightlib.common.event.impl.SpawnPlacementRegistrationEventFabric;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
@@ -46,6 +48,17 @@ public final class KnightLibFabricServerEvents {
         onEntityLevelEvents();
         onPlayerConnectionEvents();
         onLootTableModificationEvent();
+        onLivingDeathEvents();
+    }
+
+    private static void onLivingDeathEvents() {
+        ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
+            final LivingDeathEvent event = new LivingDeathEvent(entity, source);
+            KnightLibEvents.SERVER.dispatch(event);
+
+            return !event.isCancelled();
+        });
+
     }
 
     private static void onServerPlayerTickEvents() {
