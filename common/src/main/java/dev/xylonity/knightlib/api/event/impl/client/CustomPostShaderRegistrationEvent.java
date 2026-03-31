@@ -6,11 +6,11 @@ import dev.xylonity.knightlib.client.shader.post.internal.PostShader;
 /**
  * Fired once during initialization to register custom post-processing shaders
  */
-public final class RegisterPostShadersEvent extends KnightLibEvent {
+public final class CustomPostShaderRegistrationEvent extends KnightLibEvent {
 
     private final Registrar registrar;
 
-    public RegisterPostShadersEvent(Registrar registrar) {
+    public CustomPostShaderRegistrationEvent(Registrar registrar) {
         this.registrar = registrar;
     }
 

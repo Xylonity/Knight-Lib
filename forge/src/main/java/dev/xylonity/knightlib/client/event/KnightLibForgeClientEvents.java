@@ -85,7 +85,10 @@ public class KnightLibForgeClientEvents {
 
         @SubscribeEvent
         public static void onRegisterShaders(RegisterShadersEvent event) {
-            KnightLibEvents.CLIENT.dispatch(new RegisterPostShadersEvent(PostShaderManager::register));
+            KnightLibEvents.CLIENT.dispatch(new CustomPostShaderRegistrationEvent(PostShaderManager::register));
+
+            ShaderRegistrationEventForge shaderEvent = new ShaderRegistrationEventForge(event);
+            KnightLibEvents.CLIENT.dispatch(shaderEvent);
         }
 
         @SubscribeEvent

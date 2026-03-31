@@ -1,0 +1,29 @@
+package dev.xylonity.knightlib.client.event.impl;
+
+import dev.xylonity.knightlib.api.event.impl.client.ShaderRegistrationEvent;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraftforge.client.event.RegisterShadersEvent;
+
+import java.io.IOException;
+import java.util.function.Consumer;
+
+public class ShaderRegistrationEventForge extends ShaderRegistrationEvent {
+
+    private final RegisterShadersEvent forgeEvent;
+
+    public ShaderRegistrationEventForge(RegisterShadersEvent forgeEvent) {
+        this.forgeEvent = forgeEvent;
+    }
+
+    @Override
+    public void register(ResourceLocation id, VertexFormat format, Consumer<ShaderInstance> onLoaded) throws IOException {
+        forgeEvent.registerShader(
+                new ShaderInstance(forgeEvent.getResourceProvider(), id, format),
+                onLoaded
+        );
+
+    }
+
+}

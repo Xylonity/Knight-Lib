@@ -31,6 +31,7 @@ public final class KnightLibFabricClientEvents {
     private static Level lastLevel = null;
 
     public static void init() {
+        onShaderRegistrationEvents();
         onEntityLoadOrUnloadEvents();
         onLogoutOrLoginEvents();
         onRenderGuiEvents();
@@ -92,8 +93,16 @@ public final class KnightLibFabricClientEvents {
     }
 
     private static void registerPostShaders() {
-        RegisterPostShadersEvent event = new RegisterPostShadersEvent(PostShaderManager::register);
+        CustomPostShaderRegistrationEvent event = new CustomPostShaderRegistrationEvent(PostShaderManager::register);
         KnightLibEvents.CLIENT.dispatch(event);
+    }
+
+    private static void onShaderRegistrationEvents() {
+        CoreShaderRegistrationCallback.EVENT.register(context -> {
+            ShaderRegistrationEventFabric event = new ShaderRegistrationEventFabric(context);
+            KnightLibEvents.CLIENT.dispatch(event);
+        });
+
     }
 
     private static void registerBossBars() {
