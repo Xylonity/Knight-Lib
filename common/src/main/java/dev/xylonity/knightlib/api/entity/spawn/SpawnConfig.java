@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Quick wrapper for managing config entries that define an entity's spawn weight and biomes, in a hardcoded string as follows:
+ * Quick wrapper for managing config entries that define an entity's spawn weight and biomes, in a hardcoded string pattern as follows:
  *
  * {@code "weight, minAmount, maxAmount, biomes, and tags..."}
  */

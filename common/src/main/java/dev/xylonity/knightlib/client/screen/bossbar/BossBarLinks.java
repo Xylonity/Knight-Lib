@@ -32,7 +32,12 @@ public final class BossBarLinks {
                 return null;
             }
 
-            return minecraft.level.getEntity(entityId);
+            final Entity entity = minecraft.level.getEntity(entityId);
+            if (entity != null && entity.getUUID().equals(entityUuid)) {
+                return entity;
+            }
+
+            return null;
         }
 
     }
