@@ -6,6 +6,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -133,6 +134,25 @@ public interface ResourceRegistry<T> {
         final ResourceEntry<B> blockEntry = ((ResourceRegistry<B>) this).register(name, block);
         itemRegistry.register(name, () -> itemFactory.apply(blockEntry.get()));
         return blockEntry;
+    }
+
+    /**
+     * Spawn Egg item registrar helper. IMPORTANT: ensure that the entity registry is created before the items, as the fabric spawn egg abstraction
+     * assumes that the entity in this context is already registered
+     *
+     * @param name registry name
+     * @param entityType supplier of the entity type (not deferred-safe on fabric)
+     * @param primaryColor primary egg color (0xRRGGBB)
+     * @param secondaryColor secondary egg color (0xRRGGBB)
+     * @param properties item properties
+     * @return the encapsulated Item entry
+     */
+    @SuppressWarnings("unchecked")
+    default <X extends Mob> ResourceEntry<Item> registerSpawnEgg(String name, Supplier<EntityType<X>> entityType, int primaryColor, int secondaryColor, Item.Properties properties) {
+        return ((ResourceRegistry<Item>) this).register(name, () ->
+                KnightLib.PLATFORM.createSpawnEgg(entityType, primaryColor, secondaryColor, properties)
+        );
+        
     }
 
     @FunctionalInterface

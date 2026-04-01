@@ -11,6 +11,9 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
@@ -20,6 +23,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLEnvironment;
@@ -73,6 +77,11 @@ public class KnightLibForgePlatform implements KnightLibPlatform {
     @Override
     public <T extends AbstractContainerMenu> MenuType<T> createMenuFactory(ResourceRegistry.MenuFactory<T> supplier) {
         return IForgeMenuType.create(supplier::create);
+    }
+
+    @Override
+    public <X extends Mob> Item createSpawnEgg(Supplier<EntityType<X>> entityType, int primaryColor, int secondaryColor, Item.Properties properties) {
+        return new ForgeSpawnEggItem(entityType, primaryColor, secondaryColor, properties);
     }
 
     @Override
