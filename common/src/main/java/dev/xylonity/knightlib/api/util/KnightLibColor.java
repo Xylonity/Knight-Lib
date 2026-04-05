@@ -32,4 +32,35 @@ public class KnightLibColor {
         return (alpha << 24) + (red << 16) + (green << 8) + blue;
     }
 
+    public static int colorAlpha(int argb) {
+        return (argb >> 24) & 0xFF;
+    }
+
+    public static int colorRed(int argb) {
+        return (argb >> 16) & 0xFF;
+    }
+
+    public static int colorGreen(int argb) {
+        return (argb >> 8) & 0xFF;
+    }
+
+    public static int colorBlue(int argb) {
+        return argb & 0xFF;
+    }
+
+    /**
+     * Returns the color with the alpha channel replaced
+     */
+    public static int withAlpha(int argb, int alpha) {
+        return (argb & 0x00FFFFFF) | ((alpha & 0xFF) << 24);
+    }
+
+    /**
+     * Returns the color with alpha multiplied by {@code factor} [0..1]
+     */
+    public static int multiplyAlpha(int argb, float factor) {
+        final int alpha = (int) (colorAlpha(argb) * KnightLibMath.clamp01(factor));
+        return withAlpha(argb, alpha);
+    }
+
 }
