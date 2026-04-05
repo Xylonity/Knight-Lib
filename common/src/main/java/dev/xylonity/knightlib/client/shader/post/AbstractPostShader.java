@@ -20,7 +20,8 @@ import java.util.WeakHashMap;
 
 /**
  * Base class for post-processing shaders.
- * Provides a "safe" PostChain execution that restores framebuffer, viewport and the common GL state.
+ * Provides a "safe" PostChain execution that restores framebuffer, viewport
+ * and the common GL state, as well as lifecycle management for GPU resources.
  */
 public abstract class AbstractPostShader<PSS extends PostShaderSettings> implements PostShader<PSS> {
 
@@ -32,7 +33,30 @@ public abstract class AbstractPostShader<PSS extends PostShaderSettings> impleme
     }
 
     /**
-     * Runs a PostChain safely, binding the main render target before and after, restoring the viewport and the common render state
+     * Releases GPU resources held by the given chain.
+     * Subclasses that hold a {@link PostChain} field should override {@link #dispose()}
+     * and call {@code closeChain(myChain)} there.
+     */
+    protected final void closeChain(PostChain chain) {
+        if (chain != null) {
+            chain.close();
+            chainSizeCache.remove(chain);
+        }
+
+    }
+
+    /**
+     * Called when this shader is unregistered or replaced.
+     * Subclasses must override this to close their PostChain(s).
+     */
+    @Override
+    public void dispose() {
+        chainSizeCache.clear();
+    }
+
+    /**
+     * Runs a PostChain safely, binding the main render target before and after,
+     * restoring the viewport and the common render state.
      */
     protected final void process(PostChain chain, float partialTicks, Runnable beforeProcess) {
         if (chain == null) {
@@ -42,24 +66,16 @@ public abstract class AbstractPostShader<PSS extends PostShaderSettings> impleme
         final Minecraft minecraft = Minecraft.getInstance();
         final RenderTarget mainRenderTarget = minecraft.getMainRenderTarget();
 
-        // The render system may mutate the same instance later on, so a copy of the projection is made
-        final Matrix4f oldProjection = RenderSystem.getProjectionMatrix();
-        final Matrix4f oldProjectionCopy = (oldProjection == null) ? null : new Matrix4f(oldProjection);
+        // Save projection (copy, as the RenderSystem may mutate the instance later)
+        final Matrix4f savedProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
 
-        // Provides a safe identity projection for full-screen passes
-        final boolean projectionWasNull = (oldProjection == null);
-        if (projectionWasNull) {
-            RenderSystem.setProjectionMatrix(new Matrix4f().identity(), VertexSorting.DISTANCE_TO_ORIGIN);
-        }
-
-        // Forces identity model-view for full-screen quad space and then restores afterward
+        // Identity model-view for full-screen quad space
         final PoseStack modelViewStack = RenderSystem.getModelViewStack();
         modelViewStack.pushPose();
         modelViewStack.setIdentity();
         RenderSystem.applyModelViewMatrix();
 
         try {
-            // Ensures "minecraft:main" is bound and viewport matches it
             mainRenderTarget.bindWrite(true);
             RenderSystem.viewport(0, 0, mainRenderTarget.width, mainRenderTarget.height);
 
@@ -68,19 +84,16 @@ public abstract class AbstractPostShader<PSS extends PostShaderSettings> impleme
             }
 
             chain.process(partialTicks);
-
         }
         finally {
-            // Restores the model-view
+            // Restores model-view
             modelViewStack.popPose();
             RenderSystem.applyModelViewMatrix();
 
-            // Restores the projection
-            if (!projectionWasNull && oldProjectionCopy != null) {
-                RenderSystem.setProjectionMatrix(oldProjectionCopy, VertexSorting.DISTANCE_TO_ORIGIN);
-            }
+            // Restores projection
+            RenderSystem.setProjectionMatrix(savedProjection, VertexSorting.DISTANCE_TO_ORIGIN);
 
-            // Rebinds main and restores the viewport for anything rendered after the postchain
+            // Rebinds main and restore viewport
             mainRenderTarget.bindWrite(true);
             RenderSystem.viewport(0, 0, mainRenderTarget.width, mainRenderTarget.height);
 
@@ -116,13 +129,12 @@ public abstract class AbstractPostShader<PSS extends PostShaderSettings> impleme
         final int width = minecraft.getWindow().getWidth();
         final int height = minecraft.getWindow().getHeight();
 
-        final long current = (((long) width) << 32) | (height & 0xffffffffL);
+        final long current = ((long) width << 32) | (height & 0xFFFFFFFFL);
         final Long previous = chainSizeCache.get(chain);
 
         if (previous == null || previous != current) {
             chain.resize(width, height);
             chainSizeCache.put(chain, current);
-
             return true;
         }
 

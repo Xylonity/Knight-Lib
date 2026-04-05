@@ -9,51 +9,63 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import java.util.EnumSet;
 
 /**
- * Generic contract for a client-sided post-processing shader effect
+ * Generic contract for a post-processing shader managed by {@link PostShaderManager}.
  *
- * A post shader typically runs as {@link net.minecraft.client.renderer.PostChain} pass (it processes the final scene
- * buffers) and is driven by a manager that ticks and renders all registered shaders
- *
- * @param <PSS> is the settings payload used when starting/spawning an instance of the shader
+ * @param <PSS> the settings type that configures each shader
  */
 public interface PostShader<PSS extends PostShaderSettings> {
 
+    /**
+     * Unique identifier used as the registry key
+     * */
     ResourceLocation id();
 
     /**
-     * Starts (or enqueues) a new instance of the shader with the given settings
+     * Which render stages this shader should be dispatched in.
+     */
+    EnumSet<PostShaderRenderStage> stages();
+
+    /**
+     * Activates/queues a new instance of the shader effect with the given settings.
      */
     void start(PSS settings);
 
+    /**
+     * Immediately cancels all running instances of this shader effect.
+     */
     void clear();
 
+    /**
+     * Per-tick update (called every client tick while the current level is loaded).
+     */
     void clientTick();
 
+    /**
+     * (Re)loads the underlying PostChain against current client resources.
+     */
+    void initOrReload(TextureManager textures, ResourceManager resources, RenderTarget target);
+
+    /**
+     * Renders any HUD/overlay elements this shader needs.
+     */
     void renderOverlay(GuiGraphics graphics, float partialTicks);
 
     /**
-     * Render hook with full render context. The manager calls this only for fixed stages
+     * Executes the post-processing pass for the given stage context.
      */
-    default void renderStage(PostShaderRenderContext context) {
-        ;;
-    }
+    void renderStage(final PostShaderRenderContext context);
 
     /**
-     * Declares which render stages this shader wants to run on
+     * Called on client disconnect.
      */
-    default EnumSet<PostShaderRenderStage> stages() {
-        return EnumSet.noneOf(PostShaderRenderStage.class);
-    }
+    void onLogout();
 
     /**
-     * Called when shaders/resources are (re)loaded or when the main render target changes size
+     * Releases GPU resources (PostChain framebuffers, compiled programs, etc.).
+     * Called when the shader is unregistered, replaced, or the client shuts down.
      */
-    default void initOrReload(TextureManager textures, ResourceManager resources, RenderTarget target) {
+    default void dispose() {
         ;;
-    }
-
-    default void onLogout() {
-        clear();
     }
 
 }

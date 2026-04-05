@@ -8,93 +8,114 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Central registry and tick/render dispatcher for all custom post-processing shaders.
+ *
+ * Every public method must be called from the render thread, just in case.
+ */
 public final class PostShaderManager {
 
-    private static final Map<ResourceLocation, PostShader<?>> POST_SHADERS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, PostShader<?>> SHADERS = new LinkedHashMap<>();
 
     private PostShaderManager() {
         ;;
     }
 
     /**
-     * Registers a post shader and immediately reloads it against the current client resources
+     * Registers (or replaces) a custom post shader.
+     *
+     * If a shader with the same {@link PostShader#id() id} was already
+     * registered, it is {@linkplain PostShader#dispose() disposed} first so that
+     * GPU resources are not leaked.
      */
-    public static void register(PostShader<?> postShader) {
-        POST_SHADERS.put(postShader.id(), postShader);
+    public static void register(PostShader<?> shader) {
+        final PostShader<?> oldPostShader = SHADERS.put(shader.id(), shader);
+        if (oldPostShader != null && oldPostShader != shader) {
+            oldPostShader.dispose();
+        }
 
         final Minecraft minecraft = Minecraft.getInstance();
-        postShader.initOrReload(
+        shader.initOrReload(
                 minecraft.getTextureManager(),
                 minecraft.getResourceManager(),
                 minecraft.getMainRenderTarget()
         );
     }
 
+    /**
+     * Removes and disposes a custom post shader by id.
+     */
+    public static void unregister(ResourceLocation id) {
+        final PostShader<?> removedPostShader = SHADERS.remove(id);
+        if (removedPostShader != null) {
+            removedPostShader.dispose();
+        }
+
+    }
+
     @SuppressWarnings("unchecked")
     public static <PSS extends PostShaderSettings> PostShader<PSS> get(ResourceLocation id) {
-        return (PostShader<PSS>) POST_SHADERS.get(id);
+        return (PostShader<PSS>) SHADERS.get(id);
     }
 
     public static Collection<PostShader<?>> all() {
-        return POST_SHADERS.values();
+        return Collections.unmodifiableCollection(SHADERS.values());
     }
 
     public static <PSS extends PostShaderSettings> void start(ResourceLocation id, PSS settings) {
-        final PostShader<PSS> postShader = get(id);
-        if (postShader != null) {
-            postShader.start(settings);
+        final PostShader<PSS> shader = get(id);
+        if (shader != null) {
+            shader.start(settings);
         }
 
     }
 
     public static void stop(ResourceLocation id) {
-        final PostShader<?> postShader = POST_SHADERS.get(id);
-        if (postShader != null) {
-            postShader.clear();
+        final PostShader<?> shader = SHADERS.get(id);
+        if (shader != null) {
+            shader.clear();
         }
 
     }
 
     public static void stopAll() {
-        for (PostShader<?> postShader : POST_SHADERS.values()) {
-            postShader.clear();
+        for (final PostShader<?> shader : SHADERS.values()) {
+            shader.clear();
         }
 
     }
 
-    /**
-     * Per-tick update for all shaders present in the current level
-     */
     public static void clientTick() {
-        final Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
+        if (Minecraft.getInstance().level == null) {
             return;
         }
 
-        for (PostShader<?> postShader : POST_SHADERS.values()) {
-            postShader.clientTick();
+        for (final PostShader<?> shader : SHADERS.values()) {
+            shader.clientTick();
         }
 
     }
 
     public static void renderOverlay(GuiGraphics graphics, float partialTicks) {
-        for (PostShader<?> postShader : POST_SHADERS.values()) {
-            postShader.renderOverlay(graphics, partialTicks);
+        for (final PostShader<?> shader : SHADERS.values()) {
+            shader.renderOverlay(graphics, partialTicks);
         }
 
     }
 
     /**
-     * Each shader declares which stages it can be rendered into
+     * Dispatches a render stage to every shader that declared interest in it.
+     *
      * @see PostShaderRenderStage
      */
     public static void renderStage(PostShaderRenderContext context) {
-        for (PostShader<?> postShader : POST_SHADERS.values()) {
-            if (postShader.stages().contains(context.stage)) {
-                postShader.renderStage(context);
+        for (final PostShader<?> shader : SHADERS.values()) {
+            if (shader.stages().contains(context.stage)) {
+                shader.renderStage(context);
             }
 
         }
@@ -102,24 +123,34 @@ public final class PostShaderManager {
     }
 
     /**
-     * Called when the client triggers a disconnection. Safely clears each shader
+     * Called on client disconnect.
      */
     public static void onLogout() {
-        for (PostShader<?> postShader : POST_SHADERS.values()) {
-            postShader.onLogout();
+        for (final PostShader<?> shader : SHADERS.values()) {
+            shader.onLogout();
         }
 
     }
 
     /**
-     * Reinitializes all shaders after a client resource reload is performed
-     * @see dev.xylonity.knightlib.api.event.impl.client.ClientResourcesReloadedEvent event that should be triggered
+     * Reinitialises all shaders after a resource-pack reload.
      */
     public static void onRegisterShaders(TextureManager textures, ResourceManager resources, RenderTarget target) {
-        for (PostShader<?> postShader : POST_SHADERS.values()) {
-            postShader.initOrReload(textures, resources, target);
+        for (final PostShader<?> shader : SHADERS.values()) {
+            shader.initOrReload(textures, resources, target);
         }
 
+    }
+
+    /**
+     * Disposes every shader and empties the registry.
+     */
+    public static void disposeAll() {
+        for (final PostShader<?> shader : SHADERS.values()) {
+            shader.dispose();
+        }
+
+        SHADERS.clear();
     }
 
 }
