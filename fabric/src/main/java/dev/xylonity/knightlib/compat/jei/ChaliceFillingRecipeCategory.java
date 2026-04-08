@@ -37,9 +37,9 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFillingRecipe> {
 
-    public static final ResourceLocation UID = new ResourceLocation(KnightLib.MOD_ID, "block_filling");
+    public static final ResourceLocation UID = KnightLib.of("block_filling");
     public static final RecipeType<ChaliceFillingRecipe> TYPE = new RecipeType<>(UID, ChaliceFillingRecipe.class);
-    public static final ResourceLocation SHADOW = new ResourceLocation(KnightLib.MOD_ID, "textures/gui/shadow.png");
+    public static final ResourceLocation SHADOW = KnightLib.of("textures/gui/shadow.png");
 
     private GreatChaliceBlockEntity cachedBlockEntity;
     private GreatChaliceStartsetRing cachedEntity;

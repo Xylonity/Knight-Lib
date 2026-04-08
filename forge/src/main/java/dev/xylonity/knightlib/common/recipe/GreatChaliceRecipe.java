@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
 
-    private static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "great_chalice_interaction");
+    private static final ResourceLocation ID = KnightLib.of("great_chalice_interaction");
 
     public static final RecipeSerializer<GreatChaliceRecipe> SERIALIZER = new Serializer();
     public static final RecipeType<GreatChaliceRecipe> RECIPE_TYPE = new Type();

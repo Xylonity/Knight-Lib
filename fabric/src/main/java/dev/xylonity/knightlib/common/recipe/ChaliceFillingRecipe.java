@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements Recipe<SimpleContainer> {
 
-    private static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "block_filling");
+    private static final ResourceLocation ID = KnightLib.of("block_filling");
 
     public static final RecipeSerializer<ChaliceFillingRecipe> SERIALIZER = new Serializer();
     public static final RecipeType<ChaliceFillingRecipe> RECIPE_TYPE = new Type();

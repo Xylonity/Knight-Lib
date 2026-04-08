@@ -24,15 +24,15 @@ import java.util.Map;
 public class RecipeManagerMixin {
 
     @Unique
-    private static final String knightlib$GREAT_CHALICE = new ResourceLocation(KnightLib.MOD_ID, "great_chalice").toString();
+    private static final String knightlib$GREAT_CHALICE = KnightLib.of("great_chalice").toString();
     @Unique
-    private static final String knightlib$HOMUNCULUS = new ResourceLocation(KnightLib.MOD_ID, "homunculus").toString();
+    private static final String knightlib$HOMUNCULUS = KnightLib.of("homunculus").toString();
     @Unique
-    private static final String knightlib$EMPTY_GRAIL = new ResourceLocation(KnightLib.MOD_ID, "empty_grail").toString();
+    private static final String knightlib$EMPTY_GRAIL = KnightLib.of("empty_grail").toString();
     @Unique
-    private static final String knightlib$SMALL_ESSENCE = new ResourceLocation(KnightLib.MOD_ID, "small_essence").toString();
+    private static final String knightlib$SMALL_ESSENCE = KnightLib.of("small_essence").toString();
     @Unique
-    private static final String knightlib$GREAT_ESSENCE = new ResourceLocation(KnightLib.MOD_ID, "great_essence").toString();
+    private static final String knightlib$GREAT_ESSENCE = KnightLib.of("great_essence").toString();
 
     @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD"))
     private void knightlib$apply(Map<?, ?> map, ResourceManager resourceManager, ProfilerFiller profilerFiller, CallbackInfo ci) {
@@ -120,13 +120,13 @@ public class RecipeManagerMixin {
             Collection<Map<ResourceLocation, ?>> byType = (Collection<Map<ResourceLocation, ?>>) map.values();
             for (Map<ResourceLocation, ?> byId : byType) {
                 if (greatChalice) {
-                    byId.remove(new ResourceLocation(KnightLib.MOD_ID, "great_chalice"));
+                    byId.remove(KnightLib.of("great_chalice"));
                 }
                 if (homunculus) {
-                    byId.remove(new ResourceLocation(KnightLib.MOD_ID, "homunculus"));
+                    byId.remove(KnightLib.of("homunculus"));
                 }
                 if (emptyGrail) {
-                    byId.remove(new ResourceLocation(KnightLib.MOD_ID, "empty_grail"));
+                    byId.remove(KnightLib.of("empty_grail"));
                 }
 
             }

@@ -16,12 +16,12 @@ public class GenericBlockItemModel extends GeoModel<GenericBlockItem> {
 
     @Override
     public ResourceLocation getModelResource(GenericBlockItem animatable) {
-        return new ResourceLocation(KnightLib.MOD_ID, "geo/" + name + ".geo.json");
+        return KnightLib.of("geo/" + name + ".geo.json");
     }
 
     @Override
     public ResourceLocation getTextureResource(GenericBlockItem animatable) {
-        return new ResourceLocation(KnightLib.MOD_ID, "textures/block/" + name + ".png");
+        return KnightLib.of("textures/block/" + name + ".png");
     }
 
     @Override

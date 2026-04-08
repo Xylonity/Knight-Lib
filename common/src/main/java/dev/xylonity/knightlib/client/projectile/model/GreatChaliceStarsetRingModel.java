@@ -9,16 +9,16 @@ public class GreatChaliceStarsetRingModel extends GeoModel<GreatChaliceStartsetR
 
     @Override
     public ResourceLocation getModelResource(GreatChaliceStartsetRing animatable) {
-        return new ResourceLocation(KnightLib.MOD_ID, "geo/great_chalice_starset_ring.geo.json");
+        return KnightLib.of("geo/great_chalice_starset_ring.geo.json");
     }
 
     @Override
     public ResourceLocation getTextureResource(GreatChaliceStartsetRing animatable) {
-        int frames = 10;
-        int perTick = 1;
+        final int frames = 10;
+        final int perTick = 1;
 
         int frameIndex = (animatable.tickCount / perTick) % frames;
-        return new ResourceLocation(KnightLib.MOD_ID, String.format("textures/entity/great_chalice_starset_ring_%d.png", frameIndex));
+        return KnightLib.of(String.format("textures/entity/great_chalice_starset_ring_%d.png", frameIndex));
     }
 
     @Override

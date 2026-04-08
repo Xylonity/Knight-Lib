@@ -33,10 +33,10 @@ import org.joml.Vector3f;
 import software.bernie.geckolib.renderer.GeoBlockRenderer;
 
 public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatChaliceRecipe> {
-    public static final ResourceLocation UID = new ResourceLocation(KnightLib.MOD_ID, "great_chalice_interaction");
+    public static final ResourceLocation UID = KnightLib.of("great_chalice_interaction");
     public static final RecipeType<GreatChaliceRecipe> TYPE = new RecipeType<>(UID, GreatChaliceRecipe.class);
 
-    public static final ResourceLocation SHADOW = new ResourceLocation(KnightLib.MOD_ID, "textures/gui/shadow.png");
+    public static final ResourceLocation SHADOW = KnightLib.of("textures/gui/shadow.png");
 
     private final IDrawable icon;
 

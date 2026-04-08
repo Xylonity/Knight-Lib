@@ -17,7 +17,7 @@ public record CameraShakeS2C(
         boolean replace
 ) {
 
-    public static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "camera_shake");
+    public static final ResourceLocation ID = KnightLib.of("camera_shake");
 
     public static final ClientboundPacketType<CameraShakeS2C> TYPE =
             PacketType.clientbound(

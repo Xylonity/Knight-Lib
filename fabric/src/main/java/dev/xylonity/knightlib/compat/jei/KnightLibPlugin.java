@@ -20,7 +20,7 @@ import java.util.List;
 @JeiPlugin
 public final class KnightLibPlugin implements IModPlugin {
 
-    private static final ResourceLocation UID = new ResourceLocation(KnightLib.MOD_ID, "jei_plugin");
+    private static final ResourceLocation UID = KnightLib.of("jei_plugin");
 
     @Override
     public @NotNull ResourceLocation getPluginUid() {
