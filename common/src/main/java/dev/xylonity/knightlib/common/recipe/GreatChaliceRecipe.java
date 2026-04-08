@@ -2,8 +2,6 @@ package dev.xylonity.knightlib.common.recipe;
 
 import com.google.gson.JsonObject;
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.KnightLibForge;
-import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
@@ -12,16 +10,20 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+
+import net.minecraft.world.item.crafting.*;
 import org.jetbrains.annotations.NotNull;
 
-public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements Recipe<SimpleContainer> {
+public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
 
-    private static final ResourceLocation ID = KnightLib.of("block_filling");
+    private static final ResourceLocation ID = KnightLib.of("great_chalice_interaction");
 
-    public static final RecipeSerializer<ChaliceFillingRecipe> SERIALIZER = new Serializer();
-    public static final RecipeType<ChaliceFillingRecipe> RECIPE_TYPE = new Type();
+    public static final RecipeSerializer<GreatChaliceRecipe> SERIALIZER = new Serializer();
+    public static final RecipeType<GreatChaliceRecipe> RECIPE_TYPE = new Type();
+
+    public final ItemStack input = new ItemStack(KnightLibItems.EMPTY_GRAIL.get());
+    public final ItemStack output = new ItemStack(KnightLibItems.FILLED_GRAIL.get());
 
     @Override
     public boolean matches(SimpleContainer inv, @NotNull Level lvl) {
@@ -30,7 +32,7 @@ public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements 
 
     @Override
     public @NotNull ItemStack assemble(@NotNull SimpleContainer inv, @NotNull RegistryAccess reg) {
-        return ItemStack.EMPTY;
+        return output.copy();
     }
 
     @Override
@@ -40,7 +42,7 @@ public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements 
 
     @Override
     public @NotNull ItemStack getResultItem(@NotNull RegistryAccess reg) {
-        return ItemStack.EMPTY;
+        return output.copy();
     }
 
     @Override
@@ -58,7 +60,7 @@ public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements 
         return RECIPE_TYPE;
     }
 
-    public static class Type implements RecipeType<ChaliceFillingRecipe> {
+    public static final class Type implements RecipeType<GreatChaliceRecipe> {
 
         @Override
         public String toString() {
@@ -67,24 +69,19 @@ public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements 
 
     }
 
-    public static class Serializer implements RecipeSerializer<ChaliceFillingRecipe> {
+    public static final class Serializer implements RecipeSerializer<GreatChaliceRecipe> {
         @Override
-        public @NotNull ChaliceFillingRecipe fromJson(@NotNull ResourceLocation id, @NotNull JsonObject json) {
-            return new ChaliceFillingRecipe(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()));
+        public @NotNull GreatChaliceRecipe fromJson(@NotNull ResourceLocation id, @NotNull JsonObject json) {
+            return new GreatChaliceRecipe();
         }
 
         @Override
-        public ChaliceFillingRecipe fromNetwork(@NotNull ResourceLocation id, @NotNull FriendlyByteBuf buf) {
-            ItemStack input = buf.readItem();
-            ItemStack block = buf.readItem();
-            return new ChaliceFillingRecipe(input, block);
+        public GreatChaliceRecipe fromNetwork(@NotNull ResourceLocation id, @NotNull FriendlyByteBuf buf) {
+            return new GreatChaliceRecipe();
         }
 
         @Override
-        public void toNetwork(@NotNull FriendlyByteBuf buf, @NotNull ChaliceFillingRecipe rec) {
-            buf.writeItem(rec.input);
-            buf.writeItem(rec.block);
-        }
+        public void toNetwork(@NotNull FriendlyByteBuf buf, @NotNull GreatChaliceRecipe rec) { ;; }
     }
 
 }

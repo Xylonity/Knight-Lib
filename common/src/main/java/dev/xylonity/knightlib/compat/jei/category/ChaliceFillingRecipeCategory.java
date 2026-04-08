@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.compat.jei;
+package dev.xylonity.knightlib.compat.jei.category;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;

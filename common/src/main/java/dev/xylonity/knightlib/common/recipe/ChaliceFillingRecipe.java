@@ -2,7 +2,6 @@ package dev.xylonity.knightlib.common.recipe;
 
 import com.google.gson.JsonObject;
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.KnightLibFabric;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.core.RegistryAccess;

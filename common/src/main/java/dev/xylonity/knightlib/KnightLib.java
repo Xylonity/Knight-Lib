@@ -35,6 +35,8 @@ public class KnightLib {
         KnightLibItems.ITEMS.init();
         KnightLibParticles.PARTICLES.init();
         KnightLibBlockEntities.BLOCK_ENTITIES.init();
+        KnightLibRecipeTypes.RECIPE_TYPES.init();
+        KnightLibRecipeSerializers.RECIPE_SERIALIZERS.init();
 
         initialize();
     }
