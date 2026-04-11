@@ -90,16 +90,26 @@ public class BoneHitboxLayer<T extends LivingEntity & GeoAnimatable & BoneHitbox
         }
 
         final BoneHitbox hitbox = manager.get(bone.getName());
-        if (hitbox != null && hitbox.isAutoSize() && hitbox.getHalfExtents() == null) {
+        if (hitbox != null && hitbox.isAutoSize() && hitbox.getBaseHalfExtents() == null) {
             computeAutoSize(hitbox, bone);
         }
 
         // World-space position of the bone
         final Vector3d worldPosition = bone.getWorldPosition();
 
-        // Exacts rotation (3x3) from the model matrix
+        // Extracts rotation (3x3) from the model matrix
         final Matrix3f boneRotation = new Matrix3f();
         bone.getModelSpaceMatrix().get3x3(boneRotation);
+
+        // Extracts the scale (column lengths) before normalizing
+        final float scaleX = columnLength(boneRotation, 0);
+        final float scaleY = columnLength(boneRotation, 1);
+        final float scaleZ = columnLength(boneRotation, 2);
+
+        // Applies bone scale to the base half-extents
+        if (hitbox != null) {
+            hitbox.applyScale(scaleX, scaleY, scaleZ);
+        }
 
         // Removes scaling from the rotation matrix
         normalizeColumns(boneRotation);
@@ -114,8 +124,9 @@ public class BoneHitboxLayer<T extends LivingEntity & GeoAnimatable & BoneHitbox
         // Updates the manager with the computed data
         manager.updateBoneTransform(bone.getName(), position, rotation);
 
-        // Includes half-extents if it's autosized (the server cannot compute it)
-        final Vec3 halfExtents = (hitbox != null && hitbox.isAutoSize()) ? hitbox.getHalfExtents() : null;
+        // Includes the current half-extents in sync packet (the server needs them for autosized
+        // hitboxes, and they change each frame when bone scale is animated)
+        final Vec3 halfExtents = (hitbox != null) ? hitbox.getHalfExtents() : null;
         pendingTransforms.put(bone.getName(), new BoneHitboxSyncC2S.BoneTransform(position, rotation, halfExtents));
     }
 
@@ -136,12 +147,12 @@ public class BoneHitboxLayer<T extends LivingEntity & GeoAnimatable & BoneHitbox
     }
 
     /**
-     * Computes the half-extents for an auto-sized hitbox by enclosing all cubes of the bone
+     * Computes the base half-extents for an auto-sized hitbox by enclosing all cubes of the bone
      */
     private static void computeAutoSize(BoneHitbox hitbox, GeoBone bone) {
         final List<GeoCube> cubes = bone.getCubes();
         if (cubes.isEmpty()) {
-            hitbox.setHalfExtents(new Vec3(0.1, 0.1, 0.1));
+            hitbox.setBaseHalfExtents(new Vec3(0.1, 0.1, 0.1));
             return;
         }
 
@@ -158,31 +169,44 @@ public class BoneHitboxLayer<T extends LivingEntity & GeoAnimatable & BoneHitbox
             maxZ = Math.max(maxZ, hz);
         }
 
-        hitbox.setHalfExtents(new Vec3(maxX, maxY, maxZ));
+        hitbox.setBaseHalfExtents(new Vec3(maxX, maxY, maxZ));
+    }
+
+    /**
+     * Returns the length of the specified column of a 3x3 matrix
+     */
+    private static float columnLength(Matrix3f matrix, int column) {
+        return switch (column) {
+            case 0 -> (float) Math.sqrt(matrix.m00 * matrix.m00 + matrix.m01 * matrix.m01 + matrix.m02 * matrix.m02);
+            case 1 -> (float) Math.sqrt(matrix.m10 * matrix.m10 + matrix.m11 * matrix.m11 + matrix.m12 * matrix.m12);
+            case 2 -> (float) Math.sqrt(matrix.m20 * matrix.m20 + matrix.m21 * matrix.m21 + matrix.m22 * matrix.m22);
+            default -> 1f;
+        };
+
     }
 
     /**
      * Normalizes the columns of a 3x3 rotation matrix to remove any scale factor
      */
-    private static void normalizeColumns(Matrix3f m) {
-        float len0 = (float) Math.sqrt(m.m00 * m.m00 + m.m01 * m.m01 + m.m02 * m.m02);
-        float len1 = (float) Math.sqrt(m.m10 * m.m10 + m.m11 * m.m11 + m.m12 * m.m12);
-        float len2 = (float) Math.sqrt(m.m20 * m.m20 + m.m21 * m.m21 + m.m22 * m.m22);
+    private static void normalizeColumns(Matrix3f matrix) {
+        float len0 = columnLength(matrix, 0);
+        float len1 = columnLength(matrix, 1);
+        float len2 = columnLength(matrix, 2);
 
         if (len0 > 1e-6f) {
-            m.m00 /= len0;
-            m.m01 /= len0;
-            m.m02 /= len0;
+            matrix.m00 /= len0;
+            matrix.m01 /= len0;
+            matrix.m02 /= len0;
         }
         if (len1 > 1e-6f) {
-            m.m10 /= len1;
-            m.m11 /= len1;
-            m.m12 /= len1;
+            matrix.m10 /= len1;
+            matrix.m11 /= len1;
+            matrix.m12 /= len1;
         }
         if (len2 > 1e-6f) {
-            m.m20 /= len2;
-            m.m21 /= len2;
-            m.m22 /= len2;
+            matrix.m20 /= len2;
+            matrix.m21 /= len2;
+            matrix.m22 /= len2;
         }
     }
 

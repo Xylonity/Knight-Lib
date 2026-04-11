@@ -11,6 +11,7 @@
   "client": [
     "AbstractTickableSoundInstanceAccessor",
     "CameraAccessor",
+    "EntityRenderDispatcherMixin",
     "GameRendererMixin",
     "PostChainAccessor",
     "PostPassAccessor"

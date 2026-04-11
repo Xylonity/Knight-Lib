@@ -144,7 +144,7 @@ public record BoneHitboxSyncC2S(
             // Syncs auto-sized half-extents from client to server
             if (boneTransform.halfExtents() != null) {
                 final BoneHitbox hitbox = manager.get(entry.getKey());
-                if (hitbox != null && hitbox.isAutoSize() && hitbox.getHalfExtents() == null) {
+                if (hitbox != null) {
                     hitbox.setHalfExtents(boneTransform.halfExtents());
                 }
 

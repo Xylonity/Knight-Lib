@@ -29,6 +29,7 @@ import java.util.function.Predicate;
 public class BoneHitbox {
 
     private final String boneName;
+    private @Nullable Vec3 baseHalfExtents;
     private @Nullable Vec3 halfExtents;
     private final boolean autoSize;
 
@@ -42,6 +43,7 @@ public class BoneHitbox {
 
     private BoneHitbox(String boneName, @Nullable Vec3 halfExtents, boolean autoSize) {
         this.boneName = boneName;
+        this.baseHalfExtents = halfExtents;
         this.halfExtents = halfExtents;
         this.autoSize = autoSize;
     }
@@ -104,10 +106,17 @@ public class BoneHitbox {
     }
 
     /**
-     * Returns the half-extents, or {@code null} if autosized and not yet computed
+     * Returns the effective half-extents (base * bone scale), or {@code null} if not yet computed
      */
     public @Nullable Vec3 getHalfExtents() {
         return halfExtents;
+    }
+
+    /**
+     * Returns the base half-extents before bone scale is applied
+     */
+    public @Nullable Vec3 getBaseHalfExtents() {
+        return baseHalfExtents;
     }
 
     public boolean isAutoSize() {
@@ -139,10 +148,39 @@ public class BoneHitbox {
     }
 
     /**
-     * Sets the half-extents, used by the render layer when autosizing from bone cubes
+     * Sets the base half-extents. Used by the render layer when autosizing from bone cubes, or by the server when
+     * receiving autosized dimensions from the client
+     */
+    public void setBaseHalfExtents(Vec3 baseHalfExtents) {
+        this.baseHalfExtents = baseHalfExtents;
+        this.halfExtents = baseHalfExtents;
+    }
+
+    /**
+     * Sets the effective half-extents directly (already scaled). Used by the server when receiving the scaled
+     * dimensions from the sync packet
      */
     public void setHalfExtents(@Nullable Vec3 halfExtents) {
         this.halfExtents = halfExtents;
+    }
+
+    /**
+     * Applies bone scale to the base half-extents, updating the effective size
+     *
+     * @param scaleX scale factor along the bone's local X axis
+     * @param scaleY scale factor along the bone's local Y axis
+     * @param scaleZ scale factor along the bone's local Z axis
+     */
+    public void applyScale(float scaleX, float scaleY, float scaleZ) {
+        if (baseHalfExtents == null) {
+            return;
+        }
+
+        this.halfExtents = new Vec3(
+                baseHalfExtents.x * scaleX,
+                baseHalfExtents.y * scaleY,
+                baseHalfExtents.z * scaleZ
+        );
     }
 
     /**
