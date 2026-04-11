@@ -1,6 +1,7 @@
 package dev.xylonity.knightlib.registry;
 
 import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.network.packets.BoneHitboxSyncC2S;
 import dev.xylonity.knightlib.network.packets.BossBarLinkS2C;
 import dev.xylonity.knightlib.network.packets.CameraShakeS2C;
 
@@ -17,7 +18,7 @@ public class KnightLibPackets {
     }
 
     public static void registerC2S() {
-        ;;
+        KnightLib.NET.register(BoneHitboxSyncC2S.TYPE);
     }
 
 }

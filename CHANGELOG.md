@@ -3,6 +3,7 @@
 - The forge version no longer replicates its own configuration system, avoiding irrelevant alerts in the logs, among other issues
 - Added a common event bus abstraction that automatically derives registration and execution calls to their loader-specific derivatives, with sticky system applicability (mainly for fabric)
 - Added an automaton system (finite state machine) for handling complex entity logic.
+- Added an OBB (Oriented Bounding Box) system that allows assigning dynamic hitboxes to bones in geckolib entities
 - The networking system has been generalized so that each mod represents its own communication channel instead of using knightlib to register and send its own packets, which led to untimely crashes and packets that never arrived
 - Added utilities to work with post shaders (and accumulating multitarget post shaders) more uniformly
 - Added utilities to manage the spawning of entities in specific biomes in a simpler and more centralized way
