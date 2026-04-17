@@ -55,7 +55,6 @@ final class PersistentSoundTracker {
             }
 
             SoundState state = active.get(name);
-
             if (state == null) {
                 // New activation
                 state = new SoundState();
@@ -71,8 +70,49 @@ final class PersistentSoundTracker {
                 activate(sound, state, entity);
             }
 
+            state.aliveThisTick = true;
         }
 
+    }
+
+    /**
+     * Any sound that's not marked alive during this tick is deactivated. Lets callers that just stop calling tick(...) have their sounds fade out
+     * without needing an explicit stop. Entity may be null if it has left the level
+     */
+    void sweep(Entity entity) {
+        final Iterator<Map.Entry<String, SoundState>> iterator = active.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final Map.Entry<String, SoundState> entry = iterator.next();
+            final SoundState state = entry.getValue();
+
+            // Already stopped
+            if (state.instance != null && state.instance.isStopped()) {
+                iterator.remove();
+                continue;
+            }
+
+            if (!state.aliveThisTick) {
+                // If the caller didn't tick this sound this tick, fades it out, or either hard-stops the sound
+                if (entity != null) {
+                    deactivate(entry.getKey(), state, entity);
+                }
+                else if (state.instance != null) {
+                    state.instance.stopImmediately();
+                }
+
+                iterator.remove();
+            }
+            else {
+                // Resets for next tick
+                state.aliveThisTick = false;
+            }
+
+        }
+
+    }
+
+    boolean isEmpty() {
+        return active.isEmpty();
     }
 
     void stopAll() {
@@ -150,6 +190,7 @@ final class PersistentSoundTracker {
         @Nullable
         PersistentSoundInstance instance;
 
+        boolean aliveThisTick;
     }
 
 }

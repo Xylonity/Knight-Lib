@@ -5,6 +5,7 @@ import dev.xylonity.knightlib.api.event.RegisterEvent;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.api.sound.music.IBossMusicProvider;
+import dev.xylonity.knightlib.api.sound.persistent.KnightLibPersistentSounds;
 import dev.xylonity.knightlib.api.scheduler.TickScheduler;
 import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
 import dev.xylonity.knightlib.client.particle.StarsetParticle;
@@ -34,6 +35,7 @@ public class KnightLibClientEvents {
                 BossMusicRegistry.clear();
                 BossMusicManager.clear();
                 CameraShakeManager.clearAll();
+                KnightLibPersistentSounds.clearAll();
                 return;
             }
 
@@ -41,6 +43,8 @@ public class KnightLibClientEvents {
             TickScheduler.incrementTick(level);
             TickScheduler.processClientTasks(level);
             TickScheduler.processCommonTasks(level);
+
+            KnightLibPersistentSounds.endClientTick();
         }
 
     }
@@ -97,6 +101,7 @@ public class KnightLibClientEvents {
         BossMusicRegistry.clear();
         BossMusicManager.clear();
         CameraShakeManager.clearAll();
+        KnightLibPersistentSounds.clearAll();
         PostShaderManager.onLogout();
     }
 

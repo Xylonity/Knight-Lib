@@ -1,7 +1,9 @@
 package dev.xylonity.knightlib.api.sound.persistent;
 
+import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.sound.persistent.impl.PersistentSoundProfile;
 import dev.xylonity.knightlib.api.sound.persistent.impl.PersistentSoundProfileBuilder;
+import dev.xylonity.knightlib.network.packets.PersistentSoundTickS2C;
 import net.minecraft.world.entity.Entity;
 
 import java.util.ArrayList;
@@ -26,9 +28,9 @@ import java.util.List;
  *     .submit();
  * }</pre>
  *
- * <h4>Usage from the entity:</h4>
+ * <h4>Usage from an entity:</h4>
  * <pre>{@code
- * // in tick()
+ * // in Entity#tick()
  * if (level.isClientSide()) {
  *      if (getState() == 1) {
  *          KnightLibPersistentSounds.tick(this, "fly");
@@ -38,11 +40,17 @@ import java.util.List;
  *      }
  * }
  *
- * // In remove()
+ * // stopAll is optional: if you simply stop calling tick(), the end of the current client tick will deactivate active sounds
  * if (level.isClientSide()) {
  *      KnightLibPersistentSounds.stopAll(this);
  * }
- *}</pre>
+ * }</pre>
+ *
+ * <h4>Shared usage (audible to nearby players, in case the source of the sound is caused by the client player, like when using an item):</h4>
+ * <pre>{@code
+ * // Wherever runs on the server
+ * KnightLibPersistentSounds.tickShared(player, "companions:cake");
+ * }</pre>
  */
 public final class KnightLibPersistentSounds {
 
@@ -62,15 +70,35 @@ public final class KnightLibPersistentSounds {
     }
 
     /**
-     * Ticks the named sounds for the given entity.
-     * Sounds not in this list that were previously active will be stopped (or faded out).
+     * Ticks the named sounds for the given entity on the local client. Use this when the caller code already runs on
+     * every nearby client. Sounds no longer ticked are deactivated by the end of the client tick.
      */
     public static void tick(Entity entity, String... names) {
         engine.tick(entity, names);
     }
 
     /**
-     * Immediately stops all persistent sounds for the given entity.
+     * When invoked from the server, throws a S2C packet to every client tracking the entity so nearby players can hear
+     * the sound at the entity's position. When invoked from the client, ticks locally as {@link #tick} does
+     *
+     * <p>Calling this on both sides should be safe. The using client ticks locally, the server broadcasts, and the {@code aliveThisTick}
+     * flag makes a redundant network packet on the using player a no-op
+     */
+    public static void tickShared(Entity entity, String... names) {
+        if (entity == null || names.length == 0) {
+            return;
+        }
+
+        if (entity.level().isClientSide()) {
+            engine.tick(entity, names);
+        }
+        else {
+            KnightLib.NET.sendToTracking(entity, PersistentSoundTickS2C.TYPE.base(), new PersistentSoundTickS2C(entity.getId(), names));
+        }
+    }
+
+    /**
+     * Immediately stops all persistent sounds for the given entity (local client)
      */
     public static void stopAll(Entity entity) {
         engine.stopAll(entity);
@@ -81,6 +109,14 @@ public final class KnightLibPersistentSounds {
      */
     public static void clearAll() {
         engine.clearAll();
+    }
+
+    /**
+     * Runs the end of client tick sweep. Intended to be invoked once per client tick by the
+     * client event bus. Deactivates sounds that were not ticked this round. Internal, do not use
+     */
+    public static void endClientTick() {
+        engine.endClientTick();
     }
 
     public static void addProfile(PersistentSoundProfile<?> profile) {
@@ -104,6 +140,7 @@ public final class KnightLibPersistentSounds {
         void tick(Entity entity, String... names);
         void stopAll(Entity entity);
         void clearAll();
+        void endClientTick();
 
         PersistentSoundEngine NOOP = new PersistentSoundEngine() {
 
@@ -119,6 +156,11 @@ public final class KnightLibPersistentSounds {
 
             @Override
             public void clearAll() {
+                ;;
+            }
+
+            @Override
+            public void endClientTick() {
                 ;;
             }
 
