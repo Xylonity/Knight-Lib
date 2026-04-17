@@ -2,14 +2,13 @@ package dev.xylonity.knightlib.network.packets;
 
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.sound.persistent.KnightLibPersistentSounds;
+import dev.xylonity.knightlib.client.sound.persistent.internal.PersistentSoundPacketClientHandler;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
 
 /**
  * Clientbound packet emitted by {@link KnightLibPersistentSounds#tickShared(Entity, String...)}. Each tracking client resolves
@@ -27,7 +26,7 @@ public record PersistentSoundTickS2C(
                     ID,
                     PersistentSoundTickS2C.class,
                     PacketCodec.of(PersistentSoundTickS2C::encode, PersistentSoundTickS2C::decode),
-                    PersistentSoundTickS2C::handle
+                    packet -> PersistentSoundPacketClientHandler.handle(packet)
             );
 
     public static void encode(PersistentSoundTickS2C packet, FriendlyByteBuf buf) {
@@ -48,20 +47,6 @@ public record PersistentSoundTickS2C(
         }
 
         return new PersistentSoundTickS2C(entityId, names);
-    }
-
-    private static void handle(PersistentSoundTickS2C packet) {
-        final Level level = Minecraft.getInstance().level;
-        if (level == null) {
-            return;
-        }
-
-        final Entity entity = level.getEntity(packet.entityId());
-        if (entity == null) {
-            return;
-        }
-
-        KnightLibPersistentSounds.tick(entity, packet.names());
     }
 
 }
