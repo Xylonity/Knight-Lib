@@ -7,6 +7,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -17,9 +19,9 @@ import java.util.Set;
 public final class ClientPersistentSoundEngine implements KnightLibPersistentSounds.PersistentSoundEngine {
 
     /**
-     * One tracker per entity id
+     * Per entity id, one tracker per matching profile
      */
-    private final Map<Integer, PersistentSoundTracker> trackers = new HashMap<>();
+    private final Map<Integer, Map<PersistentSoundProfile<?>, PersistentSoundTracker>> trackers = new HashMap<>();
 
     @Override
     public void tick(Entity entity, String... names) {
@@ -27,21 +29,38 @@ public final class ClientPersistentSoundEngine implements KnightLibPersistentSou
             return;
         }
 
-        final int id = entity.getId();
-        PersistentSoundTracker tracker = trackers.get(id);
+        final Map<PersistentSoundProfile<?>, PersistentSoundTracker> perProfile =
+                trackers.computeIfAbsent(entity.getId(), id -> new IdentityHashMap<>());
 
-        // First call for this entity locates its matching profile and creates a tracker for it
-        if (tracker == null) {
-            final PersistentSoundProfile<?> profile = findProfile(entity);
-            if (profile == null) {
-                return;
+        Map<PersistentSoundProfile<?>, Set<String>> grouped = null;
+        for (final String name : names) {
+            final PersistentSoundProfile<?> owner = resolveOwner(entity, name);
+            if (owner == null) {
+                continue;
             }
 
-            tracker = new PersistentSoundTracker(profile);
-            trackers.put(id, tracker);
+            if (grouped == null) {
+                grouped = new IdentityHashMap<>();
+            }
+
+            grouped.computeIfAbsent(owner, p -> new HashSet<>()).add(name);
         }
 
-        tracker.tick(entity, Set.of(names));
+        if (grouped == null) {
+            return;
+        }
+
+        for (final Map.Entry<PersistentSoundProfile<?>, Set<String>> entry : grouped.entrySet()) {
+            final PersistentSoundProfile<?> profile = entry.getKey();
+            PersistentSoundTracker tracker = perProfile.get(profile);
+            if (tracker == null) {
+                tracker = new PersistentSoundTracker(profile);
+                perProfile.put(profile, tracker);
+            }
+
+            tracker.tick(entity, entry.getValue());
+        }
+
     }
 
     @Override
@@ -50,16 +69,24 @@ public final class ClientPersistentSoundEngine implements KnightLibPersistentSou
             return;
         }
 
-        final PersistentSoundTracker tracker = trackers.remove(entity.getId());
-        if (tracker != null) {
+        final Map<PersistentSoundProfile<?>, PersistentSoundTracker> perProfile = trackers.remove(entity.getId());
+        if (perProfile == null) {
+            return;
+        }
+
+        for (final PersistentSoundTracker tracker : perProfile.values()) {
             tracker.stopAll();
         }
+
     }
 
     @Override
     public void clearAll() {
-        for (final PersistentSoundTracker tracker : trackers.values()) {
-            tracker.stopAll();
+        for (final Map<PersistentSoundProfile<?>, PersistentSoundTracker> perProfile : trackers.values()) {
+            for (final PersistentSoundTracker tracker : perProfile.values()) {
+                tracker.stopAll();
+            }
+
         }
 
         trackers.clear();
@@ -69,14 +96,23 @@ public final class ClientPersistentSoundEngine implements KnightLibPersistentSou
     public void endClientTick() {
         final ClientLevel level = Minecraft.getInstance().level;
 
-        final Iterator<Map.Entry<Integer, PersistentSoundTracker>> iterator = trackers.entrySet().iterator();
+        final Iterator<Map.Entry<Integer, Map<PersistentSoundProfile<?>, PersistentSoundTracker>>> iterator = trackers.entrySet().iterator();
         while (iterator.hasNext()) {
-            final Map.Entry<Integer, PersistentSoundTracker> entry = iterator.next();
+            final Map.Entry<Integer, Map<PersistentSoundProfile<?>, PersistentSoundTracker>> entry = iterator.next();
             final Entity entity = level != null ? level.getEntity(entry.getKey()) : null;
-            final PersistentSoundTracker tracker = entry.getValue();
+            final Map<PersistentSoundProfile<?>, PersistentSoundTracker> perProfile = entry.getValue();
 
-            tracker.sweep(entity);
-            if (tracker.isEmpty()) {
+            final Iterator<PersistentSoundTracker> innerIterator = perProfile.values().iterator();
+            while (innerIterator.hasNext()) {
+                final PersistentSoundTracker tracker = innerIterator.next();
+                tracker.sweep(entity);
+                if (tracker.isEmpty()) {
+                    innerIterator.remove();
+                }
+
+            }
+
+            if (perProfile.isEmpty()) {
                 iterator.remove();
             }
 
@@ -84,12 +120,11 @@ public final class ClientPersistentSoundEngine implements KnightLibPersistentSou
 
     }
 
-    private PersistentSoundProfile<?> findProfile(Entity entity) {
+    private PersistentSoundProfile<?> resolveOwner(Entity entity, String name) {
         for (final PersistentSoundProfile<?> profile : KnightLibPersistentSounds.getProfiles()) {
-            if (profile.matches(entity)) {
+            if (profile.matches(entity) && profile.getSound(name) != null) {
                 return profile;
             }
-
         }
 
         return null;

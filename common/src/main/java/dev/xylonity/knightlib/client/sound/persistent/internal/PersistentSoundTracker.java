@@ -31,23 +31,6 @@ final class PersistentSoundTracker {
      * Called once per tick with the set of sound names that should be active.
      */
     void tick(Entity entity, Set<String> requested) {
-        // Stops sounds that are no longer requested
-        final Iterator<Map.Entry<String, SoundState>> iterator = active.entrySet().iterator();
-        while (iterator.hasNext()) {
-            final Map.Entry<String, SoundState> entry = iterator.next();
-            final String name = entry.getKey();
-            final SoundState state = entry.getValue();
-
-            if (!requested.contains(name)) {
-                deactivate(name, state, entity);
-                iterator.remove();
-            }
-            else if (state.instance != null && state.instance.isStopped()) {
-                iterator.remove();
-            }
-
-        }
-
         for (final String name : requested) {
             final PersistentSound sound = profile.getSound(name);
             if (sound == null) {
