@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.api.camera;
+package dev.xylonity.knightlib.api.camera.shake;
 
 import dev.xylonity.knightlib.api.util.KnightLibEasings;
 import net.minecraft.network.FriendlyByteBuf;

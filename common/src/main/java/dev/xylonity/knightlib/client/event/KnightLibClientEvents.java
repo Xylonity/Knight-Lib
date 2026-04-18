@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.client.event;
 
-import dev.xylonity.knightlib.api.camera.CameraShakeManager;
+import dev.xylonity.knightlib.api.camera.shake.CameraShakeManager;
 import dev.xylonity.knightlib.api.event.RegisterEvent;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;

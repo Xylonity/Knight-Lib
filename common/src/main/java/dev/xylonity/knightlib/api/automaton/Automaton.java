@@ -54,7 +54,7 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
     private float lastDamageAmount;
 
     @Nullable
-    private Targeting<E> targeting;
+    private final Targeting<? super E> targeting;
 
     private Automaton(Builder<E, S> builder) {
         this.behaviors = builder.behaviors;
@@ -379,7 +379,7 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         private final List<GlobalRule<E>> globalRules = new ArrayList<>();
 
         @Nullable
-        private Targeting<E> targeting;
+        private Targeting<? super E> targeting;
 
         private Builder(S initialState) {
             this.initialState = initialState;
@@ -425,7 +425,7 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         /**
          * Sets the targeting system
          */
-        public Builder<E, S> targeting(@Nullable Targeting<E> targeting) {
+        public Builder<E, S> targeting(@Nullable Targeting<? super E> targeting) {
             this.targeting = targeting;
             return this;
         }

@@ -1,8 +1,8 @@
 package dev.xylonity.knightlib.network.packets;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.api.camera.CameraShakeManager;
-import dev.xylonity.knightlib.api.camera.ShakeSettings;
+import dev.xylonity.knightlib.api.camera.shake.CameraShakeManager;
+import dev.xylonity.knightlib.api.camera.shake.ShakeSettings;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
