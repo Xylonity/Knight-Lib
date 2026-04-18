@@ -1,4 +1,5 @@
 # 1.5.0
+- License changed from GPLv3 to LGPL
 - The internal configuration system has been completely rewritten. In addition to specifying more information per se in the configuration entries, now KnightLib automatically creates a configuration screen/menu for each configuration file that a mod (that uses KnightLib) has in use
 - The forge version no longer replicates its own configuration system, avoiding irrelevant alerts in the logs, among other issues
 - Added a common event bus abstraction that automatically derives registration and execution calls to their loader-specific derivatives, with sticky system applicability (mainly for fabric)
