@@ -1,12 +1,15 @@
-package dev.xylonity.knightlib.client.shader.post;
+package dev.xylonity.knightlib.client.shader.post.impl;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.xylonity.knightlib.client.shader.post.internal.*;
+import dev.xylonity.knightlib.client.shader.post.*;
+import dev.xylonity.knightlib.client.shader.post.interop.MultiTargetPostShaderInstance;
+import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderContext;
+import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
+import dev.xylonity.knightlib.client.shader.post.interop.PostShaderSettings;
 import dev.xylonity.knightlib.mixin.PostChainAccessor;
 import dev.xylonity.knightlib.mixin.PostPassAccessor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.EffectInstance;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.client.renderer.PostPass;
@@ -24,33 +27,36 @@ import java.util.Map;
 /**
  * Generic multi-instance entity-driven post shader dispatcher
  *
- * Vanilla postchain is typically used "globally" (one chain, one set of targets, one uniform set...), so
+ * Vanilla {@link PostChain} is typically used "globally" (one chain, one set of targets, one uniform set...), so
  * when multiple entities try to drive the same post effect in the same frame, they conflict, causing flicker and
  * a huge set of possible visual glitches.
  *
- * This base class solves it by maintining a registry of instances keyed by K, giving each key its own PostChain,
+ * This base class solves it by maintaining a registry of instances keyed by K, giving each key its own PostChain,
  * accumulating per-instance uniforms per frame and processing instances sequentially in a chosen render stage.
  *
- * - prepareForDraw() method copies depth from minecraft:main and clears only the color on aux targets, so this
- * is important to keep depth-based occlusion stable while avoiding stale color
+ * {@link Instance#prepareForDraw()} copies depth from minecraft:main and clears only the color on aux targets,
+ * keeping depth-based occlusion stable while avoiding stale color
  *
  * @param <PSS> Optional settings for the current post shader
  * @param <K> Object which the current post shader is linked to (must be an idempotent-key, like a UUID or an entity id)
  *
  * @author Xylonity
  */
-public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSettings, K> extends AbstractPostShader<PSS> implements PostShader<PSS> {
+public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSettings, K> extends AbstractPostShader<PSS> {
 
     private final ResourceLocation postShaderJson;
     private final String[] targetNames;
 
     private final Map<K, Instance> instances = new LinkedHashMap<>();
+    private int instanceOrdinal = 0;
 
     private TextureManager textures;
     private ResourceManager resources;
     private RenderTarget initTarget;
 
     private long frameId = 0L;
+
+    private EnumSet<PostShaderRenderStage> stagesCache;
 
     protected AccumulatingMultiTargetPostShader(ResourceLocation postJson, String... targetNames) {
         this.postShaderJson = postJson;
@@ -59,13 +65,13 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
 
     /**
      * Which render stage is used to reset/GC instances and clear per-frame accumulators. Most of the time you want
-     * to use FRAME_BEGIN
+     * to use {@link PostShaderRenderStage#FRAME_BEGIN}
      */
     protected abstract PostShaderRenderStage stageBegin();
 
     /**
-     * Which render stage is used to actually run PostChains for active instances. For entity-only effects, AFTER_LEVEL
-     * is typically correct
+     * Which render stage is used to actually run PostChains for active instances. For entity-only effects,
+     * {@link PostShaderRenderStage#AFTER_LEVEL} is typically correct
      */
     protected abstract PostShaderRenderStage stageProcess();
 
@@ -83,14 +89,14 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
     }
 
     /**
-     * Return a short stable identifier for the current key, used to build unique RenderType names per instance
+     * Returns a short stable identifier for the given key, used as a "prefix" of unique RenderType names
      */
     protected String keyId(K key) {
         return Integer.toHexString(key.hashCode());
     }
 
     /**
-     * Accumulation policy that by defaults keeps the maximum each frame
+     * Accumulation policy that by default keeps the maximum each frame
      */
     protected float combineIntensity(float current, float add) {
         return Math.max(current, add);
@@ -113,40 +119,25 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
         for (Instance instance : instances.values()) {
             instance.invalidateChain();
         }
+
     }
 
     @Override
-    public EnumSet<PostShaderRenderStage> stages() {
-        return EnumSet.of(stageBegin(), stageProcess());
-    }
+    public final EnumSet<PostShaderRenderStage> stages() {
+        if (stagesCache == null) {
+            stagesCache = EnumSet.of(stageBegin(), stageProcess());
+        }
 
-    @Override
-    public void start(PSS settings) {
-        ;;
-    }
-
-    @Override
-    public void clientTick() {
-        ;;
+        return stagesCache;
     }
 
     @Override
     public void clear() {
-        for (Instance instance : instances.values()) {
-            instance.closeQuietly();
+        for (final Instance instance : instances.values()) {
+            instance.dispose();
         }
 
         instances.clear();
-    }
-
-    @Override
-    public void onLogout() {
-        clear();
-    }
-
-    @Override
-    public void renderOverlay(GuiGraphics graphics, float partialTicks) {
-        ;;
     }
 
     @Override
@@ -163,13 +154,14 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
     }
 
     /**
-     * Returns or creates the per-key instance
-     * Call this from your entity layer/renderer using its id or UUID
+     * Returns or creates the per-key instance.
+     * Call this from your entity layer/renderer using its id or UUID.
      */
     public final Instance instance(K key) {
         Instance instance = instances.get(key);
         if (instance == null) {
-            instance = new Instance(key, keyId(key));
+            final String id = keyId(key) + "_" + Integer.toHexString(instanceOrdinal++);
+            instance = new Instance(key, id);
             instances.put(key, instance);
         }
 
@@ -198,15 +190,15 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
         // Resets all instances and drops old ones to avoid leaks
         final Iterator<Map.Entry<K, Instance>> iterator = instances.entrySet().iterator();
         while (iterator.hasNext()) {
-            Instance instance = iterator.next().getValue();
+            final Instance instance = iterator.next().getValue();
             if ((gameTime - instance.lastTouchedTick) > cleanTicks) {
-                instance.closeQuietly();
+                instance.dispose();
                 iterator.remove();
 
                 continue;
             }
 
-            instance.onFrameBegin(frameId);
+            instance.onFrameBegin();
         }
 
     }
@@ -216,8 +208,8 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
             return;
         }
 
-        // Processes each instance that was activated this frame. Each instance has its own PostChain and targets, so they do
-        // not overwrite each other
+        // Processes each instance that was activated this frame. Each instance has its own PostChain and targets,
+        // so they do not overwrite each other
         for (Instance instance : instances.values()) {
             if (!instance.activeThisFrame) {
                 continue;
@@ -258,25 +250,26 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
     }
 
     /**
-     * Per-key instance that implements the interface so mods can build RenderTypes that bind outputs to this specific instance
+     * Per-key instance. Mods can build RenderTypes that bind outputs to this specific instance via
+     * {@link #target(String)} and {@link #keyId()}.
      *
-     * This instance owns a PostChain and its auxiliary targets, accumulates uniform inputs, prepares targets per frame and runs the chain
-     * once at stageProcess when active
+     * This instance owns a PostChain and its auxiliary targets, accumulates uniform inputs, prepares targets per
+     * frame and runs the chain once at {@link #stageProcess()} when active
      */
     public final class Instance implements MultiTargetPostShaderInstance {
 
         private final K key;
         private final String keyId;
 
-        // The per-instance postchain created lazily
+        // The per-instance PostChain, created lazily
         private PostChain chain;
 
         // Cached auxiliary targets for this chain
         private final Map<String, RenderTarget> targets = new LinkedHashMap<>();
 
         private boolean activeThisFrame = false;
-        private float intensityThisFrame = 0.0f;
-        private float mixThisFrame = 0.0f;
+        private float intensityThisFrame = 0f;
+        private float mixThisFrame = 0f;
 
         // Ensures we do the expensive prepare step at most once per frame (this is set to the current frameId)
         private long preparedFrameId = -1L;
@@ -301,7 +294,8 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
 
         /**
          * Accumulates values from this frame.
-         * Call this multiple times if needed (configurable via combineIntensity and combineMix)
+         * Call this multiple times if needed (configurable via {@link #combineIntensity(float, float)}
+         * and {@link #combineMix(float, float)}).
          */
         public void accumulate(float intensity, float mix01) {
             touch();
@@ -317,14 +311,14 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
             touch();
             ensureReady();
 
-            long framedId = frameId();
-            if (preparedFrameId == framedId) {
+            final long currentFrameId = frameId();
+            if (preparedFrameId == currentFrameId) {
                 return;
             }
 
-            preparedFrameId = framedId;
+            preparedFrameId = currentFrameId;
 
-            RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
+            final RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
 
             // Copies depth from main so occlusion works against the world geometry
             for (RenderTarget target : targets.values()) {
@@ -333,7 +327,7 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
             main.bindWrite(true);
 
             // Clears color only, preserving depth
-            for (RenderTarget target : targets.values()) {
+            for (final RenderTarget target : targets.values()) {
                 clearColorOnly(target);
             }
 
@@ -349,7 +343,7 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
             return targets.get(name);
         }
 
-        private void onFrameBegin(long frameId) {
+        private void onFrameBegin() {
             activeThisFrame = false;
             intensityThisFrame = 0f;
             mixThisFrame = 0f;
@@ -378,7 +372,7 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
 
         /**
          * Ensures the PostChain exists, is sized and that auxiliary targets are linked.
-         * Called lazily cuz instances might not be used every single frame
+         * Called lazily because instances might not be used every single frame
          */
         private void ensureReady() {
             if (textures() == null || resources() == null || initTarget() == null) {
@@ -423,7 +417,7 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
             }
 
             final Map<String, RenderTarget> renderTargetMap = ((PostChainAccessor) chain).knightlib$getTargets();
-            for (String targetName : targetNames()) {
+            for (final String targetName : targetNames()) {
                 final RenderTarget target = renderTargetMap.get(targetName);
                 if (target == null) {
                     throw new IllegalStateException("[KnightLib] Missing target '" + targetName + "' in chain " + postShaderJson());
@@ -446,7 +440,7 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
         }
 
         private void touch() {
-            Minecraft minecraft = Minecraft.getInstance();
+            final Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.level != null) {
                 lastTouchedTick = minecraft.level.getGameTime();
             }
@@ -454,13 +448,10 @@ public abstract class AccumulatingMultiTargetPostShader<PSS extends PostShaderSe
         }
 
         private void invalidateChain() {
-            closeQuietly();
-            chain = null;
-            targets.clear();
-            preparedFrameId = -1L;
+            dispose();
         }
 
-        private void closeQuietly() {
+        private void dispose() {
             if (chain != null) {
                 try {
                     chain.close();

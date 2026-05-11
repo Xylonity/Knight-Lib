@@ -1,11 +1,12 @@
-package dev.xylonity.knightlib.client.shader.post;
+package dev.xylonity.knightlib.client.shader.post.impl;
 
-import dev.xylonity.knightlib.client.shader.post.internal.PostShaderSettings;
+import dev.xylonity.knightlib.client.shader.post.AbstractPostShader;
+import dev.xylonity.knightlib.client.shader.post.interop.PostShaderSettings;
 import dev.xylonity.knightlib.client.shader.post.timing.FadeEnvelope;
 import net.minecraft.client.Minecraft;
 
 /**
- * Small helper for shaders that have a single timed "active instance".
+ * Helper base class for shaders that have a single timed "active instance".
  * It owns a timed envelope and auto-clears when the envelope ends
  */
 public abstract class TimedPostShader<PSS extends PostShaderSettings> extends AbstractPostShader<PSS> {

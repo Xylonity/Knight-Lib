@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.client.shader.post.internal;
+package dev.xylonity.knightlib.client.shader.post.interop;
 
 import net.minecraft.client.Camera;
 import net.minecraft.world.phys.Vec3;

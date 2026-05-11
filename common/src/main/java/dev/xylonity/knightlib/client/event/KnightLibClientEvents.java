@@ -7,16 +7,21 @@ import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.api.sound.music.IBossMusicProvider;
 import dev.xylonity.knightlib.api.sound.persistent.KnightLibPersistentSounds;
 import dev.xylonity.knightlib.api.scheduler.TickScheduler;
+import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
+import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderContext;
 import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
 import dev.xylonity.knightlib.client.particle.StarsetParticle;
 import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
-import dev.xylonity.knightlib.client.shader.post.internal.PostShaderManager;
-import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderContext;
+import dev.xylonity.knightlib.client.shader.post.examples.GroundRingPostShader;
+import dev.xylonity.knightlib.client.shader.post.examples.ScreenTintPostShader;
+import dev.xylonity.knightlib.client.shader.post.examples.ScreenWavePostShader;
+import dev.xylonity.knightlib.client.shader.post.examples.WorldBeamPostShader;
 import dev.xylonity.knightlib.client.sound.music.internal.BossMusicManager;
 import dev.xylonity.knightlib.client.sound.music.internal.BossMusicRegistry;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibEntities;
 import dev.xylonity.knightlib.registry.KnightLibParticles;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
@@ -102,7 +107,7 @@ public class KnightLibClientEvents {
         BossMusicManager.clear();
         CameraShakeManager.clearAll();
         KnightLibPersistentSounds.clearAll();
-        PostShaderManager.onLogout();
+        PostShaderManager.onWorldUnload();
     }
 
     @RegisterEvent(priority = 100)
@@ -115,7 +120,12 @@ public class KnightLibClientEvents {
 
     @RegisterEvent(priority = 100)
     public static void onResourcesReloaded(final ClientResourcesReloadedEvent event) {
-        PostShaderManager.onLogout();
+        final Minecraft minecraft = event.getClient();
+        PostShaderManager.onResourcesReloaded(
+                minecraft.getTextureManager(),
+                event.getResourceManager(),
+                minecraft.getMainRenderTarget()
+        );
 
     }
 
@@ -132,6 +142,14 @@ public class KnightLibClientEvents {
     @RegisterEvent(priority = 100)
     public static void registerParticleProviders(final ParticleProviderRegistrationEvent event) {
         event.register(KnightLibParticles.STARSET.get(), StarsetParticle.Provider::new);
+    }
+
+    @RegisterEvent(priority = 100)
+    public static void registerExamplePostShaders(final CustomPostShaderRegistrationEvent event) {
+        event.registerShader(ScreenTintPostShader.INSTANCE);
+        event.registerShader(ScreenWavePostShader.INSTANCE);
+        event.registerShader(GroundRingPostShader.INSTANCE);
+        event.registerShader(WorldBeamPostShader.INSTANCE);
     }
 
 }

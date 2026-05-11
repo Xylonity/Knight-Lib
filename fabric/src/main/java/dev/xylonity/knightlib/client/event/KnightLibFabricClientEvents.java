@@ -5,8 +5,8 @@ import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.client.event.impl.*;
-import dev.xylonity.knightlib.client.shader.post.internal.PostShaderManager;
-import dev.xylonity.knightlib.client.shader.post.internal.PostShaderRenderStage;
+import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
+import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
@@ -51,7 +51,6 @@ public final class KnightLibFabricClientEvents {
         registerMenuScreens();
         registerRenderLayers();
         registerKeyMappings();
-        registerPostShaders();
         registerBossBars();
     }
 
@@ -99,6 +98,8 @@ public final class KnightLibFabricClientEvents {
 
     private static void onShaderRegistrationEvents() {
         CoreShaderRegistrationCallback.EVENT.register(context -> {
+            registerPostShaders();
+
             ShaderRegistrationEventFabric event = new ShaderRegistrationEventFabric(context);
             KnightLibEvents.CLIENT.dispatch(event);
         });

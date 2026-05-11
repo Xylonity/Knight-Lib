@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.client.shader.post.internal;
+package dev.xylonity.knightlib.client.shader.post.interop;
 
 /**
  * Marker interface for per-shader configuration data.

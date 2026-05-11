@@ -1,4 +1,4 @@
-package dev.xylonity.knightlib.client.shader.post.internal;
+package dev.xylonity.knightlib.client.shader.post.interop;
 
 public enum PostShaderRenderStage {
     FRAME_BEGIN,
