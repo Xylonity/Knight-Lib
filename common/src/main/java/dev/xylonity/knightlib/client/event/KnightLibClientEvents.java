@@ -12,10 +12,6 @@ import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderContext
 import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
 import dev.xylonity.knightlib.client.particle.StarsetParticle;
 import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
-import dev.xylonity.knightlib.client.shader.post.examples.GroundRingPostShader;
-import dev.xylonity.knightlib.client.shader.post.examples.ScreenTintPostShader;
-import dev.xylonity.knightlib.client.shader.post.examples.ScreenWavePostShader;
-import dev.xylonity.knightlib.client.shader.post.examples.WorldBeamPostShader;
 import dev.xylonity.knightlib.client.sound.music.internal.BossMusicManager;
 import dev.xylonity.knightlib.client.sound.music.internal.BossMusicRegistry;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
@@ -142,14 +138,6 @@ public class KnightLibClientEvents {
     @RegisterEvent(priority = 100)
     public static void registerParticleProviders(final ParticleProviderRegistrationEvent event) {
         event.register(KnightLibParticles.STARSET.get(), StarsetParticle.Provider::new);
-    }
-
-    @RegisterEvent(priority = 100)
-    public static void registerExamplePostShaders(final CustomPostShaderRegistrationEvent event) {
-        event.registerShader(ScreenTintPostShader.INSTANCE);
-        event.registerShader(ScreenWavePostShader.INSTANCE);
-        event.registerShader(GroundRingPostShader.INSTANCE);
-        event.registerShader(WorldBeamPostShader.INSTANCE);
     }
 
 }
