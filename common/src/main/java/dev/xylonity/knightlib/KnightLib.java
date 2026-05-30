@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib;
 
+import dev.xylonity.knightlib.api.util.ResourceLocations;
 import dev.xylonity.knightlib.api.network.NetworkEndpoint;
 import dev.xylonity.knightlib.network.NetworkInternal;
 import dev.xylonity.knightlib.platform.KnightLibNetwork;
@@ -42,7 +43,7 @@ public class KnightLib {
     }
 
     public static ResourceLocation of(String path) {
-        return new ResourceLocation(MOD_ID, path);
+        return ResourceLocations.of(MOD_ID, path);
     }
 
     /**

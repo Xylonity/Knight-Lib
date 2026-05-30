@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.api.event.impl.client;
 
+import dev.xylonity.knightlib.api.util.ResourceLocations;
 import dev.xylonity.knightlib.api.event.KnightLibEvent;
 import net.minecraft.resources.ResourceLocation;
 
@@ -15,11 +16,11 @@ public abstract class AdditionalModelsRegistrationEvent extends KnightLibEvent {
     }
 
     public void registerItemModel(String modid, String path) {
-        register(new ResourceLocation(modid, "item/" + path));
+        register(ResourceLocations.of(modid, "item/" + path));
     }
 
     public void registerBlockModel(String modid, String path) {
-        register(new ResourceLocation(modid, "block/" + path));
+        register(ResourceLocations.of(modid, "block/" + path));
     }
 
     /**

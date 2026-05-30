@@ -2,11 +2,11 @@ package dev.xylonity.knightlib.platform;
 
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.network.Network;
+import dev.xylonity.knightlib.api.util.ResourceLocations;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketType;
 import dev.xylonity.knightlib.network.ServerboundPacketType;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -38,7 +38,7 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     public KnightLibNetworkForge(String channelNamespace, String protocol) {
         this.channel = NetworkRegistry.newSimpleChannel(
-                new ResourceLocation(channelNamespace, "main"),
+                ResourceLocations.of(channelNamespace, "main"),
                 () -> protocol,
                 protocol::equals,
                 protocol::equals

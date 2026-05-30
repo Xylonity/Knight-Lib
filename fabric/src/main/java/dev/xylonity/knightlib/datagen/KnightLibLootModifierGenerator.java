@@ -1,6 +1,7 @@
 package dev.xylonity.knightlib.datagen;
 
 import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.api.util.ResourceLocations;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
@@ -23,7 +24,7 @@ public class KnightLibLootModifierGenerator {
                 return;
             }
 
-            ResourceLocation resourceLocation = new ResourceLocation(id.getNamespace(), id.getPath().substring("entities/".length()));
+            ResourceLocation resourceLocation = ResourceLocations.of(id.getNamespace(), id.getPath().substring("entities/".length()));
 
             if (!BuiltInRegistries.ENTITY_TYPE.containsKey(resourceLocation)) {
                 return;

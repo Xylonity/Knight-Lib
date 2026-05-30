@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.api.entity.spawn;
 
+import dev.xylonity.knightlib.api.util.ResourceLocations;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -43,11 +44,11 @@ public class SpawnConfig {
         for (int i = 3; i < parts.length; i++) {
             final String part = parts[i];
             if (part.startsWith("#")) {
-                final ResourceLocation tagId = new ResourceLocation(part.substring(1));
+                final ResourceLocation tagId = ResourceLocations.parse(part.substring(1));
                 tagList.add(TagKey.create(Registries.BIOME, tagId));
             }
             else {
-                biomeList.add(new ResourceLocation(part));
+                biomeList.add(ResourceLocations.parse(part));
             }
 
         }

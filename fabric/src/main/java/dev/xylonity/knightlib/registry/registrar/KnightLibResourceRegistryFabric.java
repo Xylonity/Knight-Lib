@@ -2,6 +2,7 @@ package dev.xylonity.knightlib.registry.registrar;
 
 import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
+import dev.xylonity.knightlib.api.util.ResourceLocations;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 
@@ -24,7 +25,7 @@ public class KnightLibResourceRegistryFabric<T> implements ResourceRegistry<T> {
 
     @Override
     public <I extends T> ResourceEntry<I> register(String name, Supplier<? extends I> supplier) {
-        ResourceLocation id = new ResourceLocation(modid, name);
+        ResourceLocation id = ResourceLocations.of(modid, name);
 
         I object = supplier.get();
         Registry.register(registry, id, object);

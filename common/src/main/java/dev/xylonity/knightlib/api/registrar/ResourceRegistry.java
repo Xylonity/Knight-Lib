@@ -1,9 +1,9 @@
 package dev.xylonity.knightlib.api.registrar;
 
 import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.api.util.ResourceLocations;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -64,7 +64,7 @@ public interface ResourceRegistry<T> {
                 }
             }
 
-            return builder.build(new ResourceLocation(getNamespace(), name).toString());
+            return builder.build(ResourceLocations.of(getNamespace(), name).toString());
         });
 
     }
