@@ -1,18 +1,17 @@
 package dev.xylonity.knightlib.registry;
 
-import dev.xylonity.knightlib.KnightLibCommon;
+import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.api.registrar.ResourceDispatcher;
+import dev.xylonity.knightlib.api.registrar.ResourceEntry;
+import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
-
-import java.util.function.Supplier;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 public class KnightLibParticles {
 
-    public static void init() { ;; }
+    public static final ResourceRegistry<ParticleType<?>> PARTICLES = ResourceDispatcher.create(BuiltInRegistries.PARTICLE_TYPE, KnightLib.MOD_ID);
 
-    public static final Supplier<SimpleParticleType> STARSET = registerParticle("starset", true);
-
-    private static <T extends SimpleParticleType> Supplier<T> registerParticle(String id, boolean overrideLimiter) {
-        return KnightLibCommon.PLATFORM.registerParticle(id, overrideLimiter);
-    }
+    public static final ResourceEntry<SimpleParticleType> STARSET = PARTICLES.register("starset", KnightLib.PLATFORM.createParticle(true));
 
 }

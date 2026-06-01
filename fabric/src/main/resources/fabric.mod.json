@@ -16,16 +16,19 @@
     "environment": "*",
     "entrypoints": {
         "main": [
-            "dev.xylonity.knightlib.KnightLib"
+            "dev.xylonity.knightlib.KnightLibFabric"
         ],
         "client": [
-            "dev.xylonity.knightlib.KnightLib"
+            "dev.xylonity.knightlib.KnightLibFabricClient"
         ],
         "jei_mod_plugin": [
             "dev.xylonity.knightlib.compat.jei.KnightLibPlugin"
         ],
         "fabric-datagen": [
             "dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator"
+        ],
+        "modmenu": [
+            "dev.xylonity.knightlib.compat.modmenu.KnightLibModMenuIntegration"
         ]
     },
     "mixins": [
@@ -36,7 +39,8 @@
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",
         "minecraft": "~${minecraft_version}",
-        "java": ">=${java_version}"
+        "java": ">=${java_version}",
+        "geckolib": "*"
     },
     "suggests": {
         "another-mod": "*"

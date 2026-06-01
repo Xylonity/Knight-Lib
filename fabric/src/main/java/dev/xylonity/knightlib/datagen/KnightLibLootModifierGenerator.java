@@ -1,10 +1,13 @@
 package dev.xylonity.knightlib.datagen;
 
+import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.api.util.ResourceLocations;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibItems;
-import net.fabricmc.fabric.api.loot.v3.LootTableEvents;
+import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -16,13 +19,28 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 public class KnightLibLootModifierGenerator {
 
     public static void init() {
-        LootTableEvents.MODIFY.register((rm, lm, id, provider) -> {
-            if (!rm.location().getPath().startsWith("entities/")) return;
+        LootTableEvents.MODIFY.register((resourceManager, lootDataManager, id, tableBuilder, source) -> {
+            if (!id.getPath().startsWith("entities/")) {
+                return;
+            }
 
-            ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(rm.location().getNamespace(), rm.location().getPath().substring("entities/".length()));
+            ResourceLocation resourceLocation = ResourceLocations.of(id.getNamespace(), id.getPath().substring("entities/".length()));
 
-            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(rl)) return;
-            if (BuiltInRegistries.ENTITY_TYPE.get(rl).getCategory() != MobCategory.MONSTER) return;
+            if (!BuiltInRegistries.ENTITY_TYPE.containsKey(resourceLocation)) {
+                return;
+            }
+
+            EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(resourceLocation);
+            if (entityType.getCategory() != MobCategory.MONSTER) {
+                return;
+            }
+            if (!KnightLibConfig.isEntityAllowedForEssence(entityType)) {
+                return;
+            }
+
+            if (!KnightLib.isEnabled(KnightLib.Usage.GREEN_ESSENCES)) {
+                return;
+            }
 
             LootPool.Builder smallEssencePool = LootPool.lootPool()
                     .setRolls(ConstantValue.exactly(1))
@@ -46,8 +64,9 @@ public class KnightLibLootModifierGenerator {
                             (float) KnightLibConfig.GREAT_ESSENCE_DROP_RATE
                     ));
 
-            lm.withPool(smallEssencePool).withPool(greatEssencePool);
+            tableBuilder.withPool(smallEssencePool).withPool(greatEssencePool);
         });
+
     }
 
 }

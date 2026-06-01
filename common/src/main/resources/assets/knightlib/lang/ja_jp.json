@@ -1,0 +1,18 @@
+{
+  "item.knightlib.great_essence": "大いなるエッセンス",
+  "item.knightlib.small_essence": "小さなエッセンス",
+  "item.knightlib.empty_grail": "空の聖杯",
+  "item.knightlib.filled_grail": "満たされた聖杯",
+  "item.knightlib.homunculus": "ホムンクルス",
+  "block.knightlib.great_chalice": "大聖杯",
+
+  "tooltip.item.knightlib.great_essence": "§8§o王でさえいずれ燃え種となる",
+  "tooltip.item.knightlib.small_essence": "§8§o何も変えられなかった命の最後のため息",
+  "tooltip.item.knightlib.homunculus": "§8§o錬金術によって束縛された不完全な奇跡",
+  "tooltip.item.knightlib.empty_grail": "§8§oエッセンスで満たそう",
+  "tooltip.item.knightlib.filled_grail": "§8§oこれを飲むのは、まさに死と踊るようなもの",
+  "tooltip.item.knightlib.great_chalice": "§8§o聞き覚えのない名を囁く……なのに、なぜか覚えている",
+
+  "jei.knightlib.great_chalice_grail_interaction.title": "大聖杯",
+  "jei.knightlib.great_chalice_fill_interaction.title": "大聖杯へ注ぐ"
+}

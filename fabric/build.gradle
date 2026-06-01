@@ -16,6 +16,14 @@ repositories {
         url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
     }
 }
+
+repositories {
+    maven {
+        name = "Terraformers"
+        url = "https://maven.terraformersmc.com/"
+    }
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.layered {
@@ -25,6 +33,8 @@ dependencies {
     modImplementation "software.bernie.geckolib:geckolib-fabric-${minecraft_version}:4.7.6"
 
     shadow("com.electronwill.night-config:toml:3.6.6")
+
+    modImplementation "com.terraformersmc:modmenu:11.0.4"
 
     compileOnly "mezz.jei:jei-1.21.1-fabric-api:${jei_version}"
     modImplementation "mezz.jei:jei-1.21.1-fabric:${jei_version}"

@@ -1,0 +1,18 @@
+{
+  "item.knightlib.great_essence": "Essência Grande",
+  "item.knightlib.small_essence": "Essência Pequena",
+  "item.knightlib.empty_grail": "Taça Vazia",
+  "item.knightlib.filled_grail": "Taça Cheia",
+  "item.knightlib.homunculus": "Homúnculo",
+  "block.knightlib.great_chalice": "Grande Cálice",
+
+  "tooltip.item.knightlib.great_essence": "§8§oAté o Rei se torna a energia no fim.",
+  "tooltip.item.knightlib.small_essence": "§8§oOs restos mortais de uma vida que mudam nada.",
+  "tooltip.item.knightlib.homunculus": "§8§oUm milagre deformado, criado por um preço biológico.",
+  "tooltip.item.knightlib.empty_grail": "§8§oEncha-o com Essência.",
+  "tooltip.item.knightlib.filled_grail": "§8§oBeber isso é como dançar com a morte.",
+  "tooltip.item.knightlib.great_chalice": "§8§oVocê ouve nomes que nunca ouviu... mas ainda se lembra.",
+
+  "jei.knightlib.great_chalice_grail_interaction.title": "Grande Cálice",
+  "jei.knightlib.great_chalice_fill_interaction.title": "Enchimento de Grande Cálice"
+}

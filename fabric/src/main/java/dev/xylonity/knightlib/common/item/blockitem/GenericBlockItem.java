@@ -1,15 +1,13 @@
 package dev.xylonity.knightlib.common.item.blockitem;
 
-import dev.xylonity.knightlib.client.blockentity.renderer.GenericBlockItemRenderer;
+import dev.xylonity.knightlib.client.item.renderer.GenericBlockItemRenderer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
-import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
-import software.bernie.geckolib.animatable.client.GeoRenderProvider;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.client.RenderProvider;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
@@ -18,22 +16,22 @@ import java.util.function.Supplier;
 
 public class GenericBlockItem extends BlockItem implements GeoItem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final Supplier<Object> renderProvider = GeoItem.makeRenderer(this);
 
     private final String name;
 
     public GenericBlockItem(Block pBlock, Properties pProperties, String name) {
         super(pBlock, pProperties);
         this.name = name;
-        SingletonGeoAnimatable.registerSyncedAnimatable(this);
     }
 
     @Override
-    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
-        consumer.accept(new GeoRenderProvider() {
+    public void createRenderer(Consumer<Object> consumer) {
+        consumer.accept(new RenderProvider() {
             private GeoItemRenderer<GenericBlockItem> renderer = null;
 
             @Override
-            public @Nullable BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 if (this.renderer == null) {
                     this.renderer = new GenericBlockItemRenderer(name);
 
@@ -41,6 +39,11 @@ public class GenericBlockItem extends BlockItem implements GeoItem {
                 return this.renderer;
             }
         });
+    }
+
+    @Override
+    public Supplier<Object> getRenderProvider() {
+        return this.renderProvider;
     }
 
     @Override
