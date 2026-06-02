@@ -109,15 +109,15 @@ public final class KnightLibFabricServerEvents {
     }
 
     private static void onLootTableModificationEvent() {
-        LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
-            final LootTableModifyEvent event = new LootTableModifyEvent(id);
+        LootTableEvents.MODIFY.register((id, tableBuilder, source) -> {
+            final LootTableModifyEvent event = new LootTableModifyEvent(id.location());
             KnightLibEvents.SERVER.dispatch(event);
 
             for (LootPool.Builder pool : event.getPendingPools()) {
                 tableBuilder.withPool(pool);
             }
 
-            if (id.getPath().startsWith("entities/")) {
+            if (id.location().getPath().startsWith("entities/")) {
                 for (EntityLootEntry entityLootEntry : KnightLibLoot.getEntityEntries()) {
                     tableBuilder.withPool(KnightLibLoot.buildPool(entityLootEntry));
                 }

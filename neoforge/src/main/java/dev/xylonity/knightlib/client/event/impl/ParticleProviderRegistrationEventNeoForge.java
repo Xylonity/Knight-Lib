@@ -6,7 +6,7 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
-import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,7 +23,7 @@ public class ParticleProviderRegistrationEventNeoForge extends ParticleProviderR
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void applyToForgeEvent(RegisterParticleProvidersEvent forgeEvent) {
-        for (Map.Entry<ParticleType<?>, ParticleEngine.SpriteParticleRegistration<?>> entry : providers.entrySet()) {
+        for (final Map.Entry<ParticleType<?>, ParticleEngine.SpriteParticleRegistration<?>> entry : providers.entrySet()) {
             forgeEvent.registerSpriteSet(
                     (ParticleType) entry.getKey(),
                     (ParticleEngine.SpriteParticleRegistration) entry.getValue()

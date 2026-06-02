@@ -4,7 +4,7 @@ import dev.xylonity.knightlib.api.event.impl.server.EntityAttributeRegistrationE
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 
 import java.util.HashMap;
 import java.util.Map;

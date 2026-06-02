@@ -14,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -112,8 +113,13 @@ public abstract class EntityRenderDispatcherMixin {
             nz /= length;
         }
 
-        buffer.vertex(pose, a[0], a[1], a[2]).color(red, green, blue, alpha).normal(normal, nx, ny, nz).endVertex();
-        buffer.vertex(pose, b[0], b[1], b[2]).color(red, green, blue, alpha).normal(normal, nx, ny, nz).endVertex();
+        Vector3f normalTransform = normal.transform(new Vector3f(nx, ny, nz));
+        buffer.addVertex(pose, a[0], a[1], a[2])
+                .setColor(red, green, blue, alpha)
+                .setNormal(normalTransform.x(), normalTransform.y(), normalTransform.z());
+        buffer.addVertex(pose, b[0], b[1], b[2])
+                .setColor(red, green, blue, alpha)
+                .setNormal(normalTransform.x(), normalTransform.y(), normalTransform.z());
     }
 
 }

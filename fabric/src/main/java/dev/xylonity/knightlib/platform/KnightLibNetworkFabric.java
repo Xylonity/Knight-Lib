@@ -2,16 +2,19 @@ package dev.xylonity.knightlib.platform;
 
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
+import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
 import dev.xylonity.knightlib.network.ServerboundPacketType;
-import io.netty.buffer.Unpooled;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -27,8 +30,8 @@ import java.util.function.Consumer;
 @SuppressWarnings("unchecked")
 public class KnightLibNetworkFabric implements KnightLibNetwork {
 
-    private final Map<Class<?>, PacketType<?>> classToType = new ConcurrentHashMap<>();
-    private final Map<ResourceLocation, Boolean> clientHandlers = new ConcurrentHashMap<>();
+    private final Map<ResourceLocation, CustomPacketPayload.Type<KnightLibPayload>> typeById = new ConcurrentHashMap<>();
+    private final Map<Class<?>, ResourceLocation> classToId = new ConcurrentHashMap<>();
 
     @Override
     public KnightLibNetwork createEndpoint(String modId, String protocol) {
@@ -37,38 +40,22 @@ public class KnightLibNetworkFabric implements KnightLibNetwork {
 
     @Override
     public <T> void registerClientbound(PacketType<T> type, Consumer<T> clientHandler) {
-        memoize(type);
+        final CustomPacketPayload.Type<KnightLibPayload> payloadType = memoize(type);
+        PayloadTypeRegistry.playS2C().register(payloadType, streamCodec(payloadType, type.codec()));
 
-        if (FabricLoader.getInstance().getEnvironmentType() != EnvType.CLIENT) {
-            return;
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+            registerClientReceiver(payloadType, clientHandler);
         }
-
-        if (clientHandlers.putIfAbsent(type.id(), Boolean.TRUE) != null) {
-            return;
-        }
-
-        ClientPlayNetworking.registerGlobalReceiver(
-                type.id(), (client, handler, buf, sender) -> {
-                    T msg = type.codec().decode(buf);
-                    client.execute(() -> clientHandler.accept(msg));
-                }
-
-        );
 
     }
 
     @Override
     public <T> void registerServerbound(PacketType<T> type, BiConsumer<T, ServerPlayer> serverHandler) {
-        memoize(type);
+        final CustomPacketPayload.Type<KnightLibPayload> payloadType = memoize(type);
+        PayloadTypeRegistry.playC2S().register(payloadType, streamCodec(payloadType, type.codec()));
 
-        ServerPlayNetworking.registerGlobalReceiver(
-                type.id(), (server, player, handler, buf, sender) -> {
-                    T message = type.codec().decode(buf);
-                    server.execute(() -> serverHandler.accept(message, player));
-                }
-
-        );
-
+        ServerPlayNetworking.registerGlobalReceiver(payloadType, (payload, context) ->
+                serverHandler.accept((T) payload.message(), context.player()));
     }
 
     @Override
@@ -83,19 +70,17 @@ public class KnightLibNetworkFabric implements KnightLibNetwork {
 
     @Override
     public <T> void sendToServer(T message) {
-        PacketType<T> type = (PacketType<T>) classToType.get(message.getClass());
-        if (type == null) {
-            throw new IllegalStateException("[KnightLib] No packet registered for message: " + message.getClass().getName());
-        }
-
         if (FabricLoader.getInstance().getEnvironmentType() != EnvType.CLIENT) {
-            KnightLib.LOGGER.warn("sendToServer called on server for {}", type.id());
+            KnightLib.LOGGER.warn("[KnightLib] sendToServer called on the dedicated server for {}", message.getClass().getName());
             return;
         }
 
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        type.codec().encode(message, buf);
-        ClientPlayNetworking.send(type.id(), buf);
+        final ResourceLocation id = classToId.get(message.getClass());
+        if (id == null) {
+            throw new IllegalStateException("[KnightLib] No packet registered for message: " + message.getClass().getName());
+        }
+
+        ClientPlayNetworking.send(new KnightLibPayload(typeById.get(id), message));
     }
 
     @Override
@@ -104,9 +89,7 @@ public class KnightLibNetworkFabric implements KnightLibNetwork {
             return;
         }
 
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        type.codec().encode(message, buf);
-        ServerPlayNetworking.send(player, type.id(), buf);
+        ServerPlayNetworking.send(player, new KnightLibPayload(typeById.get(type.id()), message));
     }
 
     @Override
@@ -115,15 +98,9 @@ public class KnightLibNetworkFabric implements KnightLibNetwork {
             return;
         }
 
-        FriendlyByteBuf bufToRelease = new FriendlyByteBuf(Unpooled.buffer());
-        type.codec().encode(message, bufToRelease);
-
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            FriendlyByteBuf copy = new FriendlyByteBuf(bufToRelease.copy());
-            ServerPlayNetworking.send(player, type.id(), copy);
+        for (final ServerPlayer player : PlayerLookup.all(server)) {
+            ServerPlayNetworking.send(player, new KnightLibPayload(typeById.get(type.id()), message));
         }
-
-        bufToRelease.release();
     }
 
     @Override
@@ -132,15 +109,9 @@ public class KnightLibNetworkFabric implements KnightLibNetwork {
             return;
         }
 
-        FriendlyByteBuf bufToRelease = new FriendlyByteBuf(Unpooled.buffer());
-        type.codec().encode(message, bufToRelease);
-
-        for (ServerPlayer player : PlayerLookup.world(serverLevel)) {
-            FriendlyByteBuf copy = new FriendlyByteBuf(bufToRelease.copy());
-            ServerPlayNetworking.send(player, type.id(), copy);
+        for (final ServerPlayer player : PlayerLookup.world(serverLevel)) {
+            ServerPlayNetworking.send(player, new KnightLibPayload(typeById.get(type.id()), message));
         }
-
-        bufToRelease.release();
     }
 
     @Override
@@ -149,15 +120,9 @@ public class KnightLibNetworkFabric implements KnightLibNetwork {
             return;
         }
 
-        FriendlyByteBuf bufToRelease = new FriendlyByteBuf(Unpooled.buffer());
-        type.codec().encode(message, bufToRelease);
-
-        for (ServerPlayer player : PlayerLookup.tracking(serverLevel, pos)) {
-            FriendlyByteBuf copy = new FriendlyByteBuf(bufToRelease.copy());
-            ServerPlayNetworking.send(player, type.id(), copy);
+        for (final ServerPlayer player : PlayerLookup.tracking(serverLevel, pos)) {
+            ServerPlayNetworking.send(player, new KnightLibPayload(typeById.get(type.id()), message));
         }
-
-        bufToRelease.release();
     }
 
     @Override
@@ -166,19 +131,34 @@ public class KnightLibNetworkFabric implements KnightLibNetwork {
             return;
         }
 
-        FriendlyByteBuf bufToRelease = new FriendlyByteBuf(Unpooled.buffer());
-        type.codec().encode(message, bufToRelease);
-
-        for (ServerPlayer player : PlayerLookup.tracking(entity)) {
-            FriendlyByteBuf copy = new FriendlyByteBuf(bufToRelease.copy());
-            ServerPlayNetworking.send(player, type.id(), copy);
+        for (final ServerPlayer player : PlayerLookup.tracking(entity)) {
+            ServerPlayNetworking.send(player, new KnightLibPayload(typeById.get(type.id()), message));
         }
-
-        bufToRelease.release();
     }
 
-    private <T> void memoize(PacketType<T> type) {
-        classToType.put(type.clazz(), type);
+    private <T> CustomPacketPayload.Type<KnightLibPayload> memoize(PacketType<T> type) {
+        classToId.put(type.clazz(), type.id());
+        return typeById.computeIfAbsent(type.id(), CustomPacketPayload.Type::new);
+    }
+
+    private <T> StreamCodec<RegistryFriendlyByteBuf, KnightLibPayload> streamCodec(CustomPacketPayload.Type<KnightLibPayload> payloadType, PacketCodec<T> codec) {
+        return StreamCodec.of(
+                (buf, payload) -> codec.encode((T) payload.message(), buf),
+                buf -> new KnightLibPayload(payloadType, codec.decode(buf))
+        );
+
+    }
+
+    private <T> void registerClientReceiver(CustomPacketPayload.Type<KnightLibPayload> payloadType, Consumer<T> clientHandler) {
+        ClientPlayNetworking.registerGlobalReceiver(payloadType, (payload, context) ->
+                clientHandler.accept((T) payload.message()));
+    }
+
+    private record KnightLibPayload(
+            Type<KnightLibPayload> type,
+            Object message
+    ) implements CustomPacketPayload {
+        ;;
     }
 
 }

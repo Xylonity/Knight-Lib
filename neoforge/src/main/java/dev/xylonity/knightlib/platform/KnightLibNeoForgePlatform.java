@@ -20,13 +20,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.ForgeSpawnEggItem;
-import net.minecraftforge.common.extensions.IForgeMenuType;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.network.NetworkHooks;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.common.DeferredSpawnEggItem;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -74,17 +73,17 @@ public class KnightLibNeoForgePlatform implements KnightLibPlatform {
 
     @Override
     public <T extends AbstractContainerMenu> MenuType<T> createMenuFactory(ResourceRegistry.MenuFactory<T> supplier) {
-        return IForgeMenuType.create(supplier::create);
+        return IMenuTypeExtension.create(supplier::create);
     }
 
     @Override
     public <X extends Mob> Item createSpawnEgg(Supplier<EntityType<X>> entityType, int primaryColor, int secondaryColor, Item.Properties properties) {
-        return new ForgeSpawnEggItem(entityType, primaryColor, secondaryColor, properties);
+        return new DeferredSpawnEggItem(entityType, primaryColor, secondaryColor, properties);
     }
 
     @Override
     public void openMenu(ServerPlayer player, MenuProvider provider, Consumer<FriendlyByteBuf> extraData) {
-        NetworkHooks.openScreen(player, provider, extraData);
+        player.openMenu(provider, buf -> extraData.accept(buf));
     }
 
     @Override

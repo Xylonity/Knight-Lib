@@ -3,8 +3,8 @@ package dev.xylonity.knightlib.registry.registrar;
 import dev.xylonity.knightlib.api.registrar.ResourceEntries;
 import dev.xylonity.knightlib.api.registrar.ResourceEntry;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -21,11 +21,11 @@ public class KnightLibResourceRegistryNeoForge<T> implements ResourceRegistry<T>
     }
 
     /**
-     * Registers with RegistryObject and wraps again into a ResourceEntry
+     * Registers with a DeferredHolder and wraps again into a ResourceEntry
      */
     @Override
     public <I extends T> ResourceEntry<I> register(String name, Supplier<? extends I> supplier) {
-        RegistryObject<I> reg = dr.register(name, supplier);
+        DeferredHolder<T, I> reg = dr.register(name, supplier);
         KnightLibResourceEntryNeoForge<I> entry = new KnightLibResourceEntryNeoForge<>(reg);
         entries.add(entry);
         return entry;

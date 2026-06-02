@@ -1,21 +1,21 @@
 package dev.xylonity.knightlib.common.recipe;
 
-import com.google.gson.JsonObject;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.registry.KnightLibBlocks;
-import dev.xylonity.knightlib.registry.KnightLibItems;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
-public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements Recipe<SimpleContainer> {
+public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements Recipe<RecipeInput> {
 
     private static final ResourceLocation ID = KnightLib.of("block_filling");
 
@@ -23,12 +23,12 @@ public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements 
     public static final RecipeType<ChaliceFillingRecipe> RECIPE_TYPE = new Type();
 
     @Override
-    public boolean matches(SimpleContainer inv, @NotNull Level lvl) {
+    public boolean matches(RecipeInput inv, @NotNull Level lvl) {
         return ItemStack.isSameItem(inv.getItem(0), input);
     }
 
     @Override
-    public @NotNull ItemStack assemble(@NotNull SimpleContainer inv, @NotNull RegistryAccess reg) {
+    public @NotNull ItemStack assemble(@NotNull RecipeInput inv, HolderLookup.@NotNull Provider reg) {
         return ItemStack.EMPTY;
     }
 
@@ -38,13 +38,8 @@ public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements 
     }
 
     @Override
-    public @NotNull ItemStack getResultItem(@NotNull RegistryAccess reg) {
+    public @NotNull ItemStack getResultItem(HolderLookup.@NotNull Provider reg) {
         return ItemStack.EMPTY;
-    }
-
-    @Override
-    public @NotNull ResourceLocation getId() {
-        return ID;
     }
 
     @Override
@@ -67,22 +62,26 @@ public record ChaliceFillingRecipe(ItemStack input, ItemStack block) implements 
     }
 
     public static class Serializer implements RecipeSerializer<ChaliceFillingRecipe> {
+
+        private static final MapCodec<ChaliceFillingRecipe> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+                ItemStack.STRICT_CODEC.fieldOf("input").forGetter(ChaliceFillingRecipe::input),
+                ItemStack.STRICT_CODEC.fieldOf("block").forGetter(ChaliceFillingRecipe::block)
+        ).apply(inst, ChaliceFillingRecipe::new));
+
+        private static final StreamCodec<RegistryFriendlyByteBuf, ChaliceFillingRecipe> STREAM_CODEC = StreamCodec.composite(
+                ItemStack.STREAM_CODEC, ChaliceFillingRecipe::input,
+                ItemStack.STREAM_CODEC, ChaliceFillingRecipe::block,
+                ChaliceFillingRecipe::new
+        );
+
         @Override
-        public @NotNull ChaliceFillingRecipe fromJson(@NotNull ResourceLocation id, @NotNull JsonObject json) {
-            return new ChaliceFillingRecipe(new ItemStack(KnightLibItems.SMALL_ESSENCE.get()), new ItemStack(KnightLibBlocks.GREAT_CHALICE.get()));
+        public @NotNull MapCodec<ChaliceFillingRecipe> codec() {
+            return CODEC;
         }
 
         @Override
-        public ChaliceFillingRecipe fromNetwork(@NotNull ResourceLocation id, @NotNull FriendlyByteBuf buf) {
-            ItemStack input = buf.readItem();
-            ItemStack block = buf.readItem();
-            return new ChaliceFillingRecipe(input, block);
-        }
-
-        @Override
-        public void toNetwork(@NotNull FriendlyByteBuf buf, @NotNull ChaliceFillingRecipe rec) {
-            buf.writeItem(rec.input);
-            buf.writeItem(rec.block);
+        public @NotNull StreamCodec<RegistryFriendlyByteBuf, ChaliceFillingRecipe> streamCodec() {
+            return STREAM_CODEC;
         }
     }
 

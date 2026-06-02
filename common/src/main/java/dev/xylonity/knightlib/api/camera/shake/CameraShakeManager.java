@@ -81,7 +81,7 @@ public final class CameraShakeManager {
         sy = Mth.clamp((float) sy, -4f, 4f);
         sz = Mth.clamp((float) sz, -4f, 4f);
 
-        ((CameraAccessor) camera).moveAccessor(sx, sy, sz);
+        ((CameraAccessor) camera).moveAccessor((float) sx, (float) sy, (float) sz);
     }
 
     /**

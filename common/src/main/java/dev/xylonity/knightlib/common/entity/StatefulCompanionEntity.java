@@ -17,8 +17,8 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public abstract class StatefulCompanionEntity<E extends StatefulCompanionEntity<E, S>, S extends Enum<S> & StateEnum> extends TamableAnimal implements GeoEntity {
@@ -35,9 +35,9 @@ public abstract class StatefulCompanionEntity<E extends StatefulCompanionEntity<
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.getEntityData().define(CURRENT_STATE, getDefaultState().id());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(CURRENT_STATE, getDefaultState().id());
     }
 
     @Override

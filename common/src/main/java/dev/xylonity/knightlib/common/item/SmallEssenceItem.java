@@ -38,8 +38,8 @@ public class SmallEssenceItem extends Item implements IGreatChaliceInteractable 
     }
 
     @Override
-    public void appendHoverText(@NotNull ItemStack itemStack, @Nullable Level level, @NotNull List<Component> list, @NotNull TooltipFlag flag) {
-        super.appendHoverText(itemStack, level, list, flag);
+    public void appendHoverText(@NotNull ItemStack itemStack, Item.@NotNull TooltipContext context, @NotNull List<Component> list, @NotNull TooltipFlag flag) {
+        super.appendHoverText(itemStack, context, list, flag);
         list.add(Component.translatable("tooltip.item.knightlib.small_essence"));
     }
 

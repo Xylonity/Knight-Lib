@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -69,9 +70,9 @@ public abstract class AbstractPostShader<PSS extends PostShaderSettings> impleme
         final Matrix4f savedProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
 
         // Identity model-view for full-screen quad space
-        final PoseStack modelViewStack = RenderSystem.getModelViewStack();
-        modelViewStack.pushPose();
-        modelViewStack.setIdentity();
+        final Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+        modelViewStack.pushMatrix();
+        modelViewStack.identity();
         RenderSystem.applyModelViewMatrix();
 
         try {
@@ -86,7 +87,7 @@ public abstract class AbstractPostShader<PSS extends PostShaderSettings> impleme
         }
         finally {
             // Restores model-view
-            modelViewStack.popPose();
+            modelViewStack.popMatrix();
             RenderSystem.applyModelViewMatrix();
 
             // Restores projection

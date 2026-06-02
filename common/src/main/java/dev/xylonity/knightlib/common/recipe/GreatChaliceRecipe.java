@@ -1,21 +1,21 @@
 package dev.xylonity.knightlib.common.recipe;
 
-import com.google.gson.JsonObject;
+import com.mojang.serialization.MapCodec;
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.registry.KnightLibItems;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-
-import net.minecraft.world.item.crafting.*;
 import org.jetbrains.annotations.NotNull;
 
-public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
+public final class GreatChaliceRecipe implements Recipe<RecipeInput> {
 
     private static final ResourceLocation ID = KnightLib.of("great_chalice_interaction");
 
@@ -26,12 +26,12 @@ public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
     public final ItemStack output = new ItemStack(KnightLibItems.FILLED_GRAIL.get());
 
     @Override
-    public boolean matches(SimpleContainer inv, @NotNull Level lvl) {
+    public boolean matches(RecipeInput inv, @NotNull Level lvl) {
         return ItemStack.isSameItem(inv.getItem(0), input);
     }
 
     @Override
-    public @NotNull ItemStack assemble(@NotNull SimpleContainer inv, @NotNull RegistryAccess reg) {
+    public @NotNull ItemStack assemble(@NotNull RecipeInput inv, HolderLookup.@NotNull Provider reg) {
         return output.copy();
     }
 
@@ -41,13 +41,8 @@ public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
     }
 
     @Override
-    public @NotNull ItemStack getResultItem(@NotNull RegistryAccess reg) {
+    public @NotNull ItemStack getResultItem(HolderLookup.@NotNull Provider reg) {
         return output.copy();
-    }
-
-    @Override
-    public @NotNull ResourceLocation getId() {
-        return ID;
     }
 
     @Override
@@ -70,18 +65,19 @@ public final class GreatChaliceRecipe implements Recipe<SimpleContainer> {
     }
 
     public static final class Serializer implements RecipeSerializer<GreatChaliceRecipe> {
+
+        private static final MapCodec<GreatChaliceRecipe> CODEC = MapCodec.unit(GreatChaliceRecipe::new);
+        private static final StreamCodec<RegistryFriendlyByteBuf, GreatChaliceRecipe> STREAM_CODEC = StreamCodec.unit(new GreatChaliceRecipe());
+
         @Override
-        public @NotNull GreatChaliceRecipe fromJson(@NotNull ResourceLocation id, @NotNull JsonObject json) {
-            return new GreatChaliceRecipe();
+        public @NotNull MapCodec<GreatChaliceRecipe> codec() {
+            return CODEC;
         }
 
         @Override
-        public GreatChaliceRecipe fromNetwork(@NotNull ResourceLocation id, @NotNull FriendlyByteBuf buf) {
-            return new GreatChaliceRecipe();
+        public @NotNull StreamCodec<RegistryFriendlyByteBuf, GreatChaliceRecipe> streamCodec() {
+            return STREAM_CODEC;
         }
-
-        @Override
-        public void toNetwork(@NotNull FriendlyByteBuf buf, @NotNull GreatChaliceRecipe rec) { ;; }
     }
 
 }

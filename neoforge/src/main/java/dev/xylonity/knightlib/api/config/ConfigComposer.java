@@ -1,13 +1,14 @@
 package dev.xylonity.knightlib.api.config;
 
-import dev.xylonity.knightlib.client.screen.config.factory.ConfigScreenCreator;
+import dev.xylonity.knightlib.client.screen.config.NeoForgeConfigScreens;
 import dev.xylonity.knightlib.config.interop.ConfigManager;
 import dev.xylonity.knightlib.config.interop.ConfigRegistry;
-import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.fml.loading.FMLPaths;
 
 /**
- * Forge entry point for the KnightLib configuration system.
+ * NeoForge entry point for the KnightLib configuration system.
  *
  * <h3>Usage from any mod:</h3>
  * <pre>{@code
@@ -34,25 +35,9 @@ public final class ConfigComposer {
         // Tracks the class in the registrar (for screen creation)
         ConfigRegistry.register(modId, configClazz);
 
-        // Registers the Forge config screen factory
-        registerScreenFactory(modId);
-    }
-
-    private static void registerScreenFactory(String modId) {
-        try {
-            ModLoadingContext.get().registerExtensionPoint(
-                    ConfigScreenHandler.ConfigScreenFactory.class,
-                    () -> new ConfigScreenHandler.ConfigScreenFactory(
-                            (minecraft, screen) -> ConfigScreenCreator.createScreen(modId, screen)
-                    )
-
-            );
-
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            NeoForgeConfigScreens.register(modId);
         }
-        catch (Exception ignored) {
-            ;;
-        }
-
     }
 
 }

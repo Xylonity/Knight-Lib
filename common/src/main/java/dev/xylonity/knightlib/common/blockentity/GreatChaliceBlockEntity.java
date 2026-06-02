@@ -17,12 +17,12 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.core.animatable.GeoAnimatable;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.animatable.GeoAnimatable;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Random;
@@ -76,28 +76,30 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
     }
 
     @Override
-    protected void saveAdditional(@NotNull CompoundTag tag) {
-        super.saveAdditional(tag);
+    protected void saveAdditional(@NotNull CompoundTag tag, net.minecraft.core.HolderLookup.@NotNull Provider registries) {
+        super.saveAdditional(tag, registries);
         tag.putInt("Charges", charges);
         tag.putInt("PrevCharges", prevCharges);
         tag.putString("State", state.getSerializedName());
     }
 
     @Override
-    public void load(@NotNull CompoundTag tag) {
-        super.load(tag);
+    protected void loadAdditional(@NotNull CompoundTag tag, net.minecraft.core.HolderLookup.@NotNull Provider registries) {
+        super.loadAdditional(tag, registries);
         this.charges = tag.getInt("Charges");
         this.prevCharges = tag.getInt("PrevCharges");
         try {
             state = GreatChaliceState.valueOf(tag.getString("State").toUpperCase());
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             state = GreatChaliceState.NORMAL;
         }
+
     }
 
     @Override
-    public @NotNull CompoundTag getUpdateTag() {
-        CompoundTag tag = super.getUpdateTag();
+    public @NotNull CompoundTag getUpdateTag(net.minecraft.core.HolderLookup.@NotNull Provider registries) {
+        CompoundTag tag = super.getUpdateTag(registries);
         tag.putInt("Charges", charges);
         tag.putInt("PrevCharges", prevCharges);
         tag.putString("State", state.getSerializedName());

@@ -3,14 +3,17 @@ package dev.xylonity.knightlib.datagen;
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibItems;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraftforge.common.data.GlobalLootModifierProvider;
+import net.neoforged.neoforge.common.data.GlobalLootModifierProvider;
+
+import java.util.concurrent.CompletableFuture;
 
 public class KnightLibLootModifierGenerator extends GlobalLootModifierProvider {
 
-    public KnightLibLootModifierGenerator(PackOutput output) {
-        super(output, KnightLib.MOD_ID);
+    public KnightLibLootModifierGenerator(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        super(output, registries, KnightLib.MOD_ID);
     }
 
     @Override

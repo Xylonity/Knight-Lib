@@ -1,10 +1,11 @@
 package dev.xylonity.knightlib.mixin;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.systems.RenderSystem;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderContext;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
 import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.phys.Vec3;
@@ -31,9 +32,11 @@ public class GameRendererMixin {
             method = "renderLevel",
             at = @At("TAIL")
     )
-    private void knightlib$afterRenderLevel(float partialTicks, long finishTimeNano, PoseStack poseStack, CallbackInfo ci) {
+    private void knightlib$afterRenderLevel(DeltaTracker deltaTracker, CallbackInfo ci) {
+        float partialTicks = deltaTracker.getGameTimeDeltaPartialTick(true);
+
         Matrix4f projection = new Matrix4f(minecraft.gameRenderer.getProjectionMatrix(partialTicks));
-        Matrix4f modelView = new Matrix4f(poseStack.last().pose());
+        Matrix4f modelView = new Matrix4f(RenderSystem.getModelViewMatrix());
 
         Vec3 cameraPosition = mainCamera.getPosition();
 

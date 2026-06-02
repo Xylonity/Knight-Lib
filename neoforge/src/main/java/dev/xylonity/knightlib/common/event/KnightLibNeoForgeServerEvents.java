@@ -15,24 +15,27 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootPool;
-import net.minecraftforge.data.event.GatherDataEvent;
-import net.minecraftforge.event.LootTableLoadEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
-import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.neoforged.neoforge.event.LootTableLoadEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public class KnightLibNeoForgeServerEvents {
 
-    @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
+    @EventBusSubscriber(modid = KnightLib.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
     public static class KnightLibServerModBus {
 
         @SubscribeEvent
@@ -40,7 +43,7 @@ public class KnightLibNeoForgeServerEvents {
             DataGenerator generator = event.getGenerator();
             PackOutput packOutput = generator.getPackOutput();
 
-            generator.addProvider(event.includeServer(), new KnightLibLootModifierGenerator(packOutput));
+            generator.addProvider(event.includeServer(), new KnightLibLootModifierGenerator(packOutput, event.getLookupProvider()));
         }
 
         @SubscribeEvent
@@ -52,7 +55,7 @@ public class KnightLibNeoForgeServerEvents {
         }
 
         @SubscribeEvent
-        public static void registerSpawnPlacements(SpawnPlacementRegisterEvent event) {
+        public static void registerSpawnPlacements(RegisterSpawnPlacementsEvent event) {
             SpawnPlacementRegistrationEventNeoForge spawnEvent = new SpawnPlacementRegistrationEventNeoForge();
             KnightLibEvents.SERVER.dispatch(spawnEvent);
 
@@ -61,18 +64,17 @@ public class KnightLibNeoForgeServerEvents {
 
     }
 
-    @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    @EventBusSubscriber(modid = KnightLib.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
     public static class KnightLibServerForgeBus {
 
         @SubscribeEvent
-        public static void onServerTick(TickEvent.ServerTickEvent event) {
-            if (event.phase == TickEvent.Phase.START) {
-                KnightLibEvents.SERVER.dispatch(new ServerTickEvent(event.getServer(), TickPhase.START));
-            }
-            else {
-                KnightLibEvents.SERVER.dispatch(new ServerTickEvent(event.getServer(), TickPhase.END));
-            }
+        public static void onServerTickPre(ServerTickEvent.Pre event) {
+            KnightLibEvents.SERVER.dispatch(new dev.xylonity.knightlib.api.event.impl.server.ServerTickEvent(event.getServer(), TickPhase.START));
+        }
 
+        @SubscribeEvent
+        public static void onServerTickPost(ServerTickEvent.Post event) {
+            KnightLibEvents.SERVER.dispatch(new dev.xylonity.knightlib.api.event.impl.server.ServerTickEvent(event.getServer(), TickPhase.END));
         }
 
         @SubscribeEvent
@@ -86,8 +88,8 @@ public class KnightLibNeoForgeServerEvents {
         }
 
         @SubscribeEvent
-        public static void onLivingDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
-            final LivingDeathEvent deathEvent = new LivingDeathEvent(event.getEntity(), event.getSource());
+        public static void onLivingDeath(LivingDeathEvent event) {
+            final dev.xylonity.knightlib.api.event.impl.server.LivingDeathEvent deathEvent = new dev.xylonity.knightlib.api.event.impl.server.LivingDeathEvent(event.getEntity(), event.getSource());
             KnightLibEvents.SERVER.dispatch(deathEvent);
 
             if (deathEvent.isCancelled()) {
@@ -96,16 +98,24 @@ public class KnightLibNeoForgeServerEvents {
         }
 
         @SubscribeEvent
-        public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-            if (event.player.level().isClientSide()) {
+        public static void onPlayerTickPre(PlayerTickEvent.Pre event) {
+            dispatchPlayerTick(event, TickPhase.START);
+        }
+
+        @SubscribeEvent
+        public static void onPlayerTickPost(PlayerTickEvent.Post event) {
+            dispatchPlayerTick(event, TickPhase.END);
+        }
+
+        private static void dispatchPlayerTick(PlayerTickEvent event, TickPhase phase) {
+            if (event.getEntity().level().isClientSide()) {
                 return;
             }
 
-            if (!(event.player instanceof ServerPlayer serverPlayer)) {
+            if (!(event.getEntity() instanceof ServerPlayer serverPlayer)) {
                 return;
             }
 
-            final TickPhase phase = event.phase == TickEvent.Phase.END ? TickPhase.END : TickPhase.START;
             KnightLibEvents.SERVER.dispatch(new ServerPlayerTickEvent(serverPlayer.server, serverPlayer, phase));
         }
 
@@ -192,7 +202,7 @@ public class KnightLibNeoForgeServerEvents {
         }
 
         @SubscribeEvent
-        public static void onLivingHurt(net.minecraftforge.event.entity.living.LivingHurtEvent event) {
+        public static void onLivingHurt(LivingIncomingDamageEvent event) {
             final LivingHurtEvent hurtEvent = new LivingHurtEvent(event.getEntity(), event.getSource(), event.getAmount());
             KnightLibEvents.SERVER.dispatch(hurtEvent);
 

@@ -11,8 +11,11 @@ import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.fabricmc.loader.api.FabricLoader;
+import io.netty.buffer.Unpooled;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
@@ -39,6 +42,24 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("unchecked")
 public class KnightLibFabricPlatform implements KnightLibPlatform {
+
+    /**
+     * ExtendedScreenHandler now serializes a data object via a StreamCodec instead of writing into a buffer directly
+     */
+    private static final StreamCodec<RegistryFriendlyByteBuf, FriendlyByteBuf> MENU_DATA_CODEC = StreamCodec.of(
+            (target, data) -> {
+                final int readable = data.readableBytes();
+                target.writeVarInt(readable);
+                target.writeBytes(data, data.readerIndex(), readable);
+            },
+            source -> {
+                final int readable = source.readVarInt();
+                final FriendlyByteBuf copy = new FriendlyByteBuf(Unpooled.buffer(Math.max(readable, 1)));
+                copy.writeBytes(source, readable);
+                return copy;
+            }
+
+    );
 
     @Override
     public <T extends ParticleType<?>> Supplier<T> createParticle(boolean overrideLimiter) {
@@ -77,7 +98,7 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
 
     @Override
     public <T extends AbstractContainerMenu> MenuType<T> createMenuFactory(ResourceRegistry.MenuFactory<T> supplier) {
-        return new ExtendedScreenHandlerType<>(supplier::create);
+        return new ExtendedScreenHandlerType<>(supplier::create, MENU_DATA_CODEC);
     }
 
     @Override
@@ -87,10 +108,12 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
 
     @Override
     public void openMenu(ServerPlayer player, MenuProvider provider, Consumer<FriendlyByteBuf> extraData) {
-        player.openMenu(new ExtendedScreenHandlerFactory() {
+        player.openMenu(new ExtendedScreenHandlerFactory<FriendlyByteBuf>() {
             @Override
-            public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buf) {
+            public FriendlyByteBuf getScreenOpeningData(ServerPlayer serverPlayer) {
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 extraData.accept(buf);
+                return buf;
             }
 
             @Override

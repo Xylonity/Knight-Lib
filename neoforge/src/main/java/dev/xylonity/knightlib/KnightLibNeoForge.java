@@ -7,23 +7,26 @@ import dev.xylonity.knightlib.common.CommonProxy;
 import dev.xylonity.knightlib.common.event.KnightLibServerEvents;
 import dev.xylonity.knightlib.common.spawn.internal.KnightLibSpawnBiomeModifier;
 import dev.xylonity.knightlib.config.KnightLibConfig;
+import dev.xylonity.knightlib.platform.KnightLibNetworkNeoForge;
 import dev.xylonity.knightlib.registry.KnightLibLootModifier;
 import dev.xylonity.knightlib.registry.KnightLibPackets;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.loading.FMLEnvironment;
 
 @Mod(KnightLib.MOD_ID)
 public class KnightLibNeoForge {
 
-    public KnightLibNeoForge() {
-        KnightLib.PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
-
-        final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public KnightLibNeoForge(IEventBus modEventBus, ModContainer modContainer) {
+        KnightLib.PROXY = FMLEnvironment.dist == Dist.CLIENT ? new ClientProxy() : new CommonProxy();
 
         KnightLibLootModifier.LOOT_MODIFIER_SERIALIZERS.register(modEventBus);
 
         ConfigComposer.registerConfig(KnightLib.MOD_ID, KnightLibConfig.class);
 
+        modEventBus.addListener(KnightLibNetworkNeoForge::onRegisterPayloads);
         KnightLibPackets.registerAll();
 
         // Entity biome spawn modifiers hook

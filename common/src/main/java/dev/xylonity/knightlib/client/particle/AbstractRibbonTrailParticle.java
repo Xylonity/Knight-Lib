@@ -108,40 +108,36 @@ public abstract class AbstractRibbonTrailParticle extends Particle {
             Matrix3f norm = pose.normal();
 
             // bott left
-            vertexConsumer.vertex(mat, (float) from.x + (float) botOffset.x, (float) from.y + (float) botOffset.y, (float) from.z + (float) botOffset.z)
-                    .color(r, g, b, ribbonAlpha)
-                    .uv(u1, 1.0F)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY)
-                    .uv2(getLightColor(partialTicks))
-                    .normal(norm, 0, 1, 0)
-                    .endVertex();
+            vertexConsumer.addVertex(mat, (float) from.x + (float) botOffset.x, (float) from.y + (float) botOffset.y, (float) from.z + (float) botOffset.z)
+                    .setColor(r, g, b, ribbonAlpha)
+                    .setUv(u1, 1.0F)
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(getLightColor(partialTicks))
+                    .setNormal(pose, 0, 1, 0);
 
             // bott right
-            vertexConsumer.vertex(mat, (float) samplex.x + (float) botOffset.x, (float) samplex.y + (float) botOffset.y, (float) samplex.z + (float) botOffset.z)
-                    .color(r, g, b, ribbonAlpha)
-                    .uv(u2, 1.0F)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY)
-                    .uv2(getLightColor(partialTicks))
-                    .normal(norm, 0, 1, 0)
-                    .endVertex();
+            vertexConsumer.addVertex(mat, (float) samplex.x + (float) botOffset.x, (float) samplex.y + (float) botOffset.y, (float) samplex.z + (float) botOffset.z)
+                    .setColor(r, g, b, ribbonAlpha)
+                    .setUv(u2, 1.0F)
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(getLightColor(partialTicks))
+                    .setNormal(pose, 0, 1, 0);
 
             // top right
-            vertexConsumer.vertex(mat, (float) samplex.x + (float) topOffset.x, (float) samplex.y + (float) topOffset.y, (float) samplex.z + (float) topOffset.z)
-                    .color(r, g, b, ribbonAlpha)
-                    .uv(u2, 0.0F)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY)
-                    .uv2(getLightColor(partialTicks))
-                    .normal(norm, 0, 1, 0)
-                    .endVertex();
+            vertexConsumer.addVertex(mat, (float) samplex.x + (float) topOffset.x, (float) samplex.y + (float) topOffset.y, (float) samplex.z + (float) topOffset.z)
+                    .setColor(r, g, b, ribbonAlpha)
+                    .setUv(u2, 0.0F)
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(getLightColor(partialTicks))
+                    .setNormal(pose, 0, 1, 0);
 
             // top left
-            vertexConsumer.vertex(mat, (float) from.x + (float) topOffset.x, (float) from.y + (float) topOffset.y, (float) from.z + (float) topOffset.z)
-                    .color(r, g, b, ribbonAlpha)
-                    .uv(u1, 0.0F)
-                    .overlayCoords(OverlayTexture.NO_OVERLAY)
-                    .uv2(getLightColor(partialTicks))
-                    .normal(norm, 0, 1, 0)
-                    .endVertex();
+            vertexConsumer.addVertex(mat, (float) from.x + (float) topOffset.x, (float) from.y + (float) topOffset.y, (float) from.z + (float) topOffset.z)
+                    .setColor(r, g, b, ribbonAlpha)
+                    .setUv(u1, 0.0F)
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(getLightColor(partialTicks))
+                    .setNormal(pose, 0, 1, 0);
 
             // builds the next segment
             from = samplex;

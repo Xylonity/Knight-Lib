@@ -1,31 +1,30 @@
 package dev.xylonity.knightlib.common.spawn.internal;
 
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.spawn.EntityBiomeSpawnEntry;
 import dev.xylonity.knightlib.api.spawn.KnightLibEntityBiomeSpawns;
 import net.minecraft.core.Holder;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.MobSpawnSettings;
-import net.minecraftforge.common.world.BiomeModifier;
-import net.minecraftforge.common.world.ModifiableBiomeInfo;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.common.world.BiomeModifier;
+import net.neoforged.neoforge.common.world.ModifiableBiomeInfo;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 /**
- * Internal Forge BiomeModifier implementation that applies all spawn entries registered through {@link KnightLibEntityBiomeSpawns}
+ * Internal NeoForge BiomeModifier implementation that applies all spawn entries registered through {@link KnightLibEntityBiomeSpawns}
  */
 public class KnightLibSpawnBiomeModifier implements BiomeModifier {
 
-    public static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIER_SERIALIZERS =
-            DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, KnightLib.MOD_ID);
+    public static final DeferredRegister<MapCodec<? extends BiomeModifier>> BIOME_MODIFIER_SERIALIZERS =
+            DeferredRegister.create(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, KnightLib.MOD_ID);
 
-    private static final RegistryObject<Codec<? extends BiomeModifier>> SERIALIZER =
-            RegistryObject.create(
-                    KnightLib.of("knightlib_mob_spawns"),
-                    ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS,
-                    KnightLib.MOD_ID
+    private static final DeferredHolder<MapCodec<? extends BiomeModifier>, MapCodec<? extends BiomeModifier>> SERIALIZER =
+            DeferredHolder.create(
+                    NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS,
+                    KnightLib.of("knightlib_mob_spawns")
             );
 
     @Override
@@ -51,12 +50,12 @@ public class KnightLibSpawnBiomeModifier implements BiomeModifier {
     }
 
     @Override
-    public Codec<? extends BiomeModifier> codec() {
+    public MapCodec<? extends BiomeModifier> codec() {
         return SERIALIZER.get();
     }
 
-    public static Codec<KnightLibSpawnBiomeModifier> makeCodec() {
-        return Codec.unit(KnightLibSpawnBiomeModifier::new);
+    public static MapCodec<KnightLibSpawnBiomeModifier> makeCodec() {
+        return MapCodec.unit(KnightLibSpawnBiomeModifier::new);
     }
 
     public static void register() {

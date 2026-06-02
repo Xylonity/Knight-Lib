@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class ResourceLocations {
 
     public static ResourceLocation of(String namespace, String path) {
-        return new ResourceLocation(namespace, path);
+        return ResourceLocation.fromNamespaceAndPath(namespace, path);
     }
 
     public static ResourceLocation minecraft(String path) {
@@ -17,7 +17,7 @@ public final class ResourceLocations {
     }
 
     public static ResourceLocation parse(String location) {
-        return new ResourceLocation(location);
+        return ResourceLocation.parse(location);
     }
 
     public static ResourceLocation tryBuild(String namespace, String path) {

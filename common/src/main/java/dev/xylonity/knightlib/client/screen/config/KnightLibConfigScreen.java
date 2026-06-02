@@ -139,10 +139,6 @@ public class KnightLibConfigScreen extends Screen {
 
     @Override
     public void tick() {
-        if (searchBox != null) {
-            searchBox.tick();
-        }
-
         if (panel != null) {
             panel.tickPanel();
         }
@@ -255,19 +251,18 @@ public class KnightLibConfigScreen extends Screen {
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
-        final BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        final BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        bufferBuilder.vertex(matrix, x0, y + 1, 0).color(red, green, blue, 0).endVertex();
-        bufferBuilder.vertex(matrix, cx, y + 1, 0).color(red, green, blue, 255).endVertex();
-        bufferBuilder.vertex(matrix, cx, y, 0).color(red, green, blue, 255).endVertex();
-        bufferBuilder.vertex(matrix, x0, y, 0).color(red, green, blue, 0).endVertex();
-        bufferBuilder.vertex(matrix, cx, y + 1, 0).color(red, green, blue, 255).endVertex();
-        bufferBuilder.vertex(matrix, x1, y + 1, 0).color(red, green, blue, 0).endVertex();
-        bufferBuilder.vertex(matrix, x1, y, 0).color(red, green, blue, 0).endVertex();
-        bufferBuilder.vertex(matrix, cx, y, 0).color(red, green, blue, 255).endVertex();
+        bufferBuilder.addVertex(matrix, x0, y + 1, 0).setColor(red, green, blue, 0);
+        bufferBuilder.addVertex(matrix, cx, y + 1, 0).setColor(red, green, blue, 255);
+        bufferBuilder.addVertex(matrix, cx, y, 0).setColor(red, green, blue, 255);
+        bufferBuilder.addVertex(matrix, x0, y, 0).setColor(red, green, blue, 0);
+        bufferBuilder.addVertex(matrix, cx, y + 1, 0).setColor(red, green, blue, 255);
+        bufferBuilder.addVertex(matrix, x1, y + 1, 0).setColor(red, green, blue, 0);
+        bufferBuilder.addVertex(matrix, x1, y, 0).setColor(red, green, blue, 0);
+        bufferBuilder.addVertex(matrix, cx, y, 0).setColor(red, green, blue, 255);
 
-        BufferUploader.drawWithShader(bufferBuilder.end());
+        BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
     }
 
     static void drawHoverParticles(GuiGraphics graphics, int left, int top, int height, float anim, int accent, int seed) {
@@ -344,13 +339,7 @@ public class KnightLibConfigScreen extends Screen {
         }
 
         void tickPanel() {
-            for (EntryRow entryRow : visibleRows) {
-                if (entryRow.widget instanceof EditBox editBox) {
-                    editBox.tick();
-                }
-
-            }
-
+            ;;
         }
 
         void addEntry(Field field, ConfigEntry configEntry) {
@@ -544,13 +533,13 @@ public class KnightLibConfigScreen extends Screen {
         }
 
         @Override
-        public boolean mouseScrolled(double mx, double my, double d) {
+        public boolean mouseScrolled(double mx, double my, double scrollX, double scrollY) {
             if (!visible || !isIn(mx, my) || !scrollable()) {
                 return false;
             }
 
             draggingScrollbar = false;
-            targetScroll -= d * 24.0;
+            targetScroll -= scrollY * 24.0;
 
             clampScroll();
 

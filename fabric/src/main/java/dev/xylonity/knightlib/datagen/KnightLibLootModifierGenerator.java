@@ -19,12 +19,12 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 public class KnightLibLootModifierGenerator {
 
     public static void init() {
-        LootTableEvents.MODIFY.register((resourceManager, lootDataManager, id, tableBuilder, source) -> {
-            if (!id.getPath().startsWith("entities/")) {
+        LootTableEvents.MODIFY.register((id, tableBuilder, source) -> {
+            if (!id.location().getPath().startsWith("entities/")) {
                 return;
             }
 
-            ResourceLocation resourceLocation = ResourceLocations.of(id.getNamespace(), id.getPath().substring("entities/".length()));
+            ResourceLocation resourceLocation = ResourceLocations.of(id.location().getNamespace(), id.location().getPath().substring("entities/".length()));
 
             if (!BuiltInRegistries.ENTITY_TYPE.containsKey(resourceLocation)) {
                 return;

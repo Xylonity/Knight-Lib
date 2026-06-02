@@ -200,7 +200,7 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
             float partialTicks = (float)((System.currentTimeMillis() - lastUpdateTime) / 50.0);
             blockRenderer.render(blockEntity, partialTicks, pose, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
         } catch (Exception e) {
-            blockRenderer.render(blockEntity, Minecraft.getInstance().getFrameTime(), pose, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
+            blockRenderer.render(blockEntity, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false), pose, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
         }
 
         pose.popPose();
@@ -216,7 +216,7 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
 
             //RenderSystem.setupGui3DDiffuseLighting(up, front);
 
-            entityRenderer.render(entity, 0, Minecraft.getInstance().getFrameTime(), pose, buffer, LightTexture.pack(15, 15));
+            entityRenderer.render(entity, 0, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false), pose, buffer, LightTexture.pack(15, 15));
 
             pose.popPose();
         }

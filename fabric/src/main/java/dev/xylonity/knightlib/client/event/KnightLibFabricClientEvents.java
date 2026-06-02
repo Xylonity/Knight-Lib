@@ -5,6 +5,8 @@ import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.client.event.impl.*;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
@@ -141,7 +143,7 @@ public final class KnightLibFabricClientEvents {
     private static void onRenderGuiEvents() {
         HudRenderCallback.EVENT.register((guiGraphics, tickDelta) -> {
             final Minecraft minecraft = Minecraft.getInstance();
-            KnightLibEvents.CLIENT.dispatch(new ClientRenderGuiEvent(minecraft, guiGraphics, tickDelta));
+            KnightLibEvents.CLIENT.dispatch(new ClientRenderGuiEvent(minecraft, guiGraphics, tickDelta.getGameTimeDeltaPartialTick(false)));
         });
 
     }
@@ -184,10 +186,12 @@ public final class KnightLibFabricClientEvents {
                         return;
                     }
 
-                    final float partialTick = context.tickDelta();
+                    final float partialTick = context.tickCounter().getGameTimeDeltaPartialTick(false);
 
                     final Matrix4f projection = new Matrix4f(context.projectionMatrix());
-                    final Matrix4f modelView  = new Matrix4f(context.matrixStack().last().pose());
+
+                    final PoseStack matrices = context.matrixStack();
+                    final Matrix4f modelView = new Matrix4f(matrices != null ? matrices.last().pose() : RenderSystem.getModelViewMatrix());
 
                     final Vec3 cameraPosition = context.camera().getPosition();
 
@@ -269,8 +273,8 @@ public final class KnightLibFabricClientEvents {
     }
 
     private static void onItemTooltipEvents() {
-        ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
-            KnightLibEvents.CLIENT.dispatch(new ItemStackTooltipEvent(stack, lines, context));
+        ItemTooltipCallback.EVENT.register((stack, tooltipContext, tooltipFlag, lines) -> {
+            KnightLibEvents.CLIENT.dispatch(new ItemStackTooltipEvent(stack, lines, tooltipFlag));
         });
 
     }

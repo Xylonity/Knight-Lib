@@ -6,31 +6,50 @@ import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.client.event.impl.*;
+import dev.xylonity.knightlib.client.item.renderer.GenericBlockItemRenderer;
 import dev.xylonity.knightlib.client.screen.bossbar.BossBarApi;
 import dev.xylonity.knightlib.client.screen.bossbar.BossBarLinks;
+import dev.xylonity.knightlib.common.item.blockitem.GenericBlockItem;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.*;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
@@ -38,7 +57,7 @@ import java.util.Optional;
 
 public class KnightLibNeoForgeClientEvents {
 
-    @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = KnightLib.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class KnightLibClientModBus {
 
         @SubscribeEvent
@@ -49,14 +68,19 @@ public class KnightLibNeoForgeClientEvents {
             BlockEntityRendererRegistrationEventNeoForge beRendererEvent = new BlockEntityRendererRegistrationEventNeoForge();
             KnightLibEvents.CLIENT.dispatch(beRendererEvent);
 
-            MenuScreenRegistrationEventNeoForge menuScreenEvent = new MenuScreenRegistrationEventNeoForge();
-            KnightLibEvents.CLIENT.dispatch(menuScreenEvent);
-
             BossBarRegistrationEvent bossBarEvent = new BossBarRegistrationEvent();
             KnightLibEvents.CLIENT.dispatch(bossBarEvent);
 
             RenderLayerRegistrationEventNeoForge renderLayerEvent = new RenderLayerRegistrationEventNeoForge();
             KnightLibEvents.CLIENT.dispatch(renderLayerEvent);
+        }
+
+        @SubscribeEvent
+        public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
+            MenuScreenRegistrationEventNeoForge menuScreenEvent = new MenuScreenRegistrationEventNeoForge();
+            KnightLibEvents.CLIENT.dispatch(menuScreenEvent);
+
+            menuScreenEvent.applyToForgeEvent(event);
         }
 
         @SubscribeEvent
@@ -112,36 +136,41 @@ public class KnightLibNeoForgeClientEvents {
 
     }
 
-    @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = KnightLib.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
     public static class KnightLibClientForgeBus {
 
         @SubscribeEvent(priority = EventPriority.LOW)
-        public static void onClientTick(TickEvent.ClientTickEvent event) {
-            final Minecraft minecraft = Minecraft.getInstance();
+        public static void onClientTickPre(ClientTickEvent.Pre event) {
+            KnightLibEvents.CLIENT.dispatch(new dev.xylonity.knightlib.api.event.impl.client.ClientTickEvent(Minecraft.getInstance(), TickPhase.START));
+        }
 
-            if (event.phase == TickEvent.Phase.END) {
-                KnightLibEvents.CLIENT.dispatch(new ClientTickEvent(minecraft, TickPhase.END));
-            }
-            else {
-                KnightLibEvents.CLIENT.dispatch(new ClientTickEvent(minecraft, TickPhase.START));
-            }
-
+        @SubscribeEvent(priority = EventPriority.LOW)
+        public static void onClientTickPost(ClientTickEvent.Post event) {
+            KnightLibEvents.CLIENT.dispatch(new dev.xylonity.knightlib.api.event.impl.client.ClientTickEvent(Minecraft.getInstance(), TickPhase.END));
         }
 
         @SubscribeEvent
-        public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-            if (!event.player.level().isClientSide()) {
+        public static void onPlayerTickPre(PlayerTickEvent.Pre event) {
+            dispatchPlayerTick(event, TickPhase.START);
+        }
+
+        @SubscribeEvent
+        public static void onPlayerTickPost(PlayerTickEvent.Post event) {
+            dispatchPlayerTick(event, TickPhase.END);
+        }
+
+        private static void dispatchPlayerTick(PlayerTickEvent event, TickPhase phase) {
+            if (!event.getEntity().level().isClientSide()) {
                 return;
             }
 
             final Minecraft minecraft = Minecraft.getInstance();
             final LocalPlayer localPlayer = minecraft.player;
 
-            if (localPlayer == null || localPlayer != event.player) {
+            if (localPlayer == null || localPlayer != event.getEntity()) {
                 return;
             }
 
-            TickPhase phase = event.phase == TickEvent.Phase.END ? TickPhase.END : TickPhase.START;
             KnightLibEvents.CLIENT.dispatch(new ClientPlayerTickEvent(minecraft, localPlayer, phase));
         }
 
@@ -161,7 +190,7 @@ public class KnightLibNeoForgeClientEvents {
         @SubscribeEvent
         public static void onRenderGui(RenderGuiEvent.Post event) {
             Minecraft minecraft = Minecraft.getInstance();
-            float partialTick = minecraft.getFrameTime();
+            float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
 
             KnightLibEvents.CLIENT.dispatch(new ClientRenderGuiEvent(minecraft, event.getGuiGraphics(), partialTick));
         }
@@ -193,7 +222,7 @@ public class KnightLibNeoForgeClientEvents {
                 return;
             }
 
-            float partialTick = event.getPartialTick();
+            float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
 
             Matrix4f projection = new Matrix4f(event.getProjectionMatrix());
             Matrix4f modelView = new Matrix4f(event.getPoseStack().last().pose());

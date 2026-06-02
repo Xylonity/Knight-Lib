@@ -3,21 +3,28 @@ package dev.xylonity.knightlib.platform;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
 import dev.xylonity.knightlib.registry.registrar.KnightLibResourceRegistryNeoForge;
 import net.minecraft.core.Registry;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.registries.DeferredRegister;
 
-@SuppressWarnings("unchecked")
 public class KnightLibRegistrarNeoForge implements KnightLibRegistrar {
 
     @Override
     public <T> ResourceRegistry<T> create(Registry<T> type, String modid) {
-        DeferredRegister<T> dr = DeferredRegister.create(type.key(), modid);
+        DeferredRegister<T> deferredRegister = DeferredRegister.create(type.key(), modid);
 
-        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-        dr.register(modBus);
+        ModContainer container = ModList.get().getModContainerById(modid).orElseThrow(() ->
+                new IllegalStateException("[KnightLib] No mod container found for '" + modid + "'"));
 
-        return new KnightLibResourceRegistryNeoForge<>(dr, modid);
+        final IEventBus bus = container.getEventBus();
+        if (bus == null) {
+            throw new IllegalStateException("[KnightLib] Mod '" + modid + "' has no mod event bus");
+        }
+
+        deferredRegister.register(bus);
+
+        return new KnightLibResourceRegistryNeoForge<>(deferredRegister, modid);
     }
 
 }

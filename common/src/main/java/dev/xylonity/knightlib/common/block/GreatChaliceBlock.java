@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -65,27 +65,27 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull Player pPlayer, @NotNull InteractionHand pHand, @NotNull BlockHitResult pHit) {
+    public @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack pStack, @NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull Player pPlayer, @NotNull InteractionHand pHand, @NotNull BlockHitResult pHit) {
 
         if (pLevel.isClientSide) {
-            return InteractionResult.PASS;
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
         if (!(pLevel.getBlockEntity(pPos) instanceof GreatChaliceBlockEntity chalice)) {
-            return InteractionResult.PASS;
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
 
         ItemStack stack = pPlayer.getItemInHand(pHand);
         if (stack.getItem() instanceof IGreatChaliceInteractable actor) {
             if (!actor.canInteract(chalice, pLevel, pPlayer)) {
-                return InteractionResult.PASS;
+                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }
 
             actor.onPreInteraction(chalice, pPlayer, pLevel, pHit);
 
             int total = chalice.getCharges() + actor.getChargesToApply();
             if (total < 0 || total > IGreatChaliceInteractable.MAX_CHARGES) {
-                return InteractionResult.PASS;
+                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }
 
             chalice.setCharges(total);
@@ -120,10 +120,10 @@ public class GreatChaliceBlock extends Block implements EntityBlock {
 
             actor.onPostInteraction(chalice, pPlayer, pLevel, pHit);
 
-            return InteractionResult.SUCCESS;
+            return ItemInteractionResult.SUCCESS;
         }
 
-        return super.use(pState, pLevel, pPos, pPlayer, pHand, pHit);
+        return super.useItemOn(pStack, pState, pLevel, pPos, pPlayer, pHand, pHit);
     }
 
     private void spawnReward(Level level, BlockPos pPos, ItemStack reward, Player player) {

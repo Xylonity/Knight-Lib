@@ -2,7 +2,7 @@ package dev.xylonity.knightlib.client.event.impl;
 
 import dev.xylonity.knightlib.api.event.impl.client.KeyMappingRegistrationEvent;
 import net.minecraft.client.KeyMapping;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,7 @@ public class KeyMappingRegistrationEventNeoForge extends KeyMappingRegistrationE
     }
 
     public void applyToForgeEvent(RegisterKeyMappingsEvent forgeEvent) {
-        for (KeyMapping keyMapping : keyMappings) {
+        for (final KeyMapping keyMapping : keyMappings) {
             forgeEvent.register(keyMapping);
         }
 

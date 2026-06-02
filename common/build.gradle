@@ -16,11 +16,35 @@ neoForge {
     }
 }
 
+repositories {
+    maven {
+        name = 'GeckoLib'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        content {
+            includeGroupByRegex("software\\.bernie.*")
+            includeGroup("com.eliotlash.mclib")
+        }
+    }
+    maven {
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+    }
+    maven {
+        name = "ModMaven"
+        url = "https://modmaven.dev"
+    }
+}
+
 dependencies {
     compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.5'
     // fabric and neoforge both bundle mixinextras, so it is safe to use it in common
     compileOnly group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
     annotationProcessor group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
+
+    compileOnly("software.bernie.geckolib:geckolib-neoforge-1.21.1:4.7.6") { transitive = false }
+    compileOnly("com.electronwill.night-config:toml:3.6.6")
+    compileOnly("com.electronwill.night-config:core:3.6.6")
+    compileOnly("mezz.jei:jei-1.21.1-common-api:${jei_version}")
 }
 
 configurations {

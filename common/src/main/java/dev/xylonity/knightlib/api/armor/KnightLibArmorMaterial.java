@@ -1,15 +1,17 @@
 package dev.xylonity.knightlib.api.armor;
 
 import net.minecraft.Util;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -28,9 +30,10 @@ import java.util.function.Supplier;
  *         .build();
  * }</pre>
  *
- * <p>Then to receive the actual material, use {@code MAGE.get()}</p>
+ * <p>Then to receive the actual material, use {@code MAGE.get()}. In 1.21 durability is no longer part of
+ * {@link ArmorMaterial}, so apply {@link #getDurabilityForType(ArmorItem.Type)} on the {@code Item.Properties} of each piece.</p>
  */
-public final class KnightLibArmorMaterial implements ArmorMaterial {
+public final class KnightLibArmorMaterial {
 
     private static final EnumMap<ArmorItem.Type, Integer> BASE_DURABILITY = Util.make(
             new EnumMap<>(ArmorItem.Type.class), enumMap -> {
@@ -48,8 +51,9 @@ public final class KnightLibArmorMaterial implements ArmorMaterial {
     private final float knockbackResistance;
     private final int durabilityMultiplier;
     private final int enchantmentValue;
-    private final SoundEvent equipSound;
+    private final Holder<SoundEvent> equipSound;
     private final Supplier<Ingredient> repairIngredient;
+    private final ResourceLocation layerTexture;
 
     private KnightLibArmorMaterial(Builder builder) {
         this.name = builder.modId + ":" + builder.name;
@@ -60,50 +64,28 @@ public final class KnightLibArmorMaterial implements ArmorMaterial {
         this.enchantmentValue = builder.enchantmentValue;
         this.equipSound = builder.equipSound;
         this.repairIngredient = builder.repairIngredient;
+        this.layerTexture = ResourceLocation.fromNamespaceAndPath(builder.modId, builder.name);
     }
 
     public ArmorMaterial get() {
-        return this;
+        return new ArmorMaterial(
+                defense,
+                enchantmentValue,
+                equipSound,
+                repairIngredient,
+                List.of(new ArmorMaterial.Layer(layerTexture)),
+                toughness,
+                knockbackResistance
+        );
+
     }
 
-    @Override
-    public int getDurabilityForType(ArmorItem.@NotNull Type type) {
-        return BASE_DURABILITY.getOrDefault(type, 0) * durabilityMultiplier;
-    }
-
-    @Override
-    public int getDefenseForType(ArmorItem.@NotNull Type type) {
-        return defense.getOrDefault(type, 0);
-    }
-
-    @Override
-    public int getEnchantmentValue() {
-        return enchantmentValue;
-    }
-
-    @Override
-    public @NotNull SoundEvent getEquipSound() {
-        return equipSound;
-    }
-
-    @Override
-    public @NotNull Ingredient getRepairIngredient() {
-        return repairIngredient.get();
-    }
-
-    @Override
-    public @NotNull String getName() {
+    public String getName() {
         return name;
     }
 
-    @Override
-    public float getToughness() {
-        return toughness;
-    }
-
-    @Override
-    public float getKnockbackResistance() {
-        return knockbackResistance;
+    public int getDurabilityForType(ArmorItem.Type type) {
+        return BASE_DURABILITY.getOrDefault(type, 0) * durabilityMultiplier;
     }
 
     public static Builder builder(String name, String modId) {
@@ -119,7 +101,7 @@ public final class KnightLibArmorMaterial implements ArmorMaterial {
         private float knockbackResistance = 0f;
         private int durabilityMultiplier = 15;
         private int enchantmentValue = 9;
-        private SoundEvent equipSound = SoundEvents.ARMOR_EQUIP_IRON;
+        private Holder<SoundEvent> equipSound = SoundEvents.ARMOR_EQUIP_IRON;
         private Supplier<Ingredient> repairIngredient = () -> Ingredient.EMPTY;
 
         private Builder(String name, String modId) {
@@ -165,7 +147,7 @@ public final class KnightLibArmorMaterial implements ArmorMaterial {
             return this;
         }
 
-        public Builder equipSound(SoundEvent equipSound) {
+        public Builder equipSound(Holder<SoundEvent> equipSound) {
             this.equipSound = equipSound;
             return this;
         }
