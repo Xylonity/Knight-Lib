@@ -162,7 +162,7 @@ final class PersistentSoundTracker {
                 event, source, volume, pitch,
                 SoundInstance.createUnseededRandom(),
                 (float) entity.getX(),
-                (float) entity.getY(),
+                (float) entity.getEyeY(),
                 (float) entity.getZ()
         ));
 
