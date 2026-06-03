@@ -28,7 +28,7 @@ public final class PersistentSoundInstance extends AbstractTickableSoundInstance
         this.volume = volume;
         this.pitch = pitch;
         this.x = (float) entity.getX();
-        this.y = (float) entity.getY();
+        this.y = (float) entity.getEyeY();
         this.z = (float) entity.getZ();
     }
 
@@ -40,7 +40,7 @@ public final class PersistentSoundInstance extends AbstractTickableSoundInstance
         }
 
         this.x = (float) entity.getX();
-        this.y = (float) entity.getY();
+        this.y = (float) entity.getEyeY();
         this.z = (float) entity.getZ();
 
         if (this.volume != targetVolume) {

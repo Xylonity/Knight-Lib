@@ -1,3 +1,6 @@
+# 1.5.1
+- Fixed a case where the persistent sound engine generated desync first person sounds whose value decreased based on where you looked
+
 # 1.5.0
 - License changed from GPLv3 to LGPL
 - Updated wiki
