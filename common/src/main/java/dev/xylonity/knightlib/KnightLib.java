@@ -38,8 +38,6 @@ public class KnightLib {
         KnightLibBlockEntities.BLOCK_ENTITIES.init();
         KnightLibRecipeTypes.RECIPE_TYPES.init();
         KnightLibRecipeSerializers.RECIPE_SERIALIZERS.init();
-
-        initialize();
     }
 
     public static ResourceLocation of(String path) {

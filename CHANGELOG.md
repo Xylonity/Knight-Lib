@@ -1,3 +1,6 @@
+# 1.5.2
+- Fixed a case where green essences would be dropped by hostiles even though no explicit mods were using them
+
 # 1.5.1
 - Fixed a case where the persistent sound engine generated desync first person sounds whose value decreased based on where you looked
 - Added a baked model retrieval wrapper since the extra model registration query differs between loaders
