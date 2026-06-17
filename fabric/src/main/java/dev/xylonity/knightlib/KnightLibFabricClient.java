@@ -4,7 +4,6 @@ import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.client.ClientProxy;
 import dev.xylonity.knightlib.client.event.KnightLibClientEvents;
 import dev.xylonity.knightlib.client.event.KnightLibFabricClientEvents;
-import dev.xylonity.knightlib.registry.KnightLibPackets;
 import net.fabricmc.api.ClientModInitializer;
 
 public class KnightLibFabricClient implements ClientModInitializer {
@@ -15,8 +14,6 @@ public class KnightLibFabricClient implements ClientModInitializer {
 
         // Event hooks
         KnightLibFabricClientEvents.init();
-
-        KnightLibPackets.registerS2C();
 
         // Internal event registrar
         KnightLibEvents.CLIENT.register(KnightLibClientEvents.class);
