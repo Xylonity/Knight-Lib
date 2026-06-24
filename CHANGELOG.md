@@ -1,3 +1,6 @@
+# 1.5.4
+- Fixed a case where the great chalice geo model would be split into different parts when using Geckolib 4.9
+
 # 1.5.3
 - Fixed a case where knightlib would override one of the default vanilla atlas textures and could break custom unicode icons from other mods (such as Dungeon Difficulty)
 - Fixed a case where Fabric would crash when launching a random S2C packet, caused by a wrong packet registration supplier
