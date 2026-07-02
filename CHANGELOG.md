@@ -1,3 +1,8 @@
+# 1.5.3
+- Visual rework of the in-game config screen (for knightlib and dependant mods)
+- Fixed a case where the modified values through the in-game config screen would be cleared when resizing the game's window
+- Fixed knightlib possibly breaking custom unicode icons from external mods
+
 # 1.5.2
 - Fixed a case where green essences would be dropped by hostiles even though no explicit mods were using them
 
