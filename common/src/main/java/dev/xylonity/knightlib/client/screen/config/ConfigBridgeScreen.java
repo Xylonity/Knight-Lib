@@ -27,7 +27,7 @@ public class ConfigBridgeScreen extends Screen {
     private final Minecraft minecraft = Minecraft.getInstance();
 
     public ConfigBridgeScreen(Screen parent, String modId, List<Class<?>> configs) {
-        super(Component.literal(KnightLibConfigScreen.prettify(modId) + " — Configurations"));
+        super(Component.translatable("knightlib.config.bridge.title", KnightLibConfigScreen.prettify(modId)));
 
         this.parent = parent;
         this.modId = modId;
@@ -72,7 +72,7 @@ public class ConfigBridgeScreen extends Screen {
 
         KnightLibConfigScreen.FlatButton backButton = new KnightLibConfigScreen.FlatButton(
                 backButtonX, backButtonY, backButtonWidth, backButtonHeight,
-                Component.literal("\u2190 Back"),
+                Component.translatable("knightlib.config.bridge.back"),
                 button -> this.minecraft.setScreen(this.parent), accent
         );
 
@@ -97,11 +97,16 @@ public class ConfigBridgeScreen extends Screen {
 
         }
 
-        final String headerTitle = KnightLibConfigScreen.prettify(modId);
-        graphics.drawString(minecraft.font, headerTitle, this.width - 14 - minecraft.font.width(headerTitle), 10, 0xFFFFFFFF, false);
+        final String headerTitle = KnightLibConfigScreen.prettify(modId).toUpperCase(java.util.Locale.ROOT);
 
-        final String subtitle = "Select a configuration to edit";
-        graphics.drawString(minecraft.font, subtitle, this.width - 14 - minecraft.font.width(subtitle), 22, 0xFF888888, false);
+        // Accent bar next to the title
+        graphics.fill(14, 10, 17, 10 + minecraft.font.lineHeight + 3, accent);
+        graphics.fill(17, 10, 18, 10 + minecraft.font.lineHeight + 3, KnightLibConfigScreen.withAlpha(accent, 0x50));
+
+        graphics.drawString(minecraft.font, headerTitle, 23, 12, 0xFFFFFFFF, false);
+
+        final String subtitle = net.minecraft.client.resources.language.I18n.get("knightlib.config.bridge.subtitle");
+        graphics.drawString(minecraft.font, subtitle, 23, 12 + minecraft.font.lineHeight + 4, 0xFF888888, false);
 
         final int cardWidth = Math.min(280, this.width - 60);
         final int cardHeight = 32;
@@ -117,12 +122,6 @@ public class ConfigBridgeScreen extends Screen {
             int y = startY + i * (cardHeight + gap);
             renderCard(graphics, cards.get(i), i, startX, y, cardWidth, cardHeight, mouseX, mouseY);
         }
-
-        // Footer line between cards and back button
-        int footerY = startY + totalCardsHeight + backButtonGap / 2;
-        int lineW = (int) (cardWidth * 0.8f);
-        int lineX = (this.width - lineW) / 2;
-        KnightLibConfigScreen.drawFadedHLine(graphics, lineX, lineX + lineW, footerY, 0x4D4D4D);
 
         super.render(graphics, mouseX, mouseY, partialTick);
     }
@@ -140,42 +139,11 @@ public class ConfigBridgeScreen extends Screen {
 
         float e = card.hoverAnim * card.hoverAnim * (3f - 2f * card.hoverAnim);
 
-        final int baseAlpha = (index % 2 == 0) ? 0x1A : 0x14;
-        final int extraAlpha = (int) (0x20 * e);
-        graphics.fill(x, y, x + width, y + height, (Math.min(255, baseAlpha + extraAlpha) << 24) | 0x1A1A1A);
+        final int bg = 0xFF000000 | KnightLibConfigScreen.mixRgb(0x151517, 0x1B1B1F, e);
+        final int border = 0xFF000000 | KnightLibConfigScreen.mixRgb(0x26262A, KnightLibConfigScreen.dimAccent(accent), e);
+        KnightLibConfigScreen.drawCard(graphics, x, y, x + width, y + height, bg, border);
 
-        int[] ac = KnightLibConfigScreen.rgb(accent);
-        int baseRed = (int) (0x25 + (ac[0] - 0x25) * e);
-        int baseGreen = (int) (0x25 + (ac[1] - 0x25) * e);
-        int baseBlue = (int) (0x25 + (ac[2] - 0x25) * e);
-        graphics.fill(x, y, x + 2, y + height, 0xFF000000 | (baseRed << 16) | (baseGreen << 8) | baseBlue);
-
-        if (e > 0.01f) {
-            int eAlpha = (int) (0xFF * e);
-            graphics.fill(x + 2, y, x + 3, y + height, (eAlpha << 24) | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
-            if (e > 0.5f) {
-                int eAlpha2 = (int) (0xFF * (e - 0.5f) * 2f);
-                graphics.fill(x + 3, y, x + 4, y + height, (eAlpha2 << 24) | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
-            }
-
-        }
-
-        KnightLibConfigScreen.drawBarGlow(graphics, x, y, height, e, accent);
-        KnightLibConfigScreen.drawHoverParticles(graphics, x, y, height, e, accent, index * 73 + card.title.hashCode());
-
-        if (e > 0.01f) {
-            int gradWidth = Math.min(60, width / 4);
-            int maxAlpha = (int) (0x18 * e);
-            for (int gx = 0; gx < gradWidth; gx++) {
-                float time = (float) gx / gradWidth;
-                int alpha = (int) (maxAlpha * (1f - time * time));
-                if (alpha > 0) {
-                    graphics.fill(x + gx, y, x + gx + 1, y + height, (alpha << 24) | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
-                }
-
-            }
-
-        }
+        KnightLibConfigScreen.drawCardHoverFx(graphics, x, y, width, height, e, accent, index * 73 + card.title.hashCode());
 
         final int titleHeight = minecraft.font.lineHeight;
         final int descriptionHeight = minecraft.font.lineHeight;
@@ -205,9 +173,6 @@ public class ConfigBridgeScreen extends Screen {
         final int aGreen = (int) (0x44 + (arr[1] - 0x44) * e);
         final int aBlue = (int) (0x44 + (arr[2] - 0x44) * e);
         graphics.drawString(minecraft.font, "\u2192", x + width - arrowWidth + 2, y + (height - minecraft.font.lineHeight) / 2, 0xFF000000 | (aRed << 16) | (aGreen << 8) | aBlue, false);
-
-        graphics.fill(x + 4, y, x + width - 4, y + 1, 0x08FFFFFF);
-        graphics.fill(x + 4, y + height - 1, x + width - 4, y + height, 0x08FFFFFF);
     }
 
     @Override

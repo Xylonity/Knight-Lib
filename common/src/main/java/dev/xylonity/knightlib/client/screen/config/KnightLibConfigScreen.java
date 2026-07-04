@@ -1,7 +1,5 @@
 package dev.xylonity.knightlib.client.screen.config;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
 import dev.xylonity.knightlib.api.util.KnightLibEasings;
 import dev.xylonity.knightlib.config.interop.ConfigManager;
 import dev.xylonity.knightlib.api.config.AutoConfig;
@@ -15,14 +13,19 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
-import org.joml.Matrix4f;
+import net.minecraft.util.Mth;
+import org.lwjgl.glfw.GLFW;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class KnightLibConfigScreen extends Screen {
 
@@ -32,11 +35,18 @@ public class KnightLibConfigScreen extends Screen {
     private final int accent;
 
     private ConfigPanel panel;
+    private CategorySidebar sidebar;
     private SearchBox searchBox;
 
     private final Map<Field, Object> snapshot = new LinkedHashMap<>();
 
-    private static final int HEADER_HEIGHT = 52;
+    // Preserved across resizes so the screen rebuilds in the same state
+    private String selectedCategory = null;
+    private String searchQuery = "";
+
+    private final long openedAt = Util.getMillis();
+
+    private static final int HEADER_HEIGHT = 46;
     private static final int DEFAULT_ACCENT = 0xFF4A9EFF;
 
     private final Minecraft minecraft = Minecraft.getInstance();
@@ -83,20 +93,11 @@ public class KnightLibConfigScreen extends Screen {
 
     @Override
     protected void init() {
-        int panelTop = HEADER_HEIGHT + 4;
-        int panelBottom = this.height - 36;
+        final int panelTop = HEADER_HEIGHT + 6;
+        final int panelBottom = this.height - 36;
 
-        this.panel = new ConfigPanel(16, panelTop, this.width - 32, Math.max(0, panelBottom - panelTop), accent);
-        this.addRenderableWidget(this.panel);
-
-        final int searchWidth = Math.min(220, this.width / 3);
-        final int searchX = this.panel.getX() + 4;
-        final int searchY = HEADER_HEIGHT - 22;
-
-        this.searchBox = new SearchBox(this.font, searchX, searchY, searchWidth, 16, accent);
-        this.searchBox.setResponder(q -> { if (this.panel != null) this.panel.applySearch(q); });
-        this.addRenderableWidget(this.searchBox);
-
+        final List<Field> entryFields = new ArrayList<>();
+        final Map<String, Integer> categoryCounts = new LinkedHashMap<>();
         for (Field field : configClass.getDeclaredFields()) {
             ConfigEntry entry = field.getAnnotation(ConfigEntry.class);
             if (entry == null) {
@@ -104,37 +105,92 @@ public class KnightLibConfigScreen extends Screen {
             }
 
             field.setAccessible(true);
-
-            this.panel.addEntry(field, entry);
+            entryFields.add(field);
+            categoryCounts.merge(entry.category().trim(), 1, Integer::sum);
         }
 
-        this.panel.applySearch("");
+        final boolean hasSidebar = categoryCounts.size() >= 2;
+        final int sidebarWidth = hasSidebar ? Mth.clamp(this.width / 5, 84, 120) : 0;
+        final int panelLeft = hasSidebar ? 10 + sidebarWidth + 6 : 16;
 
-        int buttonWidth = 90;
-        int buttonHeight = 18;
-        int gap = 8;
-        int totalWidth = buttonWidth * 3 + gap * 2;
-        int sx = (this.width - totalWidth) / 2;
-        int buttonY = this.height - 26;
+        this.panel = new ConfigPanel(panelLeft, panelTop, this.width - panelLeft - 10, Math.max(0, panelBottom - panelTop), accent);
+
+        if (hasSidebar) {
+            this.sidebar = new CategorySidebar(10, panelTop, sidebarWidth, Math.max(0, panelBottom - panelTop), accent, categoryCounts, entryFields.size(),
+                    key -> {
+                        selectedCategory = key;
+                        panel.setCategory(key);
+                    });
+            this.sidebar.setSelectedKey(selectedCategory);
+            this.addRenderableWidget(this.sidebar);
+        }
+        else {
+            this.sidebar = null;
+            this.selectedCategory = null;
+        }
+
+        this.addRenderableWidget(this.panel);
+
+        final int searchWidth = Math.min(200, this.width / 3);
+        final int searchX = this.width - searchWidth - 14;
+        final int searchY = (HEADER_HEIGHT - 16) / 2 - 1;
+
+        this.searchBox = new SearchBox(this.font, searchX, searchY, searchWidth, 16, accent);
+        this.searchBox.setResponder(q -> {
+            searchQuery = q;
+            if (this.panel != null) {
+                this.panel.setQuery(q);
+            }
+            if (this.sidebar != null) {
+                this.sidebar.setDimmed(!q.isBlank());
+            }
+
+        });
+        this.addRenderableWidget(this.searchBox);
+
+        for (Field field : entryFields) {
+            this.panel.addEntry(field, field.getAnnotation(ConfigEntry.class), snapshot.get(field));
+        }
+
+        this.panel.setCategory(selectedCategory);
+        if (!searchQuery.isEmpty()) {
+            this.searchBox.setValue(searchQuery);
+        }
+
+        final int buttonWidth = 90;
+        final int buttonHeight = 18;
+        final int gap = 8;
+        final int totalWidth = buttonWidth * 3 + gap * 2;
+        final int sx = (this.width - totalWidth) / 2;
+        final int buttonY = this.height - 26;
 
         addRenderableWidget(new FlatButton(sx, buttonY, buttonWidth, buttonHeight,
                 CommonComponents.GUI_DONE,
                 button -> {
                     panel.applyToFields(); ConfigManager.save(configClass); minecraft.setScreen(parent);
                 },
-                accent));
+                accent, true).withEntranceDelay(60));
 
         addRenderableWidget(new FlatButton(sx + buttonWidth + gap, buttonY, buttonWidth, buttonHeight,
-                Component.literal("Cancel"),
+                Component.translatable("knightlib.config.cancel"),
                 button -> {
                     restoreSnapshot(); minecraft.setScreen(parent);
                 },
-                accent));
+                accent).withEntranceDelay(120));
 
         addRenderableWidget(new FlatButton(sx + (buttonWidth + gap) * 2, buttonY, buttonWidth, buttonHeight,
-                Component.literal("Reset All"),
+                Component.translatable("knightlib.config.reset_all"),
                 button -> panel.resetAllToDefault(),
-                accent));
+                accent).withEntranceDelay(180));
+    }
+
+    @Override
+    public void resize(Minecraft minecraft, int width, int height) {
+        if (panel != null) {
+            panel.applyToFields();
+        }
+
+        super.resize(minecraft, width, height);
     }
 
     @Override
@@ -151,6 +207,17 @@ public class KnightLibConfigScreen extends Screen {
     }
 
     @Override
+    public boolean keyPressed(int key, int scancode, int modifiers) {
+        if (key == GLFW.GLFW_KEY_F && hasControlDown() && searchBox != null) {
+            this.setFocused(searchBox);
+            searchBox.setFocused(true);
+            return true;
+        }
+
+        return super.keyPressed(key, scancode, modifiers);
+    }
+
+    @Override
     public void onClose() {
         panel.applyToFields(); ConfigManager.save(configClass); minecraft.setScreen(parent);
     }
@@ -159,40 +226,125 @@ public class KnightLibConfigScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fill(0, 0, width, height, 0xFF0E0E0E);
 
+        renderBackgroundGlow(graphics);
         renderHeader(graphics);
-        renderFooterLine(graphics);
+        renderHeaderInfo(graphics);
 
         super.render(graphics, mouseX, mouseY, partialTick);
+
+        renderModifiedCounter(graphics);
+
+        if (panel != null) {
+            panel.renderPendingTooltip(graphics, font, width, height);
+        }
+
+    }
+
+    private void renderBackgroundGlow(GuiGraphics graphics) {
+        // Soft wash behind the header title
+        final float breath = 0.85f + 0.15f * (float) Math.sin(Util.getMillis() / 1300.0);
+        final int[] ac = rgb(accent);
+        final int glowW = Math.min(220, width / 2);
+        for (int x = 0; x < glowW; x += 2) {
+            final float t = (float) x / glowW;
+            final int alpha = (int) (0x0A * (1f - t * t) * breath);
+            if (alpha > 0) {
+                graphics.fill(x, 0, x + 2, HEADER_HEIGHT, (alpha << 24) | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
+            }
+
+        }
+
+        // Bottom vignette
+        for (int i = 0; i < 24; i++) {
+            final int alpha = (int) (26 * ((float) i / 24) * ((float) i / 24));
+            if (alpha > 0) {
+                graphics.fill(0, height - 24 + i, width, height - 23 + i, alpha << 24);
+            }
+
+        }
+
     }
 
     private void renderHeader(GuiGraphics graphics) {
         for (int i = 0; i < HEADER_HEIGHT; i++) {
-            int alpha = Math.max(0, 60 - i * 2);
+            final int alpha = Math.max(0, 60 - i * 2);
             if (alpha > 0) {
                 graphics.fill(0, i, width, i + 1, alpha << 24);
             }
 
         }
 
-        final String title = resolveTitle(configClass);
-        graphics.drawString(font, title, width - 14 - font.width(title), 8, 0xFFFFFFFF, false);
-
+        final String title = resolveTitle(configClass).toUpperCase(Locale.ROOT);
         final String description = meta != null ? meta.description() : "";
-        if (!description.isEmpty()) {
-            graphics.drawString(font, description, width - 14 - font.width(description), 20, 0xFF888888, false);
+        final boolean hasDescription = !description.isEmpty();
+
+        final int titleY = hasDescription ? 12 : 19;
+
+        // title and description slide in
+        final long now = Util.getMillis();
+        final float t = KnightLibEasings.EASE_OUT_CUBIC.apply(Mth.clamp((now - openedAt) / 240f, 0f, 1f));
+        final float t2 = KnightLibEasings.EASE_OUT_CUBIC.apply(Mth.clamp((now - openedAt - 80) / 240f, 0f, 1f));
+
+        // Accent bar next to the title
+        final int barH = (int) ((font.lineHeight + 3) * t);
+        if (barH > 0) {
+            graphics.fill(14, titleY - 2, 17, titleY - 2 + barH, accent);
+            graphics.fill(17, titleY - 2, 18, titleY - 2 + barH, withAlpha(accent, 0x50));
+        }
+
+        final int titleAlpha = (int) (0xFF * t);
+        if (titleAlpha >= 0x10) {
+            graphics.drawString(font, title, 23 - (int) ((1f - t) * 6f), titleY, withAlpha(0xFFFFFF, titleAlpha), false);
+        }
+
+        final int descriptionAlpha = (int) (0xFF * t2);
+        if (hasDescription && descriptionAlpha >= 0x10) {
+            graphics.drawString(font, description, 23 - (int) ((1f - t2) * 6f), titleY + font.lineHeight + 4, withAlpha(0x888888, descriptionAlpha), false);
         }
 
     }
 
-    private void renderFooterLine(GuiGraphics graphics) {
-        int width = (int) (this.width * 0.75f);
-        int x0 = (this.width - width) / 2;
+    private void renderHeaderInfo(GuiGraphics graphics) {
+        if (panel == null) {
+            return;
+        }
 
-        // Top line (above entries)
-        drawFadedHLine(graphics, x0, x0 + width, HEADER_HEIGHT + 2, 0x4D4D4D);
+        final String text;
+        if (!searchQuery.isBlank()) {
+            final int results = panel.visibleCount();
+            text = I18n.get(results == 1 ? "knightlib.config.result" : "knightlib.config.results", results);
+        }
+        else {
+            final int total = snapshot.size();
+            text = I18n.get(total == 1 ? "knightlib.config.option" : "knightlib.config.options", total) + (meta != null ? " · " + meta.file() + ".toml" : "");
+        }
 
-        // Bottom line (above buttons)
-        drawFadedHLine(graphics, x0, x0 + width, height - 32, 0x4D4D4D);
+        final int alpha = (int) (0xFF * KnightLibEasings.EASE_OUT_CUBIC.apply(Mth.clamp((Util.getMillis() - openedAt - 120) / 240f, 0f, 1f)));
+        if (alpha >= 0x10) {
+            graphics.drawString(font, text, width - 14 - font.width(text), 34, withAlpha(0x4A4A4A, alpha), false);
+        }
+
+    }
+
+    private void renderModifiedCounter(GuiGraphics graphics) {
+        if (panel == null) {
+            return;
+        }
+
+        final int modified = panel.countModified();
+        if (modified <= 0) {
+            return;
+        }
+
+        final String text = I18n.get(modified == 1 ? "knightlib.config.change" : "knightlib.config.changes", modified);
+        final int textX = width - 14 - font.width(text);
+        final int textY = height - 22;
+
+        // dot next to the pending changes counter
+        final int[] ac = rgb(accent);
+        graphics.fill(textX - 8, textY + 2, textX - 4, textY + 6, 0xFF000000 | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
+
+        graphics.drawString(font, text, textX, textY, withAlpha(accent, 0xE0), false);
     }
 
     static String resolveTitle(Class<?> clazz) {
@@ -243,81 +395,262 @@ public class KnightLibConfigScreen extends Screen {
         return (alpha << 24) | (rgb & 0x00FFFFFF);
     }
 
-    static void drawFadedHLine(GuiGraphics graphics, int x0, int x1, int y, int rgb) {
-        Matrix4f matrix = graphics.pose().last().pose();
-
-        final int red = (rgb >> 16) & 0xFF;
-        final int green = (rgb >> 8) & 0xFF;
-        final int blue = rgb & 0xFF;
-        final int cx = (x0 + x1) / 2;
-
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
-
-        final BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
-        bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-
-        bufferBuilder.vertex(matrix, x0, y + 1, 0).color(red, green, blue, 0).endVertex();
-        bufferBuilder.vertex(matrix, cx, y + 1, 0).color(red, green, blue, 255).endVertex();
-        bufferBuilder.vertex(matrix, cx, y, 0).color(red, green, blue, 255).endVertex();
-        bufferBuilder.vertex(matrix, x0, y, 0).color(red, green, blue, 0).endVertex();
-        bufferBuilder.vertex(matrix, cx, y + 1, 0).color(red, green, blue, 255).endVertex();
-        bufferBuilder.vertex(matrix, x1, y + 1, 0).color(red, green, blue, 0).endVertex();
-        bufferBuilder.vertex(matrix, x1, y, 0).color(red, green, blue, 0).endVertex();
-        bufferBuilder.vertex(matrix, cx, y, 0).color(red, green, blue, 255).endVertex();
-
-        BufferUploader.drawWithShader(bufferBuilder.end());
+    static int mixRgb(int from, int to, float t) {
+        final int red = (int) (((from >> 16) & 0xFF) + ((((to >> 16) & 0xFF) - ((from >> 16) & 0xFF)) * t));
+        final int green = (int) (((from >> 8) & 0xFF) + ((((to >> 8) & 0xFF) - ((from >> 8) & 0xFF)) * t));
+        final int blue = (int) ((from & 0xFF) + (((to & 0xFF) - (from & 0xFF)) * t));
+        return (red << 16) | (green << 8) | blue;
     }
 
-    static void drawHoverParticles(GuiGraphics graphics, int left, int top, int height, float anim, int accent, int seed) {
-        if (anim <= 0.05f) {
+    static int dimAccent(int accent) {
+        final int[] ac = rgb(accent);
+        return ((ac[0] * 11 / 20) << 16) | ((ac[1] * 11 / 20) << 8) | (ac[2] * 11 / 20);
+    }
+
+    static void drawNotchedBorder(GuiGraphics graphics, int x0, int y0, int x1, int y1, int color) {
+        graphics.fill(x0 + 2, y0, x1 - 2, y0 + 1, color);
+        graphics.fill(x0 + 2, y1 - 1, x1 - 2, y1, color);
+        graphics.fill(x0, y0 + 2, x0 + 1, y1 - 2, color);
+        graphics.fill(x1 - 1, y0 + 2, x1, y1 - 2, color);
+        graphics.fill(x0 + 1, y0 + 1, x0 + 2, y0 + 2, color);
+        graphics.fill(x1 - 2, y0 + 1, x1 - 1, y0 + 2, color);
+        graphics.fill(x0 + 1, y1 - 2, x0 + 2, y1 - 1, color);
+        graphics.fill(x1 - 2, y1 - 2, x1 - 1, y1 - 1, color);
+    }
+
+    static void drawCard(GuiGraphics graphics, int x0, int y0, int x1, int y1, int bg, int border) {
+        graphics.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, bg);
+        drawNotchedBorder(graphics, x0, y0, x1, y1, border);
+    }
+
+    static void drawCardHoverFx(GuiGraphics graphics, int left, int top, int width, int height, float anim, int accent, int seed) {
+        if (anim <= 0.1f || height < 12) {
             return;
         }
 
-        long time = Util.getMillis();
-        int[] ac = rgb(accent);
-        int count = 6;
-        float maxDrift = 55f;
+        final int[] ac = rgb(accent);
+        final long time = Util.getMillis();
 
-        for (int i = 0; i < count; i++) {
-            long period = 1400L + (i * 200L);
-            long offset = Math.floorMod((long) seed * 137L + i * 311L, period);
-            float phase = Math.floorMod(time + offset, period) / (float) period;
+        for (int i = 0; i < 7; i++) {
+            final long period = 1700L + Math.floorMod((long) seed * 31L + i * 197L, 900L);
+            final long offset = Math.floorMod((long) seed * 137L + i * 311L, period);
+            final float phase = Math.floorMod(time + offset, period) / (float) period;
 
-            float mx = left + 3 + phase * maxDrift;
-            float yCenter = top + height * 0.5f;
-            float yOff = (float) Math.sin(phase * Math.PI * 2.0 + i * 1.7) * (height * 0.3f);
-            float my = yCenter + yOff;
+            final float fx = Math.floorMod((long) seed * 53L + i * 419L, 1000L) / 1000f;
+            final float sway = (float) Math.sin(phase * Math.PI * 2.0 + i * 1.3) * 2f;
+            final int px = (int) (left + 5 + fx * (width - 10) + sway);
+            final int py = (int) (top + height - 4 - phase * (height - 8));
 
-            float lifeAlpha = (float) Math.sin(phase * Math.PI);
-            float alpha = lifeAlpha * anim * 0.75f;
-            if (alpha < 0.02f) {
+            final float life = (float) Math.sin(phase * Math.PI);
+            final int alpha = (int) (life * anim * 0x66);
+            if (alpha < 6) {
                 continue;
             }
 
-            int hexAlpha = (int) (alpha * 255);
-            int size = phase < 0.3f ? 2 : 1;
-            graphics.fill((int) mx, (int) my, (int) mx + size, (int) my + size, (hexAlpha << 24) | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
+            final int size = (i % 3 == 0) ? 2 : 1;
+            graphics.fill(px, py, px + size, py + size, (alpha << 24) | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
         }
 
     }
 
-    static void drawBarGlow(GuiGraphics graphics, int left, int top, int h, float anim, int accent) {
-        if (anim <= 0.05f) {
-            return;
+    static void playClickSound() {
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.0F));
+    }
+
+    static class CategorySidebar extends AbstractWidget {
+
+        private record Item(
+                String key,
+                String label,
+                int count)
+        {
+            ;;
         }
 
-        int[] ac = rgb(accent);
-        final int glowWidth = 6;
-        final int maxAlpha = (int) (0x20 * anim);
-        for (int x = 0; x < glowWidth; x++) {
-            float time = (float) x / glowWidth;
-            int alpha = (int) (maxAlpha * (1f - time * time));
-            if (alpha > 0) {
-                graphics.fill(left + 3 + x, top, left + 4 + x, top + h, (alpha << 24) | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
+        private final List<Item> items = new ArrayList<>();
+        private final float[] hoverAnims;
+        private final int accent;
+        private final Consumer<String> onSelect;
+        private final long revealStart = Util.getMillis();
+
+        private int selected = 0;
+        private boolean dimmed = false;
+        private double scroll = 0;
+        private float indicatorY = Float.NaN;
+
+        private static final int ITEM_HEIGHT = 20;
+        private static final int ITEM_GAP = 2;
+        private static final int TOP_PAD = 18;
+
+        CategorySidebar(int x, int y, int width, int height, int accent, Map<String, Integer> categoryCounts, int total, Consumer<String> onSelect) {
+            super(x, y, width, height, Component.empty());
+            this.accent = accent;
+            this.onSelect = onSelect;
+
+            items.add(new Item(null, I18n.get("knightlib.config.category.all"), total));
+            for (Map.Entry<String, Integer> entry : categoryCounts.entrySet()) {
+                items.add(new Item(entry.getKey(), entry.getKey().isEmpty() ? I18n.get("knightlib.config.category.general") : prettify(entry.getKey()), entry.getValue()));
             }
 
+            this.hoverAnims = new float[items.size()];
+        }
+
+        void setSelectedKey(String key) {
+            selected = 0;
+            for (int i = 0; i < items.size(); i++) {
+                if (Objects.equals(items.get(i).key, key)) {
+                    selected = i;
+                    break;
+                }
+
+            }
+
+        }
+
+        void setDimmed(boolean dimmed) {
+            this.dimmed = dimmed;
+        }
+
+        private int contentHeight() {
+            return TOP_PAD + items.size() * (ITEM_HEIGHT + ITEM_GAP);
+        }
+
+        private boolean scrollable() {
+            return contentHeight() > height;
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mx, int my, float partialTick) {
+            if (!visible) {
+                return;
+            }
+
+            final int x = getX();
+            final int y = getY();
+            final int addX = x + width;
+            final int addY = y + height;
+
+            graphics.fill(x, y, addX, addY, 0xFF101010);
+
+            // Inner shadow at top edge
+            for (int i = 0; i < 4; i++) {
+                graphics.fill(x, y + i, addX, y + i + 1, (Math.max(0, 30 - i * 8)) << 24);
+            }
+
+            graphics.enableScissor(x, y, addX, addY);
+
+            final float dim = dimmed ? 0.35f : 1f;
+            final long now = Util.getMillis();
+
+            graphics.drawString(Minecraft.getInstance().font, I18n.get("knightlib.config.categories").toUpperCase(Locale.ROOT), x + 8, y + 6 - (int) scroll, withAlpha(0x585858, (int) (0xFF * dim)), false);
+
+            final int[] ac = rgb(accent);
+            int itemY = y + TOP_PAD - (int) scroll;
+
+            for (int i = 0; i < items.size(); i++) {
+                final Item item = items.get(i);
+
+                final float entrance = KnightLibEasings.EASE_OUT_CUBIC.apply(Mth.clamp((now - revealStart - i * 40L) / 180f, 0f, 1f));
+                final int slide = (int) ((1f - entrance) * -12f);
+
+                final boolean isSelected = i == selected;
+                final boolean hovered = !dimmed && mx >= x && mx < addX && my >= itemY && my < itemY + ITEM_HEIGHT && my >= y && my < addY;
+
+                final float target = hovered ? 1f : 0f;
+                hoverAnims[i] += (target - hoverAnims[i]) * 0.15f;
+                final float e = KnightLibEasings.SMOOTHSTEP.apply(hoverAnims[i]);
+
+                final int bgAlpha = (int) ((isSelected ? 0x30 : 0x12 + 0x18 * e) * entrance * dim);
+                graphics.fill(x + 3 + slide, itemY, addX - 3 + slide, itemY + ITEM_HEIGHT, (bgAlpha << 24) | 0x1A1A1A);
+
+                // Faint accent bar on hover
+                if (!isSelected && e > 0.02f) {
+                    final int barAlpha = (int) (0x66 * e * entrance * dim);
+                    graphics.fill(x + 3 + slide, itemY, x + 5 + slide, itemY + ITEM_HEIGHT, (barAlpha << 24) | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
+                }
+
+                final int textAlpha = (int) (0xFF * Math.max(0.1f, entrance) * dim);
+                if (textAlpha >= 0x10) {
+                    final Minecraft minecraft = Minecraft.getInstance();
+                    final int labelColor = isSelected ? 0xE8E8E8 : (hovered ? 0xC8C8C8 : 0x808080);
+                    final int textY = itemY + (ITEM_HEIGHT - minecraft.font.lineHeight) / 2 + 1;
+
+                    final String count = String.valueOf(item.count);
+                    final int countX = addX - 8 - minecraft.font.width(count) + slide;
+
+                    // Long labels scroll back and forth
+                    final int labelX = x + 10 + slide;
+                    final int labelMaxX = countX - 4;
+                    if (minecraft.font.width(item.label) <= labelMaxX - labelX) {
+                        graphics.drawString(minecraft.font, item.label, labelX, textY, withAlpha(labelColor, textAlpha), false);
+                    }
+                    else {
+                        renderScrollingString(graphics, minecraft.font, Component.literal(item.label), labelX, itemY, labelMaxX, itemY + ITEM_HEIGHT, withAlpha(labelColor, textAlpha));
+                    }
+
+                    final int countColor = isSelected ? (accent & 0x00FFFFFF) : 0x505050;
+                    graphics.drawString(minecraft.font, count, countX, textY, withAlpha(countColor, textAlpha), false);
+                }
+
+                itemY += ITEM_HEIGHT + ITEM_GAP;
+            }
+
+            // Selection indicator slides between items
+            final float indicatorTarget = TOP_PAD + selected * (ITEM_HEIGHT + ITEM_GAP);
+            if (Float.isNaN(indicatorY) || Math.abs(indicatorTarget - indicatorY) < 0.5f) {
+                indicatorY = indicatorTarget;
+            }
+            else {
+                indicatorY += (indicatorTarget - indicatorY) * 0.25f;
+            }
+
+            final int barY = y + (int) indicatorY - (int) scroll;
+            final int indicatorAlpha = (int) (0xFF * dim);
+            graphics.fill(x + 3, barY, x + 5, barY + ITEM_HEIGHT, (indicatorAlpha << 24) | (ac[0] << 16) | (ac[1] << 8) | ac[2]);
+
+            graphics.disableScissor();
+
+            drawNotchedBorder(graphics, x, y, addX, addY, 0xFF1C1C20);
+        }
+
+        @Override
+        public boolean mouseClicked(double mx, double my, int button) {
+            if (!visible || dimmed || button != 0 || mx < getX() || mx >= getX() + width || my < getY() || my >= getY() + height) {
+                return false;
+            }
+
+            int itemY = getY() + TOP_PAD - (int) scroll;
+            for (int i = 0; i < items.size(); i++) {
+                if (my >= itemY && my < itemY + ITEM_HEIGHT) {
+                    if (i != selected) {
+                        selected = i;
+                        playDownSound(Minecraft.getInstance().getSoundManager());
+                        onSelect.accept(items.get(i).key);
+                    }
+
+                    return true;
+                }
+
+                itemY += ITEM_HEIGHT + ITEM_GAP;
+            }
+
+            return true;
+        }
+
+        @Override
+        public boolean mouseScrolled(double mx, double my, double d) {
+            if (!visible || !scrollable() || mx < getX() || mx >= getX() + width || my < getY() || my >= getY() + height) {
+                return false;
+            }
+
+            scroll = Mth.clamp(scroll - d * 16.0, 0, Math.max(0, contentHeight() - height));
+
+            return true;
+        }
+
+        @Override
+        protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+            ;;
         }
 
     }
@@ -334,7 +667,20 @@ public class KnightLibConfigScreen extends Screen {
         private EntryRow focused = null;
         final int accent;
 
-        private static final int ROW_GAP = 3;
+        private String query = "";
+        private String category = null;
+        private long revealStart = Util.getMillis();
+
+        private List<Component> pendingTooltip = null;
+        private EntryRow pendingTooltipRow = null;
+        private EntryRow tooltipRow = null;
+        private long tooltipSince = 0;
+        private int tooltipX;
+        private int tooltipY;
+
+        private float scrollbarAnim = 0f;
+
+        private static final int ROW_GAP = 4;
         private static final int PADDING = 8;
         private static final int CATEGORY_HEIGHT = 18;
 
@@ -353,30 +699,60 @@ public class KnightLibConfigScreen extends Screen {
 
         }
 
-        void addEntry(Field field, ConfigEntry configEntry) {
-            allRows.add(new EntryRow(field, configEntry, accent));
+        void addEntry(Field field, ConfigEntry configEntry, Object snapshotValue) {
+            allRows.add(new EntryRow(field, configEntry, snapshotValue, accent));
             visibleRows.add(allRows.get(allRows.size() - 1));
 
             recalcLayout();
         }
 
-        void applySearch(String query) {
+        void setQuery(String query) {
+            this.query = query == null ? "" : query;
+            applyFilter();
+        }
+
+        void setCategory(String category) {
+            this.category = category;
+            applyFilter();
+        }
+
+        private void applyFilter() {
             visibleRows.clear();
-            if (query == null || query.isBlank()) {
-                visibleRows.addAll(allRows);
-            }
-            else {
-                String content = query.toLowerCase().replace('_', ' ');
-                for (EntryRow entryRow : allRows) {
-                    if (entryRow.matchesSearch(content)) visibleRows.add(entryRow);
+
+            final boolean searching = !query.isBlank();
+            final String content = query.toLowerCase().replace('_', ' ');
+
+            for (EntryRow entryRow : allRows) {
+                if (searching) {
+                    if (entryRow.matchesSearch(content)) {
+                        visibleRows.add(entryRow);
+                    }
+
+                }
+                else if (category == null || entryRow.categoryKey().equals(category)) {
+                    visibleRows.add(entryRow);
                 }
 
             }
 
             recalcLayout();
 
+            revealStart = Util.getMillis();
             targetScroll = 0;
             scroll = 0;
+        }
+
+        private boolean showHeaders() {
+            if (!query.isBlank() || category == null) {
+                Set<String> keys = new HashSet<>();
+                for (EntryRow entryRow : visibleRows) {
+                    keys.add(entryRow.categoryKey());
+                }
+
+                return keys.size() > 1;
+            }
+
+            return false;
         }
 
         void applyToFields() {
@@ -393,12 +769,32 @@ public class KnightLibConfigScreen extends Screen {
 
         }
 
+        int visibleCount() {
+            return visibleRows.size();
+        }
+
+        int countModified() {
+            int count = 0;
+            for (EntryRow entryRow : allRows) {
+                if (entryRow.isModified()) {
+                    count++;
+                }
+
+            }
+
+            return count;
+        }
+
         private int contentWidth() {
             return width - 16;
         }
 
         private int rowLeft() {
             return getX() + PADDING;
+        }
+
+        private int topPad() {
+            return showHeaders() ? 4 : PADDING;
         }
 
         private void recalcLayout() {
@@ -411,15 +807,16 @@ public class KnightLibConfigScreen extends Screen {
         }
 
         private int totalContentHeight() {
-            int height = 4;
+            final boolean headers = showHeaders();
+            int height = topPad();
             String lastCategory = null;
             for (int i = 0; i < visibleRows.size(); i++) {
                 if (i > 0) {
                     height += ROW_GAP;
                 }
 
-                String category = visibleRows.get(i).meta.category().trim();
-                if (!category.isEmpty() && !category.equals(lastCategory)) {
+                String category = visibleRows.get(i).categoryKey();
+                if (headers && !category.equals(lastCategory)) {
                     height += CATEGORY_HEIGHT;
                 }
 
@@ -427,7 +824,8 @@ public class KnightLibConfigScreen extends Screen {
                 height += visibleRows.get(i).height;
             }
 
-            return height;
+            // Bottom margin
+            return height + PADDING;
         }
 
         private boolean scrollable() {
@@ -445,6 +843,9 @@ public class KnightLibConfigScreen extends Screen {
             if (!visible) {
                 return;
             }
+
+            pendingTooltip = null;
+            pendingTooltipRow = null;
 
             if (!draggingScrollbar && scroll != targetScroll) {
                 double dragging = targetScroll - scroll;
@@ -466,9 +867,15 @@ public class KnightLibConfigScreen extends Screen {
 
             graphics.enableScissor(x, y, addX, addY);
 
+            if (visibleRows.isEmpty()) {
+                renderEmptyState(graphics, x, y, addY);
+            }
+
+            final boolean headers = showHeaders();
+            final long now = Util.getMillis();
             final int rowLength = rowLeft();
             final int rowWidth = contentWidth();
-            int categoryY = y + 4 - (int) scroll;
+            int categoryY = y + topPad() - (int) scroll;
             String lastCategory = null;
 
             for (int i = 0; i < visibleRows.size(); i++) {
@@ -477,10 +884,10 @@ public class KnightLibConfigScreen extends Screen {
                     categoryY += ROW_GAP;
                 }
 
-                String category = row.meta.category().trim();
-                if (!category.isEmpty() && !category.equals(lastCategory)) {
+                String category = row.categoryKey();
+                if (headers && !category.equals(lastCategory)) {
                     if (categoryY + CATEGORY_HEIGHT >= y && categoryY <= addY) {
-                        renderCategoryHeader(graphics, category, rowLength, categoryY, rowWidth);
+                        renderCategoryHeader(graphics, category.isEmpty() ? I18n.get("knightlib.config.category.general") : category, rowLength, categoryY, rowWidth);
                     }
 
                     categoryY += CATEGORY_HEIGHT;
@@ -492,7 +899,17 @@ public class KnightLibConfigScreen extends Screen {
                 if (categoryY + rowH >= y && categoryY <= addY) {
                     boolean inPanel = mx >= x && mx <= addX && my >= y && my <= addY;
                     boolean hovered = inPanel && mx >= rowLength && mx <= rowLength + rowWidth && my >= categoryY && my <= categoryY + rowH;
-                    row.render(graphics, i, categoryY, rowLength, rowWidth, mx, my, hovered, partialTick);
+
+                    final float entrance = KnightLibEasings.EASE_OUT_CUBIC.apply(Mth.clamp((now - revealStart - Math.min(i, 12) * 35L) / 170f, 0f, 1f));
+                    row.render(graphics, i, categoryY, rowLength, rowWidth, mx, my, hovered, entrance, partialTick);
+
+                    if (hovered) {
+                        captureTooltip(row, mx, my, rowLength, rowWidth);
+                    }
+
+                }
+                else {
+                    row.hoverStart = 0;
                 }
 
                 categoryY += rowH;
@@ -500,7 +917,130 @@ public class KnightLibConfigScreen extends Screen {
 
             graphics.disableScissor();
 
-            renderScrollbar(graphics);
+            if (pendingTooltipRow != tooltipRow) {
+                tooltipRow = pendingTooltipRow;
+                tooltipSince = Util.getMillis();
+            }
+
+            renderEdgeFades(graphics, x, y, addX, addY);
+
+            drawNotchedBorder(graphics, x, y, addX, addY, 0xFF1E1E22);
+
+            renderScrollbar(graphics, mx, my);
+        }
+
+        private void renderEdgeFades(GuiGraphics graphics, int x, int y, int addX, int addY) {
+            final double maxScroll = Math.max(0, totalContentHeight() - height);
+
+            if (scroll > 1) {
+                for (int i = 0; i < 10; i++) {
+                    final float t = 1f - i / 10f;
+                    graphics.fill(x, y + i, addX - 4, y + i + 1, ((int) (0xD0 * t * t) << 24) | 0x111111);
+                }
+
+            }
+
+            if (scroll < maxScroll - 1) {
+                for (int i = 0; i < 10; i++) {
+                    final float t = 1f - i / 10f;
+                    graphics.fill(x, addY - 1 - i, addX - 4, addY - i, ((int) (0xD0 * t * t) << 24) | 0x111111);
+                }
+
+            }
+
+        }
+
+        private void renderEmptyState(GuiGraphics graphics, int x, int y, int addY) {
+            final Minecraft minecraft = Minecraft.getInstance();
+            final String text = query.isBlank() ? I18n.get("knightlib.config.empty") : I18n.get("knightlib.config.empty_search", query);
+            final int textY = y + (addY - y - minecraft.font.lineHeight) / 2;
+
+            graphics.drawString(minecraft.font, text, x + (width - minecraft.font.width(text)) / 2, textY, 0xFF4A4A4A, false);
+        }
+
+        private void captureTooltip(EntryRow row, int mx, int my, int rowLeft, int rowWidth) {
+            if (mx > rowLeft + rowWidth - row.widget.getWidth() - 30) {
+                if (row.hoverStart == 0) {
+                    row.hoverStart = Util.getMillis();
+                }
+
+                return;
+            }
+
+            if (row.hoverStart == 0) {
+                row.hoverStart = Util.getMillis();
+            }
+
+            if (Util.getMillis() - row.hoverStart < 450) {
+                return;
+            }
+
+            List<Component> lines = row.tooltipLines();
+            if (!lines.isEmpty()) {
+                pendingTooltip = lines;
+                pendingTooltipRow = row;
+                tooltipX = mx;
+                tooltipY = my;
+            }
+
+        }
+
+        void renderPendingTooltip(GuiGraphics graphics, Font font, int screenWidth, int screenHeight) {
+            if (pendingTooltip == null || pendingTooltip.isEmpty()) {
+                return;
+            }
+
+            final float fade = KnightLibEasings.EASE_OUT_QUAD.apply(Mth.clamp((Util.getMillis() - tooltipSince) / 120f, 0f, 1f));
+            final int textAlpha = (int) (0xFF * fade);
+            if (textAlpha < 0x10) {
+                return;
+            }
+
+            final int maxTextWidth = 200;
+            final List<FormattedCharSequence> wrapped = new ArrayList<>();
+            for (Component line : pendingTooltip) {
+                wrapped.addAll(font.split(line, maxTextWidth));
+            }
+
+            int textWidth = 0;
+            for (FormattedCharSequence seq : wrapped) {
+                textWidth = Math.max(textWidth, font.width(seq));
+            }
+
+            final int paddingX = 6;
+            final int paddingY = 5;
+            final int boxWidth = textWidth + paddingX * 2;
+            final int boxHeight = wrapped.size() * (font.lineHeight + 1) - 1 + paddingY * 2;
+
+            int x = tooltipX + 10;
+            int y = tooltipY - boxHeight - 4;
+            if (x + boxWidth > screenWidth - 4) {
+                x = screenWidth - 4 - boxWidth;
+            }
+            if (y < 4) {
+                y = tooltipY + 12;
+            }
+            if (y + boxHeight > screenHeight - 4) {
+                y = screenHeight - 4 - boxHeight;
+            }
+
+            y += (int) ((1f - fade) * 3f);
+
+            graphics.pose().pushPose();
+            graphics.pose().translate(0, 0, 400);
+
+            final int boxBg = ((int) (0xF2 * fade) << 24) | 0x121214;
+            final int boxBorder = withAlpha(mixRgb(0x2E2E32, dimAccent(accent), 0.4f), textAlpha);
+            drawCard(graphics, x, y, x + boxWidth, y + boxHeight, boxBg, boxBorder);
+
+            final Minecraft minecraft = Minecraft.getInstance();
+            int lineY = y + paddingY;
+            for (FormattedCharSequence seq : wrapped) {
+                graphics.drawString(minecraft.font, seq, x + paddingX, lineY, withAlpha(0xDDDDDD, textAlpha), false);
+                lineY += minecraft.font.lineHeight + 1;
+            }
+
+            graphics.pose().popPose();
         }
 
         private void renderCategoryHeader(GuiGraphics graphics, String category, int x, int y, int width) {
@@ -511,7 +1051,6 @@ public class KnightLibConfigScreen extends Screen {
             final int lineY = y + 8;
             final int lineEnd = x + width;
 
-            // Small accent dot at the left of the category label
             int[] rgbAccent = rgb(accent);
             graphics.fill(x + 3, lineY - 2, x + 6, lineY + 1, 0xFF000000 | (rgbAccent[0] << 16) | (rgbAccent[1] << 8) | rgbAccent[2]);
 
@@ -524,10 +1063,14 @@ public class KnightLibConfigScreen extends Screen {
 
         }
 
-        private void renderScrollbar(GuiGraphics graphics) {
+        private void renderScrollbar(GuiGraphics graphics, int mx, int my) {
             if (!scrollable()) {
                 return;
             }
+
+            // Momentum
+            final boolean engaged = draggingScrollbar || Math.abs(targetScroll - scroll) > 0.5 || (isIn(mx, my) && mx >= getX() + width - 10);
+            scrollbarAnim += ((engaged ? 1f : 0f) - scrollbarAnim) * 0.1f;
 
             final int contentHeight = totalContentHeight();
             final int newX = getX() + width - 4;
@@ -537,10 +1080,12 @@ public class KnightLibConfigScreen extends Screen {
             final int thumbHeight = Math.max(20, (int) (newHeight * ((double) height / contentHeight)));
             final int thumbY = newY + (int) ((newHeight - thumbHeight) * (scroll / maxSwap));
 
-            graphics.fill(newX, newY, newX + 3, newY + newHeight, 0x10FFFFFF);
-            graphics.fill(newX, thumbY, newX + 3, thumbY + thumbHeight, accent);
+            final int trackAlpha = (int) (0x08 + 0x10 * scrollbarAnim);
+            graphics.fill(newX, newY, newX + 3, newY + newHeight, (trackAlpha << 24) | 0x00FFFFFF);
 
-            graphics.fill(newX - 1, thumbY, newX, thumbY + thumbHeight, withAlpha(accent, 0x15));
+            final int thumbColor = mixRgb(0x3E3E44, accent & 0x00FFFFFF, scrollbarAnim);
+            final int thumbAlpha = (int) (0x90 + 0x6F * scrollbarAnim);
+            graphics.fill(newX, thumbY, newX + 3, thumbY + thumbHeight, (thumbAlpha << 24) | thumbColor);
         }
 
         @Override
@@ -587,7 +1132,8 @@ public class KnightLibConfigScreen extends Screen {
 
             }
 
-            int contentY = getY() + 4 - (int) scroll;
+            final boolean headers = showHeaders();
+            int contentY = getY() + topPad() - (int) scroll;
             String lastCategory = null;
             for (int i = 0; i < visibleRows.size(); i++) {
                 final EntryRow row = visibleRows.get(i);
@@ -595,13 +1141,18 @@ public class KnightLibConfigScreen extends Screen {
                     contentY += ROW_GAP;
                 }
 
-                final String category = row.meta.category().trim();
-                if (!category.isEmpty() && !category.equals(lastCategory)) {
+                final String category = row.categoryKey();
+                if (headers && !category.equals(lastCategory)) {
                     contentY += CATEGORY_HEIGHT;
                 }
 
                 lastCategory = category;
                 if (my >= contentY && my <= contentY + row.height && mx >= rowLeft() && mx <= rowLeft() + contentWidth()) {
+                    if (row.clickedReset(mx, my, button, rowLeft(), contentY, contentWidth())) {
+                        clearFocused();
+                        return true;
+                    }
+
                     if (row.mouseClicked(mx, my, button)) {
                         setFocusedRow(row);
                         return true;
@@ -709,20 +1260,32 @@ public class KnightLibConfigScreen extends Screen {
         final AbstractWidget widget;
         final String searchIndex;
         final int accent;
+        final Object snapshotValue;
+        final Object defaultValue;
 
         float hoverAnim = 0f;
+        long hoverStart = 0;
         int height = 36;
         int descriptionLines = 0;
         int descriptionMaxWidth = 0;
 
-        EntryRow(Field field, ConfigEntry meta, int accent) {
+        private List<Component> cachedTooltip = null;
+        private List<FormattedCharSequence> descriptionCache = List.of();
+
+        EntryRow(Field field, ConfigEntry meta, Object snapshotValue, int accent) {
             this.field = field;
             this.meta = meta;
             this.accent = accent;
+            this.snapshotValue = snapshotValue;
+            this.defaultValue = ConfigManager.getCodeDefault(field);
             this.label = Component.literal(prettify(field.getName()));
             this.description = meta.comment().trim();
             this.searchIndex = (field.getName() + " " + prettify(field.getName()) + " " + meta.category() + " " + description).toLowerCase().replace('_', ' ');
             this.widget = createWidget();
+        }
+
+        String categoryKey() {
+            return meta.category().trim();
         }
 
         boolean matchesSearch(String query) {
@@ -748,13 +1311,14 @@ public class KnightLibConfigScreen extends Screen {
         void recalcHeight(int rowWidth) {
             final Minecraft minecraft = Minecraft.getInstance();
             final int lineHeight = minecraft.font.lineHeight;
-            final int avail = rowWidth - widget.getWidth() - 30;
+            final int avail = rowWidth - widget.getWidth() - 54;
 
             descriptionMaxWidth = Math.min(avail, (int) (rowWidth * 0.5f));
-            descriptionLines = (!description.isEmpty() && descriptionMaxWidth > 30) ? minecraft.font.split(Component.literal(description), descriptionMaxWidth).size() : 0;
+            descriptionCache = (!description.isEmpty() && descriptionMaxWidth > 30) ? minecraft.font.split(Component.literal(description), descriptionMaxWidth) : List.of();
+            descriptionLines = descriptionCache.size();
 
             final int contentHeight = lineHeight + (descriptionLines > 0 ? 2 + descriptionLines * lineHeight : 0);
-            height = Math.max(Math.max(contentHeight + 10, widget.getHeight() + 10), 28);
+            height = Math.max(Math.max(contentHeight + 12, widget.getHeight() + 12), 30);
         }
 
         private AbstractWidget createWidget() {
@@ -762,7 +1326,7 @@ public class KnightLibConfigScreen extends Screen {
             final Class<?> type = field.getType();
             try {
                 if (type == boolean.class) {
-                    return new ToggleButton(0, 0, 36, 18, field.getBoolean(null), accent);
+                    return new ToggleButton(0, 0, 44, 18, field.getBoolean(null), accent);
                 }
 
                 if (meta.slider() && Double.isFinite(meta.min()) && Double.isFinite(meta.max())) {
@@ -775,10 +1339,11 @@ public class KnightLibConfigScreen extends Screen {
                 }
 
                 final String value = String.valueOf(field.get(null));
-                final EditBox box = new StyledEditBox(minecraft.font, 0, 0, value.length() > 20 ? 200 : 120, 18, Component.empty(), accent);
+                final StyledEditBox box = new StyledEditBox(minecraft.font, 0, 0, value.length() > 20 ? 200 : 120, 18, Component.empty(), accent);
 
                 box.setMaxLength(512);
                 box.setValue(value);
+                box.setValidator(validatorFor(type));
 
                 return box;
             }
@@ -788,6 +1353,151 @@ public class KnightLibConfigScreen extends Screen {
                 return box;
             }
 
+        }
+
+        private static Predicate<String> validatorFor(Class<?> type) {
+            if (type == int.class) {
+                return raw -> raw.isBlank() || parseIntSafe(raw, Integer.MIN_VALUE) != Integer.MIN_VALUE || raw.trim().equals(String.valueOf(Integer.MIN_VALUE));
+            }
+            if (type == long.class) {
+                return raw -> raw.isBlank() || parseLongSafe(raw, Long.MIN_VALUE) != Long.MIN_VALUE || raw.trim().equals(String.valueOf(Long.MIN_VALUE));
+            }
+            if (type == float.class || type == double.class) {
+                return raw -> {
+                    if (raw.isBlank()) {
+                        return true;
+                    }
+                    try {
+                        Double.parseDouble(raw.trim());
+                        return true;
+                    }
+                    catch (NumberFormatException exception) {
+                        return false;
+                    }
+
+                };
+
+            }
+
+            return raw -> true;
+        }
+
+        /** Current widget value, converted back to the field's domain. Null when unparsable. */
+        private Object currentValue() {
+            final Class<?> type = field.getType();
+            if (widget instanceof ToggleButton toggleButton) {
+                return toggleButton.isToggled();
+            }
+            if (widget instanceof ConfigSlider configSlider) {
+                return configSlider.getValueRaw();
+            }
+            if (widget instanceof EnumCycleButton enumCycleButton) {
+                return enumCycleButton.getCurrent();
+            }
+            if (widget instanceof EditBox box) {
+                final String raw = box.getValue().trim();
+                if (type == String.class) {
+                    return box.getValue();
+                }
+                if (raw.isEmpty()) {
+                    return null;
+                }
+                try {
+                    if (type == int.class) {
+                        return Integer.decode(raw.startsWith("#") ? "0x" + raw.substring(1) : raw);
+                    }
+                    if (type == long.class) {
+                        return Long.decode(raw.startsWith("#") ? "0x" + raw.substring(1) : raw);
+                    }
+                    if (type == float.class) {
+                        return Float.parseFloat(raw);
+                    }
+                    if (type == double.class) {
+                        return Double.parseDouble(raw);
+                    }
+
+                }
+                catch (NumberFormatException exception) {
+                    return null;
+                }
+
+            }
+
+            return null;
+        }
+
+        boolean isModified() {
+            if (snapshotValue == null) {
+                return false;
+            }
+
+            final Object current = currentValue();
+            if (current == null) {
+                return false;
+            }
+
+            if (current instanceof Number number && snapshotValue instanceof Number snapNumber) {
+                return Math.abs(number.doubleValue() - snapNumber.doubleValue()) > 1e-6;
+            }
+
+            return !current.equals(snapshotValue);
+        }
+
+        List<Component> tooltipLines() {
+            if (cachedTooltip != null) {
+                return cachedTooltip;
+            }
+
+            final List<Component> lines = new ArrayList<>();
+            final String note = meta.note().trim();
+            if (!note.isEmpty()) {
+                lines.add(Component.literal(note));
+            }
+
+            if (defaultValue != null) {
+                lines.add(Component.translatable("knightlib.config.tooltip.default", formatValue(defaultValue)).withStyle(style -> style.withColor(0x7A7A7A)));
+            }
+
+            if (Double.isFinite(meta.min()) && Double.isFinite(meta.max())) {
+                final boolean isInt = field.getType() == int.class || field.getType() == long.class;
+                final String min = isInt ? String.valueOf((long) meta.min()) : trimDouble(meta.min());
+                final String max = isInt ? String.valueOf((long) meta.max()) : trimDouble(meta.max());
+                lines.add(Component.translatable("knightlib.config.tooltip.range", min, max).withStyle(style -> style.withColor(0x7A7A7A)));
+            }
+
+            if (widget instanceof ConfigSlider) {
+                lines.add(Component.translatable("knightlib.config.tooltip.slider_hint").withStyle(style -> style.withColor(0x5A5A5A)));
+            }
+
+            if (meta.requiresRestart()) {
+                lines.add(Component.translatable("knightlib.config.tooltip.requires_restart").withStyle(style -> style.withColor(0xFF8844)));
+            }
+
+            cachedTooltip = lines;
+
+            return lines;
+        }
+
+        private static String formatValue(Object value) {
+            if (value instanceof Double d) {
+                return trimDouble(d);
+            }
+            if (value instanceof Float f) {
+                return trimDouble(f);
+            }
+            if (value instanceof Enum<?> e) {
+                return prettify(e.name());
+            }
+
+            return String.valueOf(value);
+        }
+
+        private static String trimDouble(double value) {
+            if (value == Math.floor(value) && !Double.isInfinite(value)) {
+                return String.valueOf((long) value);
+            }
+
+            return String.valueOf(value);
         }
 
         void writeToField() {
@@ -860,7 +1570,6 @@ public class KnightLibConfigScreen extends Screen {
         }
 
         void resetToDefault() {
-            Object defaultValue = ConfigManager.getCodeDefault(field);
             if (defaultValue == null) {
                 return;
             }
@@ -885,9 +1594,13 @@ public class KnightLibConfigScreen extends Screen {
 
         }
 
-        void render(GuiGraphics graphics, int index, int top, int left, int width, int mx, int my, boolean hovered, float partialTick) {
+        void render(GuiGraphics graphics, int index, int top, int left, int width, int mx, int my, boolean hovered, float entrance, float partialTick) {
             final Minecraft minecraft = Minecraft.getInstance();
             final int lineHeight = minecraft.font.lineHeight;
+
+            if (!hovered) {
+                hoverStart = 0;
+            }
 
             final float target = hovered ? 1f : 0f;
             final float diff = target - hoverAnim;
@@ -898,59 +1611,56 @@ public class KnightLibConfigScreen extends Screen {
 
             float e = KnightLibEasings.SMOOTHSTEP.apply(hoverAnim);
 
-            int baseAlpha = (index % 2 == 0) ? 0x1A : 0x14;
-            int extraAlpha1 = (int) (0x20 * e);
-            graphics.fill(left, top, left + width, top + height, (Math.min(255, baseAlpha + extraAlpha1) << 24) | 0x1A1A1A);
+            // Entrance slide (from the right) and fade
+            final int slide = (int) ((1f - entrance) * 16f);
+            left += slide;
 
-            // Left accent bar
+            final int alpha = (int) (0xFF * entrance);
             final int[] accent = rgb(this.accent);
-            final int baseRed = (int) (0x25 + (accent[0] - 0x25) * e);
-            final int baseGreen = (int) (0x25 + (accent[1] - 0x25) * e);
-            final int baseBlue = (int) (0x25 + (accent[2] - 0x25) * e);
-            final int barColor = 0xFF000000 | (baseRed << 16) | (baseGreen << 8) | baseBlue;
-            graphics.fill(left, top, left + 2, top + height, barColor);
 
-            // Extra column fades in with alpha
-            if (e > 0.01f) {
-                final int extraAlpha2 = (int) (0xFF * e);
-                final int extraColor = (extraAlpha2 << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2];
-                graphics.fill(left + 2, top, left + 3, top + height, extraColor);
+            final int accentDim = dimAccent(this.accent);
+            final int bg = (alpha << 24) | mixRgb(0x151517, 0x1B1B1F, e);
+            final int border = (alpha << 24) | mixRgb(0x26262A, accentDim, e);
+            drawCard(graphics, left, top, left + width, top + height, bg, border);
 
-                // Second extra column for full hover
-                if (e > 0.5f) {
-                    final int extraAlpha3 = (int) (0xFF * (e - 0.5f) * 2f);
-                    final int extraColor2 = (extraAlpha3 << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2];
-                    graphics.fill(left + 3, top, left + 4, top + height, extraColor2);
-                }
+            drawCardHoverFx(graphics, left, top, width, height, e * entrance, this.accent, index * 73 + field.getName().hashCode());
 
+            float textFade = 1f;
+            if (widget instanceof StyledEditBox box) {
+                widget.setWidth(box.layoutWidth(width - 40));
+                textFade = 1f - box.expandProgress();
             }
 
-            drawBarGlow(graphics, left, top, height, e, this.accent);
-            drawHoverParticles(graphics, left, top, height, e, this.accent, index * 73 + field.getName().hashCode());
-
-            if (e > 0.01f) {
-                int gradientWidth = Math.min(70, width / 4);
-                int maxAlpha = (int) (0x18 * e);
-                for (int x = 0; x < gradientWidth; x++) {
-                    final float t = (float) x / gradientWidth;
-                    final int alpha = (int) (maxAlpha * (1f - t * t));
-                    if (alpha > 0) {
-                        graphics.fill(left + x, top, left + x + 1, top + height, (alpha << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2]);
-                    }
-
-                }
-
-            }
-
+            final int textAlpha = (int) (alpha * textFade);
             final int contentH = lineHeight + (descriptionLines > 0 ? 2 + descriptionLines * lineHeight : 0);
             final int contentTop = top + (height - contentH) / 2;
-            final int labelX = left + 8;
+            final int labelX = left + 10;
 
-            graphics.drawString(minecraft.font, label, labelX, contentTop, 0xFFE8E8E8, false);
+            if (textAlpha >= 0x10) {
+                graphics.drawString(minecraft.font, label, labelX, contentTop, withAlpha(mixRgb(0xC4C4C4, 0xFFFFFF, e), textAlpha), false);
 
-            if (meta.requiresRestart()) {
-                int badgeX = labelX + minecraft.font.width(label) + 4;
-                graphics.drawString(minecraft.font, "⟳", badgeX, contentTop, 0xFFFF8844, false);
+                int afterLabel = labelX + minecraft.font.width(label);
+
+                if (meta.requiresRestart()) {
+                    graphics.drawString(minecraft.font, "⟳", afterLabel + 4, contentTop, withAlpha(0xFF8844, textAlpha), false);
+                    afterLabel += 4 + minecraft.font.width("⟳");
+                }
+
+                // Modified indicator
+                if (isModified()) {
+                    graphics.fill(afterLabel + 5, contentTop + 2, afterLabel + 8, contentTop + 5, (textAlpha << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2]);
+                }
+
+            }
+
+            // Description
+            if (!descriptionCache.isEmpty() && textAlpha >= 0x10) {
+                int commentY = contentTop + lineHeight + 2;
+                for (FormattedCharSequence line : descriptionCache) {
+                    graphics.drawString(minecraft.font, line, labelX, commentY, withAlpha(mixRgb(0x646464, 0x8C8C8C, e), textAlpha), false);
+                    commentY += lineHeight;
+                }
+
             }
 
             final int widgetX = left + width - widget.getWidth() - 8;
@@ -959,29 +1669,50 @@ public class KnightLibConfigScreen extends Screen {
             widget.setX(widgetX);
             widget.setY(widgetY);
 
-            widget.render(graphics, mx, my, partialTick);
+            // Per-entry reset button
+            if (e > 0.3f && defaultValue != null) {
+                final int resetX = widgetX - 24;
+                final int resetY = top + (height - 18) / 2;
+                final boolean resetHovered = mx >= resetX && mx < resetX + 18 && my >= resetY && my < resetY + 18;
+                final int resetAlpha = (int) (0xFF * (e - 0.3f) / 0.7f);
 
-            // Description
-            if (descriptionLines > 0 && descriptionMaxWidth > 30) {
-                int commentY = contentTop + lineHeight + 2;
-                final List<FormattedCharSequence> lines = minecraft.font.split(Component.literal(description), descriptionMaxWidth);
-                int drawn = 0;
-                for (FormattedCharSequence line : lines) {
-                    if (drawn >= descriptionLines) {
-                        break;
-                    }
+                final int boxBg = withAlpha(resetHovered ? 0x202024 : 0x1A1A1C, resetAlpha);
+                final int boxBorder = withAlpha(resetHovered ? accentDim : 0x2E2E32, resetAlpha);
+                drawCard(graphics, resetX, resetY, resetX + 18, resetY + 18, boxBg, boxBorder);
 
-                    graphics.drawString(minecraft.font, line, labelX, commentY, 0xFF606060, false);
+                if (resetAlpha >= 0x10) {
+                    final int resetColor = resetHovered ? withAlpha(this.accent & 0x00FFFFFF, resetAlpha) : withAlpha(0x8A8A8A, resetAlpha);
+                    final float glyphScale = 2.4f;
+                    final float glyphW = minecraft.font.width("↺") * glyphScale;
+                    final float glyphH = minecraft.font.lineHeight * glyphScale;
 
-                    commentY += lineHeight;
-                    drawn++;
+                    graphics.pose().pushPose();
+                    graphics.pose().translate(resetX + (18 - glyphW) / 2f + 1.5f, resetY + (18 - glyphH) / 2f - 0.5f, 0);
+                    graphics.pose().scale(glyphScale, glyphScale, 1f);
+                    graphics.drawString(minecraft.font, "↺", 0, 0, resetColor, false);
+                    graphics.pose().popPose();
                 }
 
             }
 
-            // Thin top and bottom separators
-            graphics.fill(left + 4, top, left + width - 4, top + 1, 0x08FFFFFF);
-            graphics.fill(left + 4, top + height - 1, left + width - 4, top + height, 0x08FFFFFF);
+            widget.render(graphics, mx, my, partialTick);
+        }
+
+        boolean clickedReset(double mx, double my, int button, int rowLeft, int rowTop, int rowWidth) {
+            if (button != 0 || hoverAnim <= 0.3f || defaultValue == null) {
+                return false;
+            }
+
+            final int widgetX = rowLeft + rowWidth - widget.getWidth() - 8;
+            final int resetX = widgetX - 24;
+            final int resetY = rowTop + (height - 18) / 2;
+            if (mx >= resetX && mx < resetX + 18 && my >= resetY && my < resetY + 18) {
+                resetToDefault();
+                playClickSound();
+                return true;
+            }
+
+            return false;
         }
 
         boolean mouseClicked(double mx, double my, int button) {
@@ -1056,7 +1787,23 @@ public class KnightLibConfigScreen extends Screen {
             setTextColor(0xFFCCCCCC);
             setTextColorUneditable(0xFF555555);
             setMaxLength(128);
-            setHint(Component.literal("Search..."));
+            setHint(Component.translatable("knightlib.config.search"));
+        }
+
+        @Override
+        public boolean mouseClicked(double mx, double my, int button) {
+            // Clears "x" zone at the right edge when there is text
+            if (button == 0 && !getValue().isEmpty()) {
+                final int zoneX = getX() + getWidth() - 12;
+                if (mx >= zoneX && mx < getX() + getWidth() && my >= getY() && my < getY() + getHeight()) {
+                    setValue("");
+                    playClickSound();
+                    return true;
+                }
+
+            }
+
+            return super.mouseClicked(mx, my, button);
         }
 
         @Override
@@ -1073,10 +1820,12 @@ public class KnightLibConfigScreen extends Screen {
 
             focusAnim = active ? Math.min(1f, focusAnim + 0.12f) : Math.max(0f, focusAnim - 0.06f);
 
-            // Background
-            graphics.fill(x0, y0, x1, y1, 0xFF121212);
+            // Card
+            final int borderTarget = isFocused() ? (this.accent & 0x00FFFFFF) : dimAccent(this.accent);
+            final int boxBorder = 0xFF000000 | mixRgb(0x26262A, borderTarget, focusAnim);
+            drawCard(graphics, x0, y0, x1, y1, 0xFF151517, boxBorder);
 
-            // Magnifying glass icon
+            // Magnifying glass icon (for the search box)
             final Minecraft minecraft = Minecraft.getInstance();
             final int[] accent = rgb(this.accent);
             final float time = focusAnim;
@@ -1092,32 +1841,17 @@ public class KnightLibConfigScreen extends Screen {
 
             graphics.pose().translate(iconOriginX, iconOriginY, 0);
             graphics.pose().scale(scale, scale, 1f);
-            graphics.drawString(minecraft.font, "\u2315", 0, 0, iconColor, false);
+            graphics.drawString(minecraft.font, "⌕", 0, 0, iconColor, false);
 
             graphics.pose().popPose();
 
-            // Bottom line
-            final int lineY = y1 - 1;
-            final int dimLine = 0xFF2A2A2A;
-            if (focusAnim > 0.01f) {
-                final int lineRed = (int)(0x2A + ((accent[0] - 0x2A) * time));
-                final int lineGreen = (int)(0x2A + ((accent[1] - 0x2A) * time));
-                final int lineBlue = (int)(0x2A + ((accent[2] - 0x2A) * time));
-                final int lineColor = 0xFF000000 | (lineRed << 16) | (lineGreen << 8) | lineBlue;
-
-                graphics.fill(x0, lineY, x1, lineY + 1, lineColor);
-
-                if (focusAnim > 0.1f) {
-                    int glowAlpha = (int) (0x18 * focusAnim);
-                    graphics.fill(x0, lineY - 1, x1, lineY, (glowAlpha << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2]);
-                }
-
-            }
-            else {
-                graphics.fill(x0, lineY, x1, lineY + 1, dimLine);
+            // Clear "x" when there is text
+            if (!getValue().isEmpty()) {
+                final boolean clearHovered = mx >= x1 - 12 && mx < x1 && my >= y0 && my < y1;
+                graphics.drawString(minecraft.font, "×", x1 - 9, y0 + (height - minecraft.font.lineHeight) / 2 + 1, clearHovered ? this.accent : 0xFF666666, false);
             }
 
-            // Render text shifted past icon, vertically centered
+            // Renders text shifted past the icon
             final int textPaddingX = 20;
             final int lineHeight = minecraft.font.lineHeight;
             final int offsetY = (height - lineHeight) / 2 + 1;
@@ -1163,6 +1897,7 @@ public class KnightLibConfigScreen extends Screen {
         @Override
         protected void renderWidget(GuiGraphics graphics, int mx, int my, float partialTick) {
             animation = toggled ? Math.min(1f, animation + 0.2f) : Math.max(0f, animation - 0.2f);
+            final float e = KnightLibEasings.SMOOTHSTEP.apply(animation);
 
             final int x0 = getX();
             final int y0 = getY();
@@ -1171,19 +1906,41 @@ public class KnightLibConfigScreen extends Screen {
             final int[] accent = rgb(this.accent);
             final int dark = 0xFF000000 | ((accent[0] / 4) << 16) | ((accent[1] / 4) << 8) | (accent[2] / 4);
 
-            graphics.fill(x0, y0, x0 + width, y0 + height, lerp(0xFF2A2A2A, dark, animation));
-
-            final int border = lerp(0xFF3A3A3A, this.accent, animation);
-            graphics.fill(x0, y0, x0 + width, y0 + 1, border);
-            graphics.fill(x0, y0 + height - 1, x0 + width, y0 + height, border);
-            graphics.fill(x0, y0, x0 + 1, y0 + height, border);
-            graphics.fill(x0 + width - 1, y0, x0 + width, y0 + height, border);
+            final int border = lerp(0xFF3A3A3E, 0xFF000000 | dimAccent(this.accent), e);
+            drawCard(graphics, x0, y0, x0 + width, y0 + height, lerp(0xFF2A2A2E, dark, e), border);
 
             final int padding = 3;
             final int knobWidth = 14;
-            final int knobX = x0 + padding + (int) ((width - knobWidth - padding * 2) * animation);
+            final int knobX = x0 + padding + (int) ((width - knobWidth - padding * 2) * e);
 
-            graphics.fill(knobX, y0 + padding, knobX + knobWidth, y0 + height - padding, lerp(0xFF555555, this.accent, animation));
+            graphics.fill(knobX, y0 + padding, knobX + knobWidth, y0 + height - padding, lerp(0xFF555555, this.accent, e));
+
+            // Soft glow
+            if (e > 0.5f) {
+                final int glowAlpha = (int) (0x30 * (e - 0.5f) * 2f);
+                graphics.fill(knobX - 1, y0 + padding, knobX, y0 + height - padding, (glowAlpha << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2]);
+                graphics.fill(knobX + knobWidth, y0 + padding, knobX + knobWidth + 1, y0 + height - padding, (glowAlpha << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2]);
+            }
+
+            // ON/OFF label
+            final Minecraft minecraft = Minecraft.getInstance();
+            final int textY = y0 + (height - minecraft.font.lineHeight) / 2 + 1;
+            if (e > 0.6f) {
+                final int alpha = (int) (0xFF * (e - 0.6f) / 0.4f);
+                if (alpha >= 0x10) {
+                    graphics.drawString(minecraft.font, "ON", x0 + 6, textY, withAlpha(this.accent & 0x00FFFFFF, alpha), false);
+                }
+
+            }
+            else if (e < 0.4f) {
+                final int alpha = (int) (0xFF * (0.4f - e) / 0.4f);
+                if (alpha >= 0x10) {
+                    final String text = "OFF";
+                    graphics.drawString(minecraft.font, text, x0 + width - 5 - minecraft.font.width(text), textY, withAlpha(0x666666, alpha), false);
+                }
+
+            }
+
         }
 
         private static int lerp(int from, int origin, float t) {
@@ -1213,6 +1970,11 @@ public class KnightLibConfigScreen extends Screen {
         private final boolean intMode;
         private final int accent;
         private boolean dragging = false;
+        private float activeAnim = 0f;
+
+        // Ctrl+Shift+click switches to inline text entry for exact values
+        private boolean editing = false;
+        private String editBuffer = "";
 
         ConfigSlider(int x, int y, int w, int h, double min, double max, double value, boolean intMode, int accent) {
             super(x, y, w, h, Component.empty());
@@ -1246,6 +2008,17 @@ public class KnightLibConfigScreen extends Screen {
 
         @Override
         public void onClick(double mx, double my) {
+            if (editing) {
+                commitEdit();
+                return;
+            }
+
+            if (Screen.hasControlDown() && Screen.hasShiftDown()) {
+                editing = true;
+                editBuffer = formatCurrent();
+                return;
+            }
+
             dragging = true;
             fromMouse(mx);
         }
@@ -1263,6 +2036,82 @@ public class KnightLibConfigScreen extends Screen {
             dragging = false;
         }
 
+        @Override
+        public void setFocused(boolean focused) {
+            super.setFocused(focused);
+
+            if (!focused && editing) {
+                commitEdit();
+            }
+
+        }
+
+        @Override
+        public boolean keyPressed(int key, int s, int m) {
+            if (!editing) {
+                return false;
+            }
+
+            if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
+                commitEdit();
+                return true;
+            }
+            if (key == GLFW.GLFW_KEY_ESCAPE) {
+                editing = false;
+                return true;
+            }
+            if (key == GLFW.GLFW_KEY_BACKSPACE) {
+                if (!editBuffer.isEmpty()) {
+                    editBuffer = editBuffer.substring(0, editBuffer.length() - 1);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean charTyped(char c, int m) {
+            if (!editing) {
+                return false;
+            }
+
+            if (Character.isDigit(c) || c == '-' || (!intMode && (c == '.' || c == ','))) {
+                editBuffer += (c == ',' ? '.' : c);
+            }
+
+            return true;
+        }
+
+        private void commitEdit() {
+            editing = false;
+            try {
+                setValueRaw(Double.parseDouble(editBuffer.trim()));
+                if (intMode) {
+                    value = Math.round(value);
+                }
+
+            }
+            catch (NumberFormatException ignored) {
+                ;;
+            }
+
+        }
+
+        private String formatCurrent() {
+            if (intMode) {
+                return String.valueOf((long) getValueRaw());
+            }
+
+            final double raw = getValueRaw();
+            if (raw == Math.floor(raw) && !Double.isInfinite(raw)) {
+                return String.valueOf((long) raw);
+            }
+
+            return String.format(Locale.ROOT, "%.6f", raw).replaceAll("0+$", "").replaceAll("\\.$", "");
+        }
+
 
         @Override
         protected void renderWidget(GuiGraphics graphics, int mx, int my, float partialTick) {
@@ -1272,25 +2121,41 @@ public class KnightLibConfigScreen extends Screen {
             final int height = getHeight();
             final int[] accent = rgb(this.accent);
 
-            graphics.fill(x0, y0, x0 + width, y0 + height, 0xFF1A1A1A);
+            final boolean hovered = mx >= x0 && mx < x0 + width && my >= y0 && my < y0 + height;
+            activeAnim = (hovered || dragging) ? Math.min(1f, activeAnim + 0.15f) : Math.max(0f, activeAnim - 0.1f);
 
-            int fillWidth = (int) (width * frac());
-            if (fillWidth > 0) {
-                graphics.fill(x0, y0, x0 + fillWidth, y0 + height, 0xFF000000 | ((accent[0] / 3) << 16) | ((accent[1] / 3) << 8) | (accent[2] / 3));
+            final Minecraft minecraft = Minecraft.getInstance();
+
+            if (editing) {
+                drawCard(graphics, x0, y0, x0 + width, y0 + height, 0xFF161618, this.accent);
+
+                final boolean caret = (Util.getMillis() / 400L) % 2 == 0;
+                final String text = editBuffer + (caret ? "_" : "");
+                graphics.drawString(minecraft.font, text, x0 + (width - minecraft.font.width(text)) / 2, y0 + (height - minecraft.font.lineHeight) / 2 + 1, 0xFFE8E8E8, false);
+                return;
             }
 
-            boolean hovered = mx >= x0 && mx < x0 + width && my >= y0 && my < y0 + height;
-            int border = (hovered || dragging) ? this.accent : 0xFF3A3A3A;
+            final int border = mixRgb(0x3A3A3E, dimAccent(this.accent), activeAnim);
+            drawCard(graphics, x0, y0, x0 + width, y0 + height, 0xFF1A1A1C, 0xFF000000 | border);
 
-            graphics.fill(x0, y0, x0 + width, y0 + 1, border);
-            graphics.fill(x0, y0 + height - 1, x0 + width, y0 + height, border);
-            graphics.fill(x0, y0, x0 + 1, y0 + height, border);
-            graphics.fill(x0 + width - 1, y0, x0 + width, y0 + height, border);
+            int fillWidth = (int) (width * frac());
+            if (fillWidth > 1) {
+                final float boost = 1f + activeAnim * 0.4f;
+                final int fr = Math.min(255, (int) (accent[0] / 3f * boost));
+                final int fg = Math.min(255, (int) (accent[1] / 3f * boost));
+                final int fb = Math.min(255, (int) (accent[2] / 3f * boost));
+                graphics.fill(x0 + 1, y0 + 1, Math.min(x0 + fillWidth, x0 + width - 1), y0 + height - 1, 0xFF000000 | (fr << 16) | (fg << 8) | fb);
+            }
 
             int thumbX = x0 + Math.max(0, Math.min(width - 3, fillWidth - 1));
             graphics.fill(thumbX, y0, thumbX + 3, y0 + height, this.accent);
 
-            final Minecraft minecraft = Minecraft.getInstance();
+            if (activeAnim > 0.05f) {
+                final int glowAlpha = (int) (0x50 * activeAnim);
+                graphics.fill(thumbX - 1, y0 + 1, thumbX, y0 + height - 1, (glowAlpha << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2]);
+                graphics.fill(thumbX + 3, y0 + 1, thumbX + 4, y0 + height - 1, (glowAlpha << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2]);
+            }
+
             final String text = intMode ? String.valueOf((long) getValueRaw()) : String.format("%.3f", getValueRaw());
             graphics.drawString(minecraft.font, text, x0 + (width - minecraft.font.width(text)) / 2, y0 + (height - minecraft.font.lineHeight) / 2 + 1, 0xFFD0D0D0, false);
         }
@@ -1340,8 +2205,15 @@ public class KnightLibConfigScreen extends Screen {
         }
 
         @Override
-        public void onClick(double mx, double my) {
-            idx = (idx + 1) % values.length;
+        public boolean mouseClicked(double mx, double my, int button) {
+            if (!active || !visible || (button != 0 && button != 1) || !clicked(mx, my)) {
+                return false;
+            }
+
+            playDownSound(Minecraft.getInstance().getSoundManager());
+            idx = Math.floorMod(idx + (button == 1 ? -1 : 1), values.length);
+
+            return true;
         }
 
         @Override
@@ -1353,21 +2225,29 @@ public class KnightLibConfigScreen extends Screen {
             final boolean hovering = mx >= x0 && mx < x0 + width && my >= y0 && my < y0 + height;
             hoverAnim = hovering ? Math.min(1f, hoverAnim + 0.15f) : Math.max(0f, hoverAnim - 0.1f);
 
-            graphics.fill(x0, y0, x0 + width, y0 + height, 0xFF181818);
-            final int border = isHovered ? accent : 0xFF3A3A3A;
-            graphics.fill(x0, y0, x0 + width, y0 + 1, border);
-            graphics.fill(x0, y0 + height - 1, x0 + width, y0 + height, border);
-            graphics.fill(x0, y0, x0 + 1, y0 + height, border);
-            graphics.fill(x0 + width - 1, y0, x0 + width, y0 + height, border);
+            final int border = 0xFF000000 | mixRgb(0x3A3A3E, dimAccent(accent), KnightLibEasings.SMOOTHSTEP.apply(hoverAnim));
+            drawCard(graphics, x0, y0, x0 + width, y0 + height, 0xFF18181A, border);
+
+            if (values.length > 1 && values.length <= 12) {
+                final int pipsW = values.length * 3 - 1;
+                int pipX = x0 + (width - pipsW) / 2;
+                final int[] ac = rgb(accent);
+                for (int i = 0; i < values.length; i++) {
+                    final int color = i == idx ? (0xFF000000 | (ac[0] << 16) | (ac[1] << 8) | ac[2]) : 0xFF333333;
+                    graphics.fill(pipX, y0 + height - 3, pipX + 2, y0 + height - 2, color);
+                    pipX += 3;
+                }
+
+            }
 
             final Minecraft minecraft = Minecraft.getInstance();
             final String text = prettify(values[idx].name());
 
-            graphics.drawString(minecraft.font, text, x0 + (width - minecraft.font.width(text)) / 2, y0 + (height - minecraft.font.lineHeight) / 2 + 1, 0xFFD0D0D0, false);
+            graphics.drawString(minecraft.font, text, x0 + (width - minecraft.font.width(text)) / 2, y0 + (height - minecraft.font.lineHeight) / 2, 0xFFD0D0D0, false);
 
             final int alphaY = y0 + (height - minecraft.font.lineHeight) / 2 + 1;
-            graphics.drawString(minecraft.font, "\u2190", x0 + 3, alphaY, border, false);
-            graphics.drawString(minecraft.font, "\u2192", x0 + width - 10, alphaY, border, false);
+            graphics.drawString(minecraft.font, "←", x0 + 3, alphaY, border, false);
+            graphics.drawString(minecraft.font, "→", x0 + width - 10, alphaY, border, false);
         }
 
         @Override
@@ -1380,15 +2260,41 @@ public class KnightLibConfigScreen extends Screen {
     static class StyledEditBox extends EditBox {
 
         private float focusAnim = 0f;
+        private float expandAnim = 0f;
+        private final int baseWidth;
         private final int accent;
+        private Predicate<String> validator = raw -> true;
 
         StyledEditBox(net.minecraft.client.gui.Font font, int x, int y, int width, int height, Component message, int accent) {
             super(font, x, y, width, height, message);
+            this.baseWidth = width;
             this.accent = accent;
             setBordered(false);
             setTextColor(0xFFD0D0D0);
             setTextColorUneditable(0xFF666666);
             setMaxLength(512);
+        }
+
+        void setValidator(Predicate<String> validator) {
+            this.validator = validator;
+        }
+
+        int layoutWidth(int expandedMax) {
+            final float target = isFocused() ? 1f : 0f;
+            expandAnim += (target - expandAnim) * 0.2f;
+            if (Math.abs(target - expandAnim) < 0.01f) {
+                expandAnim = target;
+            }
+
+            if (expandedMax <= baseWidth || expandAnim <= 0f) {
+                return baseWidth;
+            }
+
+            return baseWidth + (int) ((expandedMax - baseWidth) * KnightLibEasings.SMOOTHSTEP.apply(expandAnim));
+        }
+
+        float expandProgress() {
+            return KnightLibEasings.SMOOTHSTEP.apply(expandAnim);
         }
 
         @Override
@@ -1400,13 +2306,11 @@ public class KnightLibConfigScreen extends Screen {
             boolean enable = (mx >= x0 && mx < x1 && my >= y0 && my < y1) || isFocused();
             focusAnim = enable ? Math.min(1f, focusAnim + 0.15f) : Math.max(0f, focusAnim - 0.1f);
 
-            graphics.fill(x0, y0, x1, y1, 0xFF161616);
+            final boolean valid = validator.test(getValue());
 
-            int border = focusAnim > 0 ? accent : 0xFF3A3A3A;
-            graphics.fill(x0, y0, x1, y0 + 1, border);
-            graphics.fill(x0, y1 - 1, x1, y1, border);
-            graphics.fill(x0, y0, x0 + 1, y1, border);
-            graphics.fill(x1 - 1, y0, x1, y1, border);
+            final int borderTarget = isFocused() ? (accent & 0x00FFFFFF) : dimAccent(accent);
+            final int border = !valid ? 0xFFCC4444 : 0xFF000000 | mixRgb(0x3A3A3E, borderTarget, focusAnim);
+            drawCard(graphics, x0, y0, x1, y1, valid ? 0xFF161618 : 0xFF221214, border);
 
             int lineHeight = Minecraft.getInstance().font.lineHeight;
             int offsetY = (this.height - lineHeight) / 2 + 1;
@@ -1428,49 +2332,72 @@ public class KnightLibConfigScreen extends Screen {
 
         private float hoverAnim = 0f;
         private final int accent;
+        private final boolean primary;
+
+        private final long createdAt = Util.getMillis();
+        private int entranceDelay = 0;
+        private int entranceAlpha = 0xFF;
 
         FlatButton(int x, int y, int width, int height, Component message, OnPress onPress, int accent) {
+            this(x, y, width, height, message, onPress, accent, false);
+        }
+
+        FlatButton(int x, int y, int width, int height, Component message, OnPress onPress, int accent, boolean primary) {
             super(x, y, width, height, message, onPress, Button.DEFAULT_NARRATION);
             this.accent = accent;
+            this.primary = primary;
+        }
+
+        FlatButton withEntranceDelay(int delayMs) {
+            this.entranceDelay = delayMs;
+            return this;
         }
 
         @Override
         public void renderWidget(GuiGraphics graphics, int mx, int my, float partialTick) {
+            final float entrance = KnightLibEasings.EASE_OUT_CUBIC.apply(Mth.clamp((Util.getMillis() - createdAt - entranceDelay) / 180f, 0f, 1f));
+            entranceAlpha = (int) (0xFF * entrance);
+            if (entranceAlpha < 0x10) {
+                return;
+            }
+
+            final int rise = (int) ((1f - entrance) * 4f);
             final int x0 = getX();
-            final int y0 = getY();
+            final int y0 = getY() + rise;
             final int x1 = x0 + getWidth();
             final int y1 = y0 + getHeight();
             boolean hovering = mx >= x0 && mx < x1 && my >= y0 && my < y1;
             hoverAnim = hovering ? Math.min(1f, hoverAnim + 0.15f) : Math.max(0f, hoverAnim - 0.1f);
 
-            graphics.fill(x0, y0, x1, y1, 0xFF141414);
-            graphics.fill(x0 + 1, y0 + 1, x1 - 1, y1 - 1, hovering ? 0xFF1C1C1C : 0xFF181818);
-
-            int borderWidth = 2 + Math.round(hoverAnim);
-            graphics.fill(x0, y0, x0 + borderWidth, y1, hoverAnim > 0 ? accent : 0x40FFFFFF);
-
-            if (hoverAnim > 0f) {
-                final int[] accent = rgb(this.accent);
-                final int defWidth = Math.min(60, getWidth() / 3);
-                final int maxAlpha = (int) (0x20 * hoverAnim);
-                for (int x = 0; x < defWidth; x++) {
-                    int alpha = (int) (maxAlpha * (1f - (float) x / defWidth));
-                    if (alpha > 0) {
-                        graphics.fill(x0 + x, y0, x0 + x + 1, y1, (alpha << 24) | (accent[0] << 16) | (accent[1] << 8) | accent[2]);
-                    }
-
-                }
-
+            if (primary) {
+                renderPrimary(graphics, x0, y0, x1, y1);
+            }
+            else {
+                renderSecondary(graphics, x0, y0, x1, y1);
             }
 
-            final int color = hovering ? 0xFF2A2A2A : 0xFF222222;
-            graphics.fill(x0, y0, x1, y0 + 1, color);
-            graphics.fill(x0, y1 - 1, x1, y1, color);
-            graphics.fill(x0, y0, x0 + 1, y1, color);
-            graphics.fill(x1 - 1, y0, x1, y1, color);
-
             final Minecraft minecraft = Minecraft.getInstance();
-            graphics.drawCenteredString(minecraft.font, getMessage(), x0 + width / 2, y0 + (this.height - minecraft.font.lineHeight) / 2 + 1, active ? 0xFFD0D0D0 : 0xFF666666);
+            final int textColor = !active ? 0x666666 : (primary ? 0xFFFFFF : 0xD0D0D0);
+            graphics.drawCenteredString(minecraft.font, getMessage(), x0 + width / 2, y0 + (this.height - minecraft.font.lineHeight) / 2 + 1, withAlpha(textColor, entranceAlpha));
+        }
+
+        private void renderPrimary(GuiGraphics graphics, int x0, int y0, int x1, int y1) {
+            final int[] ac = rgb(accent);
+
+            final float boost = 0.32f + hoverAnim * 0.18f;
+            final int red = (int) (ac[0] * boost);
+            final int green = (int) (ac[1] * boost);
+            final int blue = (int) (ac[2] * boost);
+
+            drawCard(graphics, x0, y0, x1, y1, (entranceAlpha << 24) | (red << 16) | (green << 8) | blue, withAlpha(accent & 0x00FFFFFF, entranceAlpha));
+        }
+
+        private void renderSecondary(GuiGraphics graphics, int x0, int y0, int x1, int y1) {
+            final float e = KnightLibEasings.SMOOTHSTEP.apply(hoverAnim);
+            final int bg = (entranceAlpha << 24) | mixRgb(0x161618, 0x1E1E22, e);
+            final int border = (entranceAlpha << 24) | mixRgb(0x2A2A2E, dimAccent(accent), e);
+
+            drawCard(graphics, x0, y0, x1, y1, bg, border);
         }
 
     }

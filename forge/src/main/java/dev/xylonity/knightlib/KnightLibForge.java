@@ -9,7 +9,6 @@ import dev.xylonity.knightlib.registry.KnightLibLootModifier;
 import dev.xylonity.knightlib.api.config.ConfigComposer;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.registry.KnightLibPackets;
-import dev.xylonity.knightlib.registry.KnightLibRecipeSerializers;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;

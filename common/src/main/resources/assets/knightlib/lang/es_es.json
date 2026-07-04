@@ -1,0 +1,23 @@
+{
+  "knightlib.config.cancel": "Cancelar",
+  "knightlib.config.reset_all": "Restablecer todo",
+  "knightlib.config.search": "Buscar...",
+  "knightlib.config.categories": "Categorías",
+  "knightlib.config.category.all": "Todas",
+  "knightlib.config.category.general": "General",
+  "knightlib.config.option": "%s opción",
+  "knightlib.config.options": "%s opciones",
+  "knightlib.config.result": "%s resultado",
+  "knightlib.config.results": "%s resultados",
+  "knightlib.config.change": "%s cambio",
+  "knightlib.config.changes": "%s cambios",
+  "knightlib.config.empty": "Nada por aquí",
+  "knightlib.config.empty_search": "Sin resultados para \"%s\"",
+  "knightlib.config.tooltip.default": "Por defecto: %s",
+  "knightlib.config.tooltip.range": "Rango: %s - %s",
+  "knightlib.config.tooltip.slider_hint": "Ctrl+Shift+clic en el slider para escribir un valor exacto",
+  "knightlib.config.tooltip.requires_restart": "⟳ Requiere reiniciar",
+  "knightlib.config.bridge.title": "%s - Configuraciones",
+  "knightlib.config.bridge.subtitle": "Selecciona una configuración para editar",
+  "knightlib.config.bridge.back": "← Volver"
+}
