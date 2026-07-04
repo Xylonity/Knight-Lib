@@ -1,3 +1,7 @@
+# 1.5.5
+- Visual rework of the in-game config screen (for knightlib and dependant mods)
+- Fixed a case where unsaved modified values inside the in-game config screen would be cleared when resizing the game's window
+
 # 1.5.4
 - Fixed a case where the great chalice geo model would be split into different parts when using Geckolib 4.9
 

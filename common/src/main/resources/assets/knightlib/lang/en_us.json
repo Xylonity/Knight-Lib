@@ -14,5 +14,27 @@
   "tooltip.item.knightlib.great_chalice": "§8§oWhispers names you've never heard... yet somehow remember.",
 
   "jei.knightlib.great_chalice_grail_interaction.title": "Great Chalice",
-  "jei.knightlib.great_chalice_fill_interaction.title": "Great Chalice Fill"
+  "jei.knightlib.great_chalice_fill_interaction.title": "Great Chalice Fill",
+
+  "knightlib.config.cancel": "Cancel",
+  "knightlib.config.reset_all": "Reset All",
+  "knightlib.config.search": "Search...",
+  "knightlib.config.categories": "Categories",
+  "knightlib.config.category.all": "All",
+  "knightlib.config.category.general": "General",
+  "knightlib.config.option": "%s option",
+  "knightlib.config.options": "%s options",
+  "knightlib.config.result": "%s result",
+  "knightlib.config.results": "%s results",
+  "knightlib.config.change": "%s change",
+  "knightlib.config.changes": "%s changes",
+  "knightlib.config.empty": "Nothing here yet",
+  "knightlib.config.empty_search": "No results for \"%s\"",
+  "knightlib.config.tooltip.default": "Default: %s",
+  "knightlib.config.tooltip.range": "Range: %s - %s",
+  "knightlib.config.tooltip.slider_hint": "Ctrl+Shift+click the slider to type an exact value",
+  "knightlib.config.tooltip.requires_restart": "⟳ Requires restart",
+  "knightlib.config.bridge.title": "%s - Configurations",
+  "knightlib.config.bridge.subtitle": "Select a configuration to edit",
+  "knightlib.config.bridge.back": "← Back"
 }
