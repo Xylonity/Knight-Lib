@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.network.packets;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.common.entity.data.internal.AttachmentsClient;
+import dev.xylonity.knightlib.client.entity.data.internal.AttachmentsClient;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
