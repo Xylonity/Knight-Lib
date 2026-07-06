@@ -15,6 +15,7 @@
   "client": [
     "BossHealthOverlayMixin",
     "CameraMixin",
+    "MouseHandlerMixin",
     "KeyboardHandlerMixin"
   ],
   "server": [

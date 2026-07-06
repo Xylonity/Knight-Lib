@@ -210,9 +210,29 @@ public class KnightLibForgeClientEvents {
         }
 
         @SubscribeEvent
+        public static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
+            final Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.screen != null || minecraft.player == null) {
+                return;
+            }
+
+            final ClientMouseScrollEvent scrollEvent = new ClientMouseScrollEvent(minecraft, event.getScrollDelta());
+            KnightLibEvents.CLIENT.dispatch(scrollEvent);
+
+            if (scrollEvent.isCancelled()) {
+                event.setCanceled(true);
+            }
+
+        }
+
+        @SubscribeEvent
         public static void onCamera(ViewportEvent.ComputeCameraAngles event) {
             Minecraft minecraft = Minecraft.getInstance();
             KnightLibEvents.CLIENT.dispatch(new ClientComputeCameraAnglesEvent(minecraft, event.getCamera(), event.getCamera().getEntity(), (float) event.getPartialTick()));
+
+            // Forge re-applies the event angles right after this hook, which would clobber any rotation set directly on the camera
+            event.setYaw(event.getCamera().getYRot());
+            event.setPitch(event.getCamera().getXRot());
         }
 
         @SubscribeEvent
