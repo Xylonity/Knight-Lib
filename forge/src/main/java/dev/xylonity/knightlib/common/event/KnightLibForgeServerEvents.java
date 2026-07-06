@@ -231,6 +231,30 @@ public class KnightLibForgeServerEvents {
             KnightLibEvents.SERVER.dispatch(new PlayerItemCraftedEvent(event.getEntity(), event.getCrafting(), event.getInventory()));
         }
 
+        @SubscribeEvent
+        public static void onStartTracking(PlayerEvent.StartTracking event) {
+            if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+                KnightLibEvents.SERVER.dispatch(new PlayerStartTrackingEvent(serverPlayer, event.getTarget()));
+            }
+
+        }
+
+        @SubscribeEvent
+        public static void onPlayerClone(PlayerEvent.Clone event) {
+            if (event.getOriginal() instanceof ServerPlayer oldPlayer && event.getEntity() instanceof ServerPlayer newPlayer) {
+                KnightLibEvents.SERVER.dispatch(new ServerPlayerCloneEvent(oldPlayer, newPlayer, event.isWasDeath()));
+            }
+
+        }
+
+        @SubscribeEvent
+        public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+            if (event.getEntity() instanceof ServerPlayer serverPlayer) {
+                KnightLibEvents.SERVER.dispatch(new ServerPlayerRespawnEvent(serverPlayer, event.isEndConquered()));
+            }
+
+        }
+
     }
 
 }

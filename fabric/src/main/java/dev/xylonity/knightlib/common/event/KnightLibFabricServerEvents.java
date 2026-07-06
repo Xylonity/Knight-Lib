@@ -9,10 +9,12 @@ import dev.xylonity.knightlib.common.event.impl.EntityAttributeRegistrationEvent
 import dev.xylonity.knightlib.common.event.impl.SpawnPlacementRegistrationEventFabric;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
+import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -48,6 +50,26 @@ public final class KnightLibFabricServerEvents {
         onPlayerConnectionEvents();
         onLootTableModificationEvent();
         onLivingDeathEvents();
+        onPlayerTrackingEvents();
+        onPlayerRespawnEvents();
+    }
+
+    private static void onPlayerTrackingEvents() {
+        EntityTrackingEvents.START_TRACKING.register((trackedEntity, player) ->
+                KnightLibEvents.SERVER.dispatch(new PlayerStartTrackingEvent(player, trackedEntity))
+        );
+
+    }
+
+    private static void onPlayerRespawnEvents() {
+        ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) ->
+                KnightLibEvents.SERVER.dispatch(new ServerPlayerCloneEvent(oldPlayer, newPlayer, !alive))
+        );
+
+        ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) ->
+                KnightLibEvents.SERVER.dispatch(new ServerPlayerRespawnEvent(newPlayer, alive))
+        );
+
     }
 
     private static void onLivingDeathEvents() {
