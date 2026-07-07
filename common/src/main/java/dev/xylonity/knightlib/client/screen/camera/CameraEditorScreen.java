@@ -1305,7 +1305,7 @@ public class CameraEditorScreen extends Screen {
      */
     private void drawEffectBand(GuiGraphics graphics, EditorEffect effect, int trackY, boolean selected, boolean hovered) {
         final int x1 = Mth.clamp(Math.round(timeToX(effect.start)), stripX, stripX + stripWidth);
-        final int x2 = Mth.clamp(Math.round(timeToX(effect.end)), stripX, stripX + stripWidth);
+        int x2 = Mth.clamp(Math.round(timeToX(effect.end)), stripX, stripX + stripWidth);
         if (x2 <= x1) {
             x2 = x1 + 1;
         }
