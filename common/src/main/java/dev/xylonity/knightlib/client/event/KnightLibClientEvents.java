@@ -114,7 +114,7 @@ public class KnightLibClientEvents {
 
     @RegisterEvent(priority = 100)
     public static void onClientRenderLevelStage(final ClientRenderLevelStageEvent event) {
-        PostShaderRenderContext context = new PostShaderRenderContext(
+        final PostShaderRenderContext context = new PostShaderRenderContext(
                 event.getStage(),
                 event.getPartialTick(),
                 event.getProjection(),
