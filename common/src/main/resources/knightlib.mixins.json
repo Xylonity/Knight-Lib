@@ -12,6 +12,7 @@
     "AbstractTickableSoundInstanceAccessor",
     "CameraAccessor",
     "EntityRenderDispatcherMixin",
+    "GameRendererAccessor",
     "GameRendererMixin",
     "PostChainAccessor",
     "PostPassAccessor"
