@@ -1,0 +1,67 @@
+{
+    "targets": [
+        "swap_a",
+        "swap_b"
+    ],
+    "passes": [
+        {
+            "name": "knightlib_box_blur",
+            "intarget": "minecraft:main",
+            "outtarget": "swap_a",
+            "uniforms": [
+                { "name": "BlurDir", "values": [ 1.0, 0.0 ] },
+                { "name": "RadiusMultiplier", "values": [ 1.0 ] }
+            ]
+        },
+        {
+            "name": "knightlib_box_blur",
+            "intarget": "swap_a",
+            "outtarget": "swap_b",
+            "uniforms": [
+                { "name": "BlurDir", "values": [ 0.0, 1.0 ] },
+                { "name": "RadiusMultiplier", "values": [ 1.0 ] }
+            ]
+        },
+        {
+            "name": "knightlib_box_blur",
+            "intarget": "swap_b",
+            "outtarget": "swap_a",
+            "uniforms": [
+                { "name": "BlurDir", "values": [ 1.0, 0.0 ] },
+                { "name": "RadiusMultiplier", "values": [ 0.5 ] }
+            ]
+        },
+        {
+            "name": "knightlib_box_blur",
+            "intarget": "swap_a",
+            "outtarget": "swap_b",
+            "uniforms": [
+                { "name": "BlurDir", "values": [ 0.0, 1.0 ] },
+                { "name": "RadiusMultiplier", "values": [ 0.5 ] }
+            ]
+        },
+        {
+            "name": "knightlib_box_blur",
+            "intarget": "swap_b",
+            "outtarget": "swap_a",
+            "uniforms": [
+                { "name": "BlurDir", "values": [ 1.0, 0.0 ] },
+                { "name": "RadiusMultiplier", "values": [ 0.25 ] }
+            ]
+        },
+        {
+            "name": "knightlib_box_blur",
+            "intarget": "swap_a",
+            "outtarget": "swap_b",
+            "uniforms": [
+                { "name": "BlurDir", "values": [ 0.0, 1.0 ] },
+                { "name": "RadiusMultiplier", "values": [ 0.25 ] }
+            ]
+        },
+        {
+            "name": "blit",
+            "intarget": "swap_b",
+            "outtarget": "minecraft:main"
+        }
+    ]
+}

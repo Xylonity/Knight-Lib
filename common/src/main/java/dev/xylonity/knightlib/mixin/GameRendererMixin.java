@@ -1,12 +1,14 @@
 package dev.xylonity.knightlib.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import dev.xylonity.knightlib.api.camera.path.impl.CameraPathManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderContext;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -50,6 +52,22 @@ public class GameRendererMixin {
         );
 
         PostShaderManager.renderStage(context);
+    }
+
+    /**
+     * Runs right after the gui passes so the camera path is drawn anyway
+     */
+    @Inject(
+            method = "render(Lnet/minecraft/client/DeltaTracker;Z)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;flush()V")
+    )
+    private void knightlib$renderCameraPathOverlay(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
+        if (renderLevel && minecraft.level != null) {
+            final GuiGraphics graphics = new GuiGraphics(minecraft, minecraft.renderBuffers().bufferSource());
+            CameraPathManager.renderOverlay(graphics, deltaTracker.getGameTimeDeltaPartialTick(true));
+            graphics.flush();
+        }
+
     }
 
 }

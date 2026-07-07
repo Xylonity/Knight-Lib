@@ -38,6 +38,7 @@ public interface KnightLibPlatform {
 
     boolean isPhysicalClient();
     boolean isModLoaded(String modid);
+    boolean isDevelopmentEnvironment();
 
     Path resolveConfigFile(String configFileName);
     Path getConfigPath();

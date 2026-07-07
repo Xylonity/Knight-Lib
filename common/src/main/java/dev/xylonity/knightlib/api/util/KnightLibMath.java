@@ -82,6 +82,13 @@ public final class KnightLibMath {
     }
 
     /**
+     * Angle of a horizontal offset
+     */
+    public static float yawAngleOf(Vec3 offset) {
+        return (float) Math.toDegrees(Math.atan2(-offset.x, offset.z));
+    }
+
+    /**
      * Clamped lerp, where {@code t} is clamped to [0, 1] before interpolation
      */
     public static float clampedLerp(float a, float b, float t) {
@@ -351,6 +358,26 @@ public final class KnightLibMath {
      */
     public static float tickProgress(int tickCount, float partialTick, int durationTicks) {
         return clamp01((tickCount + partialTick) / durationTicks);
+    }
+
+    /**
+     * Computes a Hermite spline with the given params
+     */
+    public static Vec3 hermite(Vec3 from, Vec3 outTangent, Vec3 to, Vec3 inTangent, float t) {
+        final float t2 = t * t;
+        final float t3 = t2 * t;
+
+        final float h00 = 2f * t3 - 3f * t2 + 1f;
+        final float h10 = t3 - 2f * t2 + t;
+        final float h01 = -2f * t3 + 3f * t2;
+        final float h11 = t3 - t2;
+
+        return new Vec3(
+                h00 * from.x + h10 * outTangent.x + h01 * to.x + h11 * inTangent.x,
+                h00 * from.y + h10 * outTangent.y + h01 * to.y + h11 * inTangent.y,
+                h00 * from.z + h10 * outTangent.z + h01 * to.z + h11 * inTangent.z
+        );
+
     }
 
 }

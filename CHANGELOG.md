@@ -1,3 +1,10 @@
+# 1.6.0
+- Added a [dev] campath manager (experimental) to easily create custom camera cutscenes
+- Added an attachment processor utility that can be hooked to any entity (syncs data automatically)
+- Added new client and server knightlib events
+- Fixed a case where the neoforge's persistent data utility wouldn't be correctly loaded on a dedicated server
+- Fixed a case where the tick scheduler could crash the game on very rare occasions
+
 # 1.5.5
 - Visual rework of the in-game config screen (for knightlib and dependant mods)
 - Fixed a case where unsaved modified values inside the in-game config screen would be cleared when resizing the game's window

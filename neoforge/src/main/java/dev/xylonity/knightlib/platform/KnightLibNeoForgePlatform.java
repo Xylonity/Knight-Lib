@@ -97,6 +97,11 @@ public class KnightLibNeoForgePlatform implements KnightLibPlatform {
     }
 
     @Override
+    public boolean isDevelopmentEnvironment() {
+        return !FMLEnvironment.production;
+    }
+
+    @Override
     public Path resolveConfigFile(String config) {
         return FMLPaths.CONFIGDIR.get().resolve(config);
     }

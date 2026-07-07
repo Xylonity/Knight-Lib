@@ -42,7 +42,6 @@ import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
@@ -239,9 +238,19 @@ public class KnightLibNeoForgeClientEvents {
         }
 
         @SubscribeEvent
-        public static void onCamera(ViewportEvent.ComputeCameraAngles event) {
-            Minecraft minecraft = Minecraft.getInstance();
-            KnightLibEvents.CLIENT.dispatch(new ClientComputeCameraAnglesEvent(minecraft, event.getCamera(), event.getCamera().getEntity(), (float) event.getPartialTick()));
+        public static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
+            final Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.screen != null || minecraft.player == null) {
+                return;
+            }
+
+            final ClientMouseScrollEvent scrollEvent = new ClientMouseScrollEvent(minecraft, event.getScrollDeltaY());
+            KnightLibEvents.CLIENT.dispatch(scrollEvent);
+
+            if (scrollEvent.isCancelled()) {
+                event.setCanceled(true);
+            }
+
         }
 
         @SubscribeEvent

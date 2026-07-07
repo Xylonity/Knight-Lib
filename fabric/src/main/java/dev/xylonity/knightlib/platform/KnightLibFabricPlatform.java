@@ -141,6 +141,11 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
     }
 
     @Override
+    public boolean isDevelopmentEnvironment() {
+        return FabricLoader.getInstance().isDevelopmentEnvironment();
+    }
+
+    @Override
     public Path resolveConfigFile(String configFileName) {
         return FabricLoader.getInstance().getConfigDir().resolve(configFileName);
     }
