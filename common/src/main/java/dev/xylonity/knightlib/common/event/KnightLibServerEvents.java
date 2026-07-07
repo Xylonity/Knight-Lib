@@ -24,7 +24,6 @@ public class KnightLibServerEvents {
         TickScheduler.clean();
 
         for (ServerLevel level : event.server().getAllLevels()) {
-            TickScheduler.incrementTick(level);
             TickScheduler.processServerTasks(level);
             TickScheduler.processCommonTasks(level);
         }

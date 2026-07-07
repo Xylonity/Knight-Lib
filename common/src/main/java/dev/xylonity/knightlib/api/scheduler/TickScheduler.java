@@ -1,6 +1,9 @@
 package dev.xylonity.knightlib.api.scheduler;
 
+import dev.xylonity.knightlib.KnightLib;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +12,7 @@ import java.util.PriorityQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class TickScheduler {
+
     private static final byte SERVER = 0;
     private static final byte CLIENT = 1;
     private static final byte BOTH = 2;
@@ -16,28 +20,11 @@ public final class TickScheduler {
     private static final Map<Level, PriorityQueue<ScheduledTask>> SERVER_TASKS = new ConcurrentHashMap<>(4);
     private static final Map<Level, PriorityQueue<ScheduledTask>> CLIENT_TASKS = new ConcurrentHashMap<>(2);
     private static final Map<Level, PriorityQueue<ScheduledTask>> COMMON_TASKS = new ConcurrentHashMap<>(4);
-    private static final Map<Level, Long> LEVEL_TICK_COUNTER = new ConcurrentHashMap<>();
 
     private static final List<Level> LEVELS_TO_CLEAN = new ArrayList<>();
 
     public static void schedule(Level level, Runnable runnable, int delay, byte type) {
-        if (level == null || runnable == null || delay < 0) return;
-
-        ScheduledTask task = new ScheduledTask(getOrCreateTickCounter(level) + delay, runnable);
-        switch (type) {
-            case SERVER:
-                if (!level.isClientSide()) getOrCreateQueue(SERVER_TASKS, level).add(task);
-                break;
-            case CLIENT:
-                if (level.isClientSide()) getOrCreateQueue(CLIENT_TASKS, level).add(task);
-                break;
-            case BOTH:
-                getOrCreateQueue(COMMON_TASKS, level).add(task);
-                break;
-            default:
-                break;
-        }
-
+        scheduleTask(level, null, runnable, delay, 0, type);
     }
 
     /**
@@ -47,7 +34,7 @@ public final class TickScheduler {
      * @param delay the delay in ticks
      */
     public static void scheduleServer(Level level, Runnable runnable, int delay) {
-        schedule(level, runnable, delay, SERVER);
+        scheduleTask(level, null, runnable, delay, 0, SERVER);
     }
 
     /**
@@ -57,7 +44,7 @@ public final class TickScheduler {
      * @param delay the delay in ticks
      */
     public static void scheduleClient(Level level, Runnable runnable, int delay) {
-        schedule(level, runnable, delay, CLIENT);
+        scheduleTask(level, null, runnable, delay, 0, CLIENT);
     }
 
     /**
@@ -67,7 +54,100 @@ public final class TickScheduler {
      * @param delay the delay in ticks
      */
     public static void scheduleBoth(Level level, Runnable runnable, int delay) {
-        schedule(level, runnable, delay, BOTH);
+        scheduleTask(level, null, runnable, delay, 0, BOTH);
+    }
+
+    /**
+     * Same as {@link #scheduleServer(Level, Runnable, int)} but hands back a cancelable handle
+     */
+    @Nullable
+    public static ScheduledTask scheduleServerTask(Level level, Runnable runnable, int delay) {
+        return scheduleTask(level, null, runnable, delay, 0, SERVER);
+    }
+
+    /**
+     * Same as {@link #scheduleClient(Level, Runnable, int)} but hands back a cancelable handle
+     */
+    @Nullable
+    public static ScheduledTask scheduleClientTask(Level level, Runnable runnable, int delay) {
+        return scheduleTask(level, null, runnable, delay, 0, CLIENT);
+    }
+
+    /**
+     * Same as {@link #scheduleBoth(Level, Runnable, int)} but hands back a cancelable handle
+     */
+    @Nullable
+    public static ScheduledTask scheduleBothTask(Level level, Runnable runnable, int delay) {
+        return scheduleTask(level, null, runnable, delay, 0, BOTH);
+    }
+
+    /**
+     * Schedule a repeating task on the server, so it first runs after the delay ticks and then
+     * again every interval ticks until {@link ScheduledTask#cancel()} is called or the level unloads
+     */
+    @Nullable
+    public static ScheduledTask scheduleServerRepeating(Level level, Runnable runnable, int delay, int interval) {
+        return scheduleTask(level, null, runnable, delay, Math.max(1, interval), SERVER);
+    }
+
+    /**
+     * Schedule a repeating task on the client, so it first runs after the delay ticks and then
+     * again every interval ticks until {@link ScheduledTask#cancel()} is called or the level unloads
+     */
+    @Nullable
+    public static ScheduledTask scheduleClientRepeating(Level level, Runnable runnable, int delay, int interval) {
+        return scheduleTask(level, null, runnable, delay, Math.max(1, interval), CLIENT);
+    }
+
+    /**
+     * Schedule a task on the server tied to an entity. It silently cancels itself instead of running if the entity has been removed
+     */
+    @Nullable
+    public static ScheduledTask scheduleServer(Entity entity, Runnable runnable, int delay) {
+        return entity == null ? null : scheduleTask(entity.level(), entity, runnable, delay, 0, SERVER);
+    }
+
+    /**
+     * Schedule a repeating task on the server tied to an entity: it stops for good once the entity is removed or {@link ScheduledTask#cancel()} is called
+     */
+    @Nullable
+    public static ScheduledTask scheduleServerRepeating(Entity entity, Runnable runnable, int delay, int interval) {
+        return entity == null ? null : scheduleTask(entity.level(), entity, runnable, delay, Math.max(1, interval), SERVER);
+    }
+
+    @Nullable
+    private static ScheduledTask scheduleTask(Level level, @Nullable Entity owner, Runnable runnable, int delay, int interval, byte type) {
+        if (level == null || runnable == null || delay < 0) {
+            return null;
+        }
+
+        PriorityQueue<ScheduledTask> queue;
+        switch (type) {
+            case SERVER:
+                queue = level.isClientSide() ? null : getOrCreateQueue(SERVER_TASKS, level);
+                break;
+            case CLIENT:
+                queue = level.isClientSide() ? getOrCreateQueue(CLIENT_TASKS, level) : null;
+                break;
+            case BOTH:
+                queue = getOrCreateQueue(COMMON_TASKS, level);
+                break;
+            default:
+                queue = null;
+                break;
+        }
+
+        if (queue == null) {
+            return null;
+        }
+
+        final ScheduledTask task = new ScheduledTask(level.getGameTime() + delay, interval, owner, runnable);
+
+        synchronized (queue) {
+            queue.add(task);
+        }
+
+        return task;
     }
 
     public static void markForClean(Level level) {
@@ -75,7 +155,7 @@ public final class TickScheduler {
             synchronized (LEVELS_TO_CLEAN) {
                 LEVELS_TO_CLEAN.add(level);
             }
-            
+
         }
 
     }
@@ -87,7 +167,6 @@ public final class TickScheduler {
                     SERVER_TASKS.remove(level);
                     CLIENT_TASKS.remove(level);
                     COMMON_TASKS.remove(level);
-                    LEVEL_TICK_COUNTER.remove(level);
                 }
 
                 LEVELS_TO_CLEAN.clear();
@@ -105,81 +184,95 @@ public final class TickScheduler {
         return map.computeIfAbsent(level, lvl -> new PriorityQueue<>());
     }
 
-    private static long getOrCreateTickCounter(Level level) {
-        return LEVEL_TICK_COUNTER.computeIfAbsent(level, lvl -> 0L);
-    }
-
+    /**
+     * @deprecated the scheduler now follows {@link Level#getGameTime()} directly, so there is no internal counter to advance anymore
+     */
+    @Deprecated
     public static void incrementTick(Level level) {
-        LEVEL_TICK_COUNTER.put(level, getOrCreateTickCounter(level) + 1);
+        ;;
     }
 
     public static void processServerTasks(Level level) {
-        PriorityQueue<ScheduledTask> queue = SERVER_TASKS.get(level);
-
-        if (queue == null || queue.isEmpty()) {
-            return;
-        }
-
-        while (!queue.isEmpty()) {
-            ScheduledTask top = queue.peek();
-            if (top.execAt > getOrCreateTickCounter(level)) {
-                break;
-            }
-
-            queue.poll();
-            top.execute();
-        }
-
+        process(SERVER_TASKS, level);
     }
 
     public static void processClientTasks(Level level) {
-        PriorityQueue<ScheduledTask> queue = CLIENT_TASKS.get(level);
-
-        if (queue == null || queue.isEmpty()) {
-            return;
-        }
-
-        while (!queue.isEmpty()) {
-            ScheduledTask top = queue.peek();
-
-            if (top.execAt > getOrCreateTickCounter(level)) {
-                break;
-            }
-
-            queue.poll();
-            top.execute();
-        }
-
+        process(CLIENT_TASKS, level);
     }
 
     public static void processCommonTasks(Level level) {
-        PriorityQueue<ScheduledTask> queue = COMMON_TASKS.get(level);
+        process(COMMON_TASKS, level);
+    }
 
-        if (queue == null || queue.isEmpty()) {
+    private static void process(Map<Level, PriorityQueue<ScheduledTask>> map, Level level) {
+        final PriorityQueue<ScheduledTask> queue = map.get(level);
+        if (queue == null) {
             return;
         }
 
-        while (!queue.isEmpty()) {
-            ScheduledTask top = queue.peek();
+        final long now = level.getGameTime();
 
-            if (top.execAt > getOrCreateTickCounter(level)) {
-                break;
+        List<ScheduledTask> due = null;
+        synchronized (queue) {
+            while (!queue.isEmpty() && queue.peek().execAt <= now) {
+                if (due == null) {
+                    due = new ArrayList<>();
+                }
+
+                due.add(queue.poll());
             }
 
-            queue.poll();
-            top.execute();
+        }
+
+        if (due == null) {
+            return;
+        }
+
+        for (final ScheduledTask task : due) {
+            try {
+                task.execute();
+            }
+            catch (Throwable throwable) {
+                KnightLib.LOGGER.error("Scheduled task threw an exception: ", throwable);
+            }
+
+            if (task.shouldRepeat()) {
+                task.execAt = now + task.interval;
+                synchronized (queue) {
+                    queue.add(task);
+                }
+
+            }
+
         }
 
     }
 
     public static final class ScheduledTask implements Comparable<ScheduledTask> {
 
-        private final long execAt;
+        private long execAt;
+        private final int interval;
+        @Nullable
+        private final Entity owner;
         private final Runnable runnable;
+        private volatile boolean cancelled;
 
-        private ScheduledTask(long executeAtTick, Runnable runnable) {
+        private ScheduledTask(long executeAtTick, int interval, @Nullable Entity owner, Runnable runnable) {
             this.execAt = executeAtTick;
+            this.interval = interval;
+            this.owner = owner;
             this.runnable = runnable;
+        }
+
+        /**
+         * Prevents any pending execution (and every future one, for repeating tasks)
+         */
+        public void cancel() {
+            cancelled = true;
+        }
+
+        public boolean isCancelled() {
+            return cancelled;
         }
 
         @Override
@@ -188,7 +281,20 @@ public final class TickScheduler {
         }
 
         public void execute() {
+            if (cancelled) {
+                return;
+            }
+
+            if (owner != null && owner.isRemoved()) {
+                cancelled = true;
+                return;
+            }
+
             runnable.run();
+        }
+
+        private boolean shouldRepeat() {
+            return interval > 0 && !cancelled;
         }
 
     }

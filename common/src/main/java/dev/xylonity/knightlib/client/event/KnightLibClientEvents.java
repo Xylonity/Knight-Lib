@@ -66,7 +66,6 @@ public class KnightLibClientEvents {
             CameraPathEditor.tick();
 
             TickScheduler.clean();
-            TickScheduler.incrementTick(level);
             TickScheduler.processClientTasks(level);
             TickScheduler.processCommonTasks(level);
 
@@ -174,6 +173,9 @@ public class KnightLibClientEvents {
         KnightLibPersistentSounds.clearAll();
         AttachmentsClient.clearAll();
         PostShaderManager.onWorldUnload();
+
+        TickScheduler.markForClean(event.getLevel());
+        TickScheduler.clean();
     }
 
     @RegisterEvent(priority = 100)
