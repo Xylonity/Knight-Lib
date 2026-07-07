@@ -82,6 +82,13 @@ public final class KnightLibMath {
     }
 
     /**
+     * Angle of a horizontal offset
+     */
+    public static float yawAngleOf(Vec3 offset) {
+        return (float) Math.toDegrees(Math.atan2(-offset.x, offset.z));
+    }
+
+    /**
      * Clamped lerp, where {@code t} is clamped to [0, 1] before interpolation
      */
     public static float clampedLerp(float a, float b, float t) {
