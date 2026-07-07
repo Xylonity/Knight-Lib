@@ -55,15 +55,15 @@ public final class KnightLibConfig {
     public static boolean YEET_GRAIL_WHEN_FILLED = true;
 
     public static boolean isEntityAllowedForEssence(EntityType<?> entityType) {
-        ResourceLocation id = EntityType.getKey(entityType);
-        String entityId = id.toString();
+        final ResourceLocation id = EntityType.getKey(entityType);
+        final String entityId = id.toString();
 
-        Set<String> blacklist = KnightLibUtil.parseList(ESSENCE_ENTITY_BLACKLIST);
+        final Set<String> blacklist = KnightLibUtil.parseList(ESSENCE_ENTITY_BLACKLIST);
         if (blacklist.contains(entityId)) {
             return false;
         }
 
-        Set<String> whitelist = KnightLibUtil.parseList(ESSENCE_ENTITY_WHITELIST);
+        final Set<String> whitelist = KnightLibUtil.parseList(ESSENCE_ENTITY_WHITELIST);
         if (!whitelist.isEmpty()) {
             return whitelist.contains(entityId);
         }
