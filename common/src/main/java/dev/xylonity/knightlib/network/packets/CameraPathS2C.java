@@ -1,8 +1,8 @@
 package dev.xylonity.knightlib.network.packets;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.api.camera.path.CameraPath;
-import dev.xylonity.knightlib.api.camera.path.CameraPathManager;
+import dev.xylonity.knightlib.api.camera.path.impl.CameraPath;
+import dev.xylonity.knightlib.api.camera.path.impl.CameraPathManager;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;

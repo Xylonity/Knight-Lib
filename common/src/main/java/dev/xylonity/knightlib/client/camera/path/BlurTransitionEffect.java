@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.client.camera.path;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.api.camera.path.CameraPath;
+import dev.xylonity.knightlib.api.camera.path.impl.CameraPath;
 import dev.xylonity.knightlib.mixin.GameRendererAccessor;
 import dev.xylonity.knightlib.mixin.PostChainAccessor;
 import dev.xylonity.knightlib.mixin.PostPassAccessor;

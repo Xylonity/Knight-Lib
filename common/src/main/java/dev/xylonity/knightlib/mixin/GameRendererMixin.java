@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import dev.xylonity.knightlib.api.camera.path.CameraPathManager;
+import dev.xylonity.knightlib.api.camera.path.impl.CameraPathManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderContext;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;

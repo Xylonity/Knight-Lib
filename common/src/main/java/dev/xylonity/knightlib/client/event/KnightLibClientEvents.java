@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.client.event;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.api.camera.path.CameraPathManager;
+import dev.xylonity.knightlib.api.camera.path.impl.CameraPathManager;
 import dev.xylonity.knightlib.api.camera.shake.CameraShakeManager;
 import dev.xylonity.knightlib.api.event.RegisterEvent;
 import dev.xylonity.knightlib.client.camera.editor.CameraPathEditor;
