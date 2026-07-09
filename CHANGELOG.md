@@ -3,6 +3,7 @@
 - Added an attachment processor utility that can be hooked to any entity (syncs data automatically)
 - Added new client and server knightlib events
 - Fixed a case where the tick scheduler could crash the game on very rare occasions
+- Fixed a case where some very occasional crashes could occur due to a race condition caused by a parallel registration stage on forge
 
 # 1.5.3
 - Visual rework of the in-game config screen (for knightlib and dependant mods)

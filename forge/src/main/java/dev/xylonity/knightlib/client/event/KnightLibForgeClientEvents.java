@@ -43,20 +43,23 @@ public class KnightLibForgeClientEvents {
 
         @SubscribeEvent
         public static void clientSetup(FMLClientSetupEvent event) {
-            EntityRendererRegistrationEventForge rendererEvent = new EntityRendererRegistrationEventForge();
-            KnightLibEvents.CLIENT.dispatch(rendererEvent);
+            event.enqueueWork(() -> {
+                final EntityRendererRegistrationEventForge rendererEvent = new EntityRendererRegistrationEventForge();
+                KnightLibEvents.CLIENT.dispatch(rendererEvent);
 
-            BlockEntityRendererRegistrationEventForge beRendererEvent = new BlockEntityRendererRegistrationEventForge();
-            KnightLibEvents.CLIENT.dispatch(beRendererEvent);
+                final BlockEntityRendererRegistrationEventForge beRendererEvent = new BlockEntityRendererRegistrationEventForge();
+                KnightLibEvents.CLIENT.dispatch(beRendererEvent);
 
-            MenuScreenRegistrationEventForge menuScreenEvent = new MenuScreenRegistrationEventForge();
-            KnightLibEvents.CLIENT.dispatch(menuScreenEvent);
+                final MenuScreenRegistrationEventForge menuScreenEvent = new MenuScreenRegistrationEventForge();
+                KnightLibEvents.CLIENT.dispatch(menuScreenEvent);
 
-            BossBarRegistrationEvent bossBarEvent = new BossBarRegistrationEvent();
-            KnightLibEvents.CLIENT.dispatch(bossBarEvent);
+                final BossBarRegistrationEvent bossBarEvent = new BossBarRegistrationEvent();
+                KnightLibEvents.CLIENT.dispatch(bossBarEvent);
 
-            RenderLayerRegistrationEventForge renderLayerEvent = new RenderLayerRegistrationEventForge();
-            KnightLibEvents.CLIENT.dispatch(renderLayerEvent);
+                final RenderLayerRegistrationEventForge renderLayerEvent = new RenderLayerRegistrationEventForge();
+                KnightLibEvents.CLIENT.dispatch(renderLayerEvent);
+            });
+
         }
 
         @SubscribeEvent
