@@ -61,22 +61,25 @@ public class KnightLibNeoForgeClientEvents {
 
         @SubscribeEvent
         public static void clientSetup(FMLClientSetupEvent event) {
-            EntityRendererRegistrationEventNeoForge rendererEvent = new EntityRendererRegistrationEventNeoForge();
-            KnightLibEvents.CLIENT.dispatch(rendererEvent);
+            event.enqueueWork(() -> {
+                final EntityRendererRegistrationEventNeoForge rendererEvent = new EntityRendererRegistrationEventNeoForge();
+                KnightLibEvents.CLIENT.dispatch(rendererEvent);
 
-            BlockEntityRendererRegistrationEventNeoForge beRendererEvent = new BlockEntityRendererRegistrationEventNeoForge();
-            KnightLibEvents.CLIENT.dispatch(beRendererEvent);
+                final BlockEntityRendererRegistrationEventNeoForge beRendererEvent = new BlockEntityRendererRegistrationEventNeoForge();
+                KnightLibEvents.CLIENT.dispatch(beRendererEvent);
 
-            BossBarRegistrationEvent bossBarEvent = new BossBarRegistrationEvent();
-            KnightLibEvents.CLIENT.dispatch(bossBarEvent);
+                final BossBarRegistrationEvent bossBarEvent = new BossBarRegistrationEvent();
+                KnightLibEvents.CLIENT.dispatch(bossBarEvent);
 
-            RenderLayerRegistrationEventNeoForge renderLayerEvent = new RenderLayerRegistrationEventNeoForge();
-            KnightLibEvents.CLIENT.dispatch(renderLayerEvent);
+                final RenderLayerRegistrationEventNeoForge renderLayerEvent = new RenderLayerRegistrationEventNeoForge();
+                KnightLibEvents.CLIENT.dispatch(renderLayerEvent);
+            });
+
         }
 
         @SubscribeEvent
         public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
-            MenuScreenRegistrationEventNeoForge menuScreenEvent = new MenuScreenRegistrationEventNeoForge();
+            final MenuScreenRegistrationEventNeoForge menuScreenEvent = new MenuScreenRegistrationEventNeoForge();
             KnightLibEvents.CLIENT.dispatch(menuScreenEvent);
 
             menuScreenEvent.applyToForgeEvent(event);
@@ -84,7 +87,7 @@ public class KnightLibNeoForgeClientEvents {
 
         @SubscribeEvent
         public static void registerParticleFactories(final RegisterParticleProvidersEvent event) {
-            ParticleProviderRegistrationEventNeoForge particleEvent = new ParticleProviderRegistrationEventNeoForge();
+            final ParticleProviderRegistrationEventNeoForge particleEvent = new ParticleProviderRegistrationEventNeoForge();
             KnightLibEvents.CLIENT.dispatch(particleEvent);
 
             particleEvent.applyToForgeEvent(event);
@@ -92,7 +95,7 @@ public class KnightLibNeoForgeClientEvents {
 
         @SubscribeEvent
         public static void onRegisterAdditionalModels(ModelEvent.RegisterAdditional event) {
-            AdditionalModelsRegistrationEventNeoForge modelsEvent = new AdditionalModelsRegistrationEventNeoForge();
+            final AdditionalModelsRegistrationEventNeoForge modelsEvent = new AdditionalModelsRegistrationEventNeoForge();
             KnightLibEvents.CLIENT.dispatch(modelsEvent);
 
             modelsEvent.applyToForgeEvent(event);
@@ -100,7 +103,7 @@ public class KnightLibNeoForgeClientEvents {
 
         @SubscribeEvent(priority = EventPriority.HIGH)
         public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
-            KeyMappingRegistrationEventNeoForge keyEvent = new KeyMappingRegistrationEventNeoForge();
+            final KeyMappingRegistrationEventNeoForge keyEvent = new KeyMappingRegistrationEventNeoForge();
             KnightLibEvents.CLIENT.dispatch(keyEvent);
 
             keyEvent.applyToForgeEvent(event);
@@ -110,7 +113,7 @@ public class KnightLibNeoForgeClientEvents {
         public static void onRegisterShaders(RegisterShadersEvent event) {
             KnightLibEvents.CLIENT.dispatch(new CustomPostShaderRegistrationEvent(PostShaderManager::register));
 
-            ShaderRegistrationEventNeoForge shaderEvent = new ShaderRegistrationEventNeoForge(event);
+            final ShaderRegistrationEventNeoForge shaderEvent = new ShaderRegistrationEventNeoForge(event);
             KnightLibEvents.CLIENT.dispatch(shaderEvent);
         }
 

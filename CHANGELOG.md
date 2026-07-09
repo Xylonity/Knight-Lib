@@ -4,6 +4,7 @@
 - Added new client and server knightlib events
 - Fixed a case where the neoforge's persistent data utility wouldn't be correctly loaded on a dedicated server
 - Fixed a case where the tick scheduler could crash the game on very rare occasions
+- Fixed a case where some very occasional crashes could occur due to a race condition caused by a parallel registration stage on neoforge
 
 # 1.5.5
 - Visual rework of the in-game config screen (for knightlib and dependant mods)
