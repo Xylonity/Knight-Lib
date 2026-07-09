@@ -64,7 +64,7 @@ public class KnightLibForgeClientEvents {
 
         @SubscribeEvent
         public static void registerParticleFactories(final RegisterParticleProvidersEvent event) {
-            ParticleProviderRegistrationEventForge particleEvent = new ParticleProviderRegistrationEventForge();
+            final ParticleProviderRegistrationEventForge particleEvent = new ParticleProviderRegistrationEventForge();
             KnightLibEvents.CLIENT.dispatch(particleEvent);
 
             particleEvent.applyToForgeEvent(event);
@@ -72,7 +72,7 @@ public class KnightLibForgeClientEvents {
 
         @SubscribeEvent
         public static void onRegisterAdditionalModels(ModelEvent.RegisterAdditional event) {
-            AdditionalModelsRegistrationEventForge modelsEvent = new AdditionalModelsRegistrationEventForge();
+            final AdditionalModelsRegistrationEventForge modelsEvent = new AdditionalModelsRegistrationEventForge();
             KnightLibEvents.CLIENT.dispatch(modelsEvent);
 
             modelsEvent.applyToForgeEvent(event);
@@ -80,7 +80,7 @@ public class KnightLibForgeClientEvents {
 
         @SubscribeEvent(priority = EventPriority.HIGH)
         public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
-            KeyMappingRegistrationEventForge keyEvent = new KeyMappingRegistrationEventForge();
+            final KeyMappingRegistrationEventForge keyEvent = new KeyMappingRegistrationEventForge();
             KnightLibEvents.CLIENT.dispatch(keyEvent);
 
             keyEvent.applyToForgeEvent(event);
@@ -90,7 +90,7 @@ public class KnightLibForgeClientEvents {
         public static void onRegisterShaders(RegisterShadersEvent event) {
             KnightLibEvents.CLIENT.dispatch(new CustomPostShaderRegistrationEvent(PostShaderManager::register));
 
-            ShaderRegistrationEventForge shaderEvent = new ShaderRegistrationEventForge(event);
+            final ShaderRegistrationEventForge shaderEvent = new ShaderRegistrationEventForge(event);
             KnightLibEvents.CLIENT.dispatch(shaderEvent);
         }
 
