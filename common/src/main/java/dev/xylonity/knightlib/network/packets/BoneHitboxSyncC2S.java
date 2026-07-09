@@ -7,6 +7,7 @@ import dev.xylonity.knightlib.api.entity.hitbox.BoneHitboxManager;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
 import dev.xylonity.knightlib.network.ServerboundPacketType;
+import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -101,6 +102,10 @@ public record BoneHitboxSyncC2S(
     public static BoneHitboxSyncC2S decode(FriendlyByteBuf buf) {
         final int entityId = buf.readVarInt();
         final int count = buf.readVarInt();
+        if (count < 0 || count > 256) {
+            throw new DecoderException("[KnightLib] Too many bone transforms: " + count);
+        }
+
         final Map<String, BoneTransform> transforms = new HashMap<>(count);
         for (int i = 0; i < count; i++) {
             String boneName = buf.readUtf(64);

@@ -2,6 +2,7 @@ package dev.xylonity.knightlib.api.camera.path.impl;
 
 import dev.xylonity.knightlib.api.util.KnightLibEasings;
 import dev.xylonity.knightlib.network.packets.CameraPathS2C;
+import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import java.util.List;
 public final class CameraPath {
 
     public static final float DEFAULT_BLUR_RADIUS = 10f;
+    private static final int MAX_KEYFRAMES = 8192;
 
     private final List<CameraKeyframe> keyframes;
     private final List<EffectKeyframe> effects;
@@ -142,12 +144,20 @@ public final class CameraPath {
         final KnightLibEasings returnEasing = KnightLibEasings.byId(buf.readVarInt());
 
         final int count = buf.readVarInt();
+        if (count < 0 || count > MAX_KEYFRAMES) {
+            throw new DecoderException("[KnightLib] Too many camera keyframes: " + count);
+        }
+
         final List<CameraKeyframe> keyframes = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             keyframes.add(CameraKeyframe.decode(buf));
         }
 
         final int effectCount = buf.readVarInt();
+        if (effectCount < 0 || effectCount > MAX_KEYFRAMES) {
+            throw new DecoderException("[KnightLib] Too many effect keyframes: " + effectCount);
+        }
+
         final List<EffectKeyframe> effects = new ArrayList<>(effectCount);
         for (int i = 0; i < effectCount; i++) {
             effects.add(EffectKeyframe.decode(buf));

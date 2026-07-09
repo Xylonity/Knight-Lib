@@ -1,3 +1,6 @@
+# 1.6.1
+- Bossbar links are now cleared on world reload
+
 # 1.6.0
 - Added a [dev] campath manager (experimental) to easily create custom camera cutscenes
 - Added an attachment processor utility that can be hooked to any entity (syncs data automatically)

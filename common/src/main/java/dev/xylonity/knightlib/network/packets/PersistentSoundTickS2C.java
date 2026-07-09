@@ -6,6 +6,7 @@ import dev.xylonity.knightlib.client.sound.persistent.internal.PersistentSoundPa
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
+import io.netty.handler.codec.DecoderException;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -41,6 +42,10 @@ public record PersistentSoundTickS2C(
     public static PersistentSoundTickS2C decode(FriendlyByteBuf buf) {
         final int entityId = buf.readVarInt();
         final int count = buf.readVarInt();
+        if (count < 0 || count > 64) {
+            throw new DecoderException("[KnightLib] Too many sound names: " + count);
+        }
+
         final String[] names = new String[count];
         for (int i = 0; i < count; i++) {
             names[i] = buf.readUtf();

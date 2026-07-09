@@ -7,6 +7,7 @@ import dev.xylonity.knightlib.api.event.RegisterEvent;
 import dev.xylonity.knightlib.client.camera.editor.CameraPathEditor;
 import dev.xylonity.knightlib.client.camera.editor.EditorPathRenderer;
 import dev.xylonity.knightlib.client.entity.data.internal.AttachmentsClient;
+import dev.xylonity.knightlib.client.screen.bossbar.BossBarLinks;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.api.sound.music.IBossMusicProvider;
@@ -59,6 +60,7 @@ public class KnightLibClientEvents {
                 CameraPathEditor.discard();
                 KnightLibPersistentSounds.clearAll();
                 AttachmentsClient.clearAll();
+                BossBarLinks.INSTANCE.clear();
                 return;
             }
 
@@ -161,6 +163,7 @@ public class KnightLibClientEvents {
         CameraPathManager.clearAll();
         CameraPathEditor.discard();
         AttachmentsClient.clearAll();
+        BossBarLinks.INSTANCE.clear();
     }
 
     @RegisterEvent(priority = 100)
@@ -172,6 +175,7 @@ public class KnightLibClientEvents {
         CameraPathEditor.discard();
         KnightLibPersistentSounds.clearAll();
         AttachmentsClient.clearAll();
+        BossBarLinks.INSTANCE.clear();
         PostShaderManager.onWorldUnload();
 
         TickScheduler.markForClean(event.getLevel());
