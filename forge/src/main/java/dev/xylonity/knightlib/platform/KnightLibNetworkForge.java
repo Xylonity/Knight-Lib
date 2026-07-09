@@ -29,8 +29,7 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     private final SimpleChannel channel;
 
-    private final AtomicInteger nextS2C = new AtomicInteger(0);
-    private final AtomicInteger nextC2S = new AtomicInteger(0);
+    private final AtomicInteger nextId = new AtomicInteger(0);
 
     public KnightLibNetworkForge() {
         this(KnightLib.MOD_ID, Network.PROTOCOL);
@@ -53,7 +52,7 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     @Override
     public <T> void registerClientbound(PacketType<T> type, Consumer<T> clientHandler) {
-        int id = nextS2C.getAndIncrement();
+        int id = nextId.getAndIncrement();
 
         channel.registerMessage(
                 id,
@@ -72,7 +71,7 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     @Override
     public <T> void registerServerbound(PacketType<T> type, BiConsumer<T, ServerPlayer> serverHandler) {
-        int id = nextC2S.getAndIncrement();
+        int id = nextId.getAndIncrement();
 
         channel.registerMessage(
                 id,

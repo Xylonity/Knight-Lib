@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Network {
 
-    public static final String PROTOCOL = "1";
+    public static final String PROTOCOL = "2";
 
     private static final Map<String, NetworkEndpoint> ENDPOINTS = new ConcurrentHashMap<>();
 

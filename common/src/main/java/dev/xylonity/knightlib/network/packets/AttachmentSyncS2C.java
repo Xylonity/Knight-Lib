@@ -28,7 +28,7 @@ public record AttachmentSyncS2C(
                     ID,
                     AttachmentSyncS2C.class,
                     PacketCodec.of(AttachmentSyncS2C::encode, AttachmentSyncS2C::decode),
-                    AttachmentsClient::handle
+                    message -> AttachmentsClient.handle(message)
             );
 
     public static void encode(AttachmentSyncS2C packet, FriendlyByteBuf buf) {

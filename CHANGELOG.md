@@ -1,3 +1,7 @@
+# 1.6.1
+- Bossbar links are now cleared on world reload
+- Fixed a case where the forge's networking stack could kick the player on a dedicated server
+
 # 1.6.0
 - Added a [dev] campath manager (experimental) to easily create custom camera cutscenes
 - Added an attachment processor utility that can be hooked to any entity (syncs data automatically)
