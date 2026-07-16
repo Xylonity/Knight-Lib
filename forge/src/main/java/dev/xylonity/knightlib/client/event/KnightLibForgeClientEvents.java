@@ -63,6 +63,11 @@ public class KnightLibForgeClientEvents {
         }
 
         @SubscribeEvent
+        public static void registerArmorModels(EntityRenderersEvent.RegisterLayerDefinitions event) {
+            KnightLibEvents.CLIENT.dispatch(new ArmorModelRegistrationEventForge(event));
+        }
+
+        @SubscribeEvent
         public static void registerParticleFactories(final RegisterParticleProvidersEvent event) {
             final ParticleProviderRegistrationEventForge particleEvent = new ParticleProviderRegistrationEventForge();
             KnightLibEvents.CLIENT.dispatch(particleEvent);

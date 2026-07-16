@@ -1,6 +1,8 @@
 package dev.xylonity.knightlib.platform;
 
+import dev.xylonity.knightlib.api.armor.KnightLibArmorMaterial;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
+import dev.xylonity.knightlib.common.item.armor.KnightLibArmorItemForge;
 import dev.xylonity.knightlib.common.block.GreatChaliceBlock;
 import dev.xylonity.knightlib.common.item.blockitem.GreatChaliceBlockItem;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
@@ -9,6 +11,7 @@ import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
@@ -16,6 +19,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -58,6 +62,11 @@ public class KnightLibForgePlatform implements KnightLibPlatform {
                     () -> (T) new GreatChaliceBlockItem(KnightLibBlocks.GREAT_CHALICE.get(), properties, id);
         };
 
+    }
+
+    @Override
+    public ArmorItem createArmorItem(KnightLibArmorMaterial material, ArmorItem.Type type, Item.Properties properties, ResourceLocation modelId) {
+        return new KnightLibArmorItemForge(material.get(), type, properties, modelId);
     }
 
     @Override

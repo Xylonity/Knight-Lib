@@ -44,6 +44,7 @@ public final class KnightLibFabricClientEvents {
     }
 
     public static void dispatchRegistrationEvents() {
+        registerArmorModels();
         registerRenderers();
         registerBlockEntityRenderers();
         registerParticles();
@@ -52,6 +53,11 @@ public final class KnightLibFabricClientEvents {
         registerRenderLayers();
         registerKeyMappings();
         registerBossBars();
+    }
+
+    private static void registerArmorModels() {
+        ArmorModelRegistrationEventFabric event = new ArmorModelRegistrationEventFabric();
+        KnightLibEvents.CLIENT.dispatch(event);
     }
 
     private static void registerRenderers() {

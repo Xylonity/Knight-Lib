@@ -28,7 +28,8 @@ import java.util.function.Supplier;
  *         .build();
  * }</pre>
  *
- * <p>Then to receive the actual material, use {@code MAGE.get()}</p>
+ * <p>Pass this abstraction directly to {@link KnightLibArmorItems#create}, as the
+ * loader adapter converts it to the specific armor material.</p>
  */
 public final class KnightLibArmorMaterial implements ArmorMaterial {
 
