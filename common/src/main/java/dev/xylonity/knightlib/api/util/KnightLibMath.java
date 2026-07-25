@@ -340,7 +340,7 @@ public final class KnightLibMath {
     }
 
     /**
-     * Returns 0 if value < edge, else 1
+     * Returns 0 if {@code value < edge}, else 1.
      */
     public static float step(float edge, float value) {
         return value < edge ? 0F : 1F;
