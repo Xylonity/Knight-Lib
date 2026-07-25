@@ -10,7 +10,7 @@ import java.util.function.Consumer;
  * Structural definition of a packet. This type does not carry handlers (runnable), so use the specific wrappers (ClientboundPacketType
  * or ServerboundPacketType) when you want types to be self-contained with their default handlers.
  *
- * Two PacketType instances are considered distinct even if they share the same id.
+ * Packet ids and message classes must each be unique within one {@code NetworkEndpoint}, and they should be registered under common code.
  */
 public record PacketType<T>(ResourceLocation id, Class<T> clazz, PacketCodec<T> codec) {
 

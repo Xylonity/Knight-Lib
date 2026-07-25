@@ -9,7 +9,6 @@ import dev.xylonity.knightlib.common.spawn.internal.KnightLibSpawnsFabric;
 import dev.xylonity.knightlib.config.KnightLibConfig;
 import dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator;
 import dev.xylonity.knightlib.registry.KnightLibPackets;
-import dev.xylonity.knightlib.registry.KnightLibRecipeSerializers;
 import net.fabricmc.api.ModInitializer;
 
 public class KnightLibFabric implements ModInitializer {
@@ -22,7 +21,7 @@ public class KnightLibFabric implements ModInitializer {
 
         ConfigComposer.registerConfig(KnightLib.MOD_ID, KnightLibConfig.class);
 
-        KnightLibPackets.registerC2S();
+        KnightLibPackets.register();
 
         // Internal event registrar
         KnightLibEvents.SERVER.register(KnightLibServerEvents.class);

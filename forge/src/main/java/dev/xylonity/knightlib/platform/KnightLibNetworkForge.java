@@ -7,6 +7,8 @@ import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketType;
 import dev.xylonity.knightlib.network.ServerboundPacketType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -20,22 +22,40 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static dev.xylonity.knightlib.platform.PacketTypeRegistry.Direction.CLIENTBOUND;
+import static dev.xylonity.knightlib.platform.PacketTypeRegistry.Direction.SERVERBOUND;
+
 public class KnightLibNetworkForge implements KnightLibNetwork {
+
+    private static final int CLIENTBOUND_ID = 0;
+    private static final int SERVERBOUND_ID = 1;
 
     private final SimpleChannel channel;
 
-    private final AtomicInteger nextId = new AtomicInteger(0);
+    private final PacketTypeRegistry packetTypes = new PacketTypeRegistry();
+
+    private final Map<ResourceLocation, Consumer<Object>> clientHandlers = new ConcurrentHashMap<>();
+    private final Map<ResourceLocation, BiConsumer<Object, ServerPlayer>> serverHandlers = new ConcurrentHashMap<>();
 
     public KnightLibNetworkForge() {
         this(KnightLib.MOD_ID, Network.PROTOCOL);
     }
 
     public KnightLibNetworkForge(String channelNamespace, String protocol) {
+        if (channelNamespace == null || channelNamespace.isBlank()) {
+            throw new IllegalArgumentException("[KnightLib] channelNamespace cannot be blank");
+        }
+        if (protocol == null || protocol.isBlank()) {
+            throw new IllegalArgumentException("[KnightLib] protocol cannot be blank");
+        }
+
         this.channel = NetworkRegistry.newSimpleChannel(
                 ResourceLocations.of(channelNamespace, "main"),
                 () -> protocol,
@@ -43,6 +63,7 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
                 protocol::equals
         );
 
+        registerWrappers();
     }
 
     @Override
@@ -52,44 +73,17 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     @Override
     public <T> void registerClientbound(PacketType<T> type, Consumer<T> clientHandler) {
-        int id = nextId.getAndIncrement();
-
-        channel.registerMessage(
-                id,
-                type.clazz(),
-                type.codec()::encode,
-                type.codec()::decode,
-                (message, sup) -> {
-                    NetworkEvent.Context ctx = sup.get();
-                    ctx.enqueueWork(() -> clientHandler.accept(message));
-                    ctx.setPacketHandled(true);
-                },
-                Optional.of(NetworkDirection.PLAY_TO_CLIENT)
-        );
-
+        Objects.requireNonNull(clientHandler, "clientHandler");
+        packetTypes.register(CLIENTBOUND, type);
+        clientHandlers.put(type.id(), message -> clientHandler.accept(type.clazz().cast(message)));
     }
 
     @Override
     public <T> void registerServerbound(PacketType<T> type, BiConsumer<T, ServerPlayer> serverHandler) {
-        int id = nextId.getAndIncrement();
-
-        channel.registerMessage(
-                id,
-                type.clazz(),
-                type.codec()::encode,
-                type.codec()::decode,
-                (message, sup) -> {
-                    NetworkEvent.Context context = sup.get();
-                    ServerPlayer sender = context.getSender();
-                    if (sender != null) {
-                        context.enqueueWork(() -> serverHandler.accept(message, sender));
-                    }
-
-                    context.setPacketHandled(true);
-                },
-                Optional.of(NetworkDirection.PLAY_TO_SERVER)
-        );
-
+        Objects.requireNonNull(serverHandler, "serverHandler");
+        packetTypes.register(SERVERBOUND, type);
+        serverHandlers.put(type.id(),
+                (message, player) -> serverHandler.accept(type.clazz().cast(message), player));
     }
 
     @Override
@@ -104,14 +98,17 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
 
     @Override
     public <T> void sendToServer(T message) {
-        Boolean canSend = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> {
+        final Boolean canSend = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> {
             var minecraft = net.minecraft.client.Minecraft.getInstance();
             return minecraft != null && minecraft.getConnection() != null;
         });
 
         if (Boolean.TRUE.equals(canSend)) {
-            channel.sendToServer(message);
+            Objects.requireNonNull(message, "message");
+            final ResourceLocation packetId = packetTypes.idForClass(SERVERBOUND, message.getClass());
+            channel.sendToServer(new ServerboundWrapper(packetId, message));
         }
+
     }
 
     @Override
@@ -120,7 +117,8 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
             return;
         }
 
-        channel.send(PacketDistributor.PLAYER.with(() -> player), message);
+        final ClientboundWrapper wrapper = clientboundWrapper(type, message);
+        channel.send(PacketDistributor.PLAYER.with(() -> player), wrapper);
     }
 
     @Override
@@ -129,7 +127,7 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
             return;
         }
 
-        channel.send(PacketDistributor.ALL.noArg(), message);
+        channel.send(PacketDistributor.ALL.noArg(), clientboundWrapper(type, message));
     }
 
     @Override
@@ -138,9 +136,11 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
             return;
         }
 
-        for (ServerPlayer player : level.players().stream().map(ServerPlayer.class::cast).toList()) {
-            channel.send(PacketDistributor.PLAYER.with(() -> player), message);
+        final ClientboundWrapper wrapper = clientboundWrapper(type, message);
+        for (final ServerPlayer player : level.players().stream().map(ServerPlayer.class::cast).toList()) {
+            channel.send(PacketDistributor.PLAYER.with(() -> player), wrapper);
         }
+
     }
 
     @Override
@@ -149,10 +149,11 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
             return;
         }
 
-        LevelChunk chunk = level.getChunkAt(blockPos);
+        final LevelChunk chunk = level.getChunkAt(blockPos);
         if (chunk != null) {
-            channel.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), message);
+            channel.send(PacketDistributor.TRACKING_CHUNK.with(() -> chunk), clientboundWrapper(type, message));
         }
+
     }
 
     @Override
@@ -161,7 +162,87 @@ public class KnightLibNetworkForge implements KnightLibNetwork {
             return;
         }
 
-        channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
+        channel.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity),
+                clientboundWrapper(type, message));
+    }
+
+    private void registerWrappers() {
+        channel.registerMessage(
+                CLIENTBOUND_ID,
+                ClientboundWrapper.class,
+                this::encodeClientbound,
+                this::decodeClientbound,
+                (wrapper, supplier) -> {
+                    final NetworkEvent.Context context = supplier.get();
+                    final Consumer<Object> handler = clientHandlers.get(wrapper.packetId());
+                    if (handler == null) {
+                        throw new IllegalStateException("[KnightLib] No client handler registered for " + wrapper.packetId());
+                    }
+
+                    context.enqueueWork(() -> handler.accept(wrapper.message()));
+                    context.setPacketHandled(true);
+                },
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT)
+        );
+
+        channel.registerMessage(
+                SERVERBOUND_ID,
+                ServerboundWrapper.class,
+                this::encodeServerbound,
+                this::decodeServerbound,
+                (wrapper, supplier) -> {
+                    final NetworkEvent.Context context = supplier.get();
+                    final ServerPlayer sender = context.getSender();
+                    final BiConsumer<Object, ServerPlayer> handler = serverHandlers.get(wrapper.packetId());
+                    if (handler == null) {
+                        throw new IllegalStateException("[KnightLib] No server handler registered for " + wrapper.packetId());
+                    }
+                    if (sender != null) {
+                        context.enqueueWork(() -> handler.accept(wrapper.message(), sender));
+                    }
+
+                    context.setPacketHandled(true);
+                },
+                Optional.of(NetworkDirection.PLAY_TO_SERVER)
+        );
+
+    }
+
+    private void encodeClientbound(ClientboundWrapper wrapper, FriendlyByteBuf buffer) {
+        packetTypes.encode(CLIENTBOUND, wrapper.packetId(), wrapper.message(), buffer);
+    }
+
+    private ClientboundWrapper decodeClientbound(FriendlyByteBuf buffer) {
+        final PacketTypeRegistry.Decoded decoded = packetTypes.decode(CLIENTBOUND, buffer);
+        return new ClientboundWrapper(decoded.id(), decoded.message());
+    }
+
+    private void encodeServerbound(ServerboundWrapper wrapper, FriendlyByteBuf buffer) {
+        packetTypes.encode(SERVERBOUND, wrapper.packetId(), wrapper.message(), buffer);
+    }
+
+    private ServerboundWrapper decodeServerbound(FriendlyByteBuf buffer) {
+        final PacketTypeRegistry.Decoded decoded = packetTypes.decode(SERVERBOUND, buffer);
+        return new ServerboundWrapper(decoded.id(), decoded.message());
+    }
+
+    private <T> ClientboundWrapper clientboundWrapper(PacketType<T> type, T message) {
+        packetTypes.validate(CLIENTBOUND, type, message);
+        return new ClientboundWrapper(type.id(), message);
+    }
+
+    private record ClientboundWrapper(
+            ResourceLocation packetId,
+            Object message
+    ) {
+        ;;
+    }
+
+    private record ServerboundWrapper(
+            ResourceLocation packetId,
+            Object message
+    ) {
+        ;;
     }
 
 }

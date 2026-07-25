@@ -5,6 +5,8 @@ import dev.xylonity.knightlib.api.bossbar.BossBarContext;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
+import dev.xylonity.knightlib.client.animation.KnightLibAnimationAssets;
+import dev.xylonity.knightlib.client.ClientProxy;
 import dev.xylonity.knightlib.client.event.impl.*;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
@@ -38,12 +40,31 @@ import java.util.Optional;
 
 public class KnightLibForgeClientEvents {
 
+    private static boolean clientInitialized;
+
+    private static synchronized void initializeClient() {
+        if (clientInitialized) {
+            return;
+        }
+        clientInitialized = true;
+
+        KnightLib.PROXY = new ClientProxy();
+        KnightLib.PROXY.registerClientEvents();
+        KnightLib.PROXY.updatePersistentSoundsEngine();
+    }
+
     @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class KnightLibClientModBus {
+
+        static {
+            initializeClient();
+        }
 
         @SubscribeEvent
         public static void clientSetup(FMLClientSetupEvent event) {
             event.enqueueWork(() -> {
+                KnightLibEvents.CLIENT.dispatch(new ClientPacketHandlerRegistrationEvent());
+
                 final EntityRendererRegistrationEventForge rendererEvent = new EntityRendererRegistrationEventForge();
                 KnightLibEvents.CLIENT.dispatch(rendererEvent);
 
@@ -110,7 +131,8 @@ public class KnightLibForgeClientEvents {
 
                 @Override
                 protected void apply(@NotNull Void prepared, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profiler) {
-                    Minecraft minecraft = Minecraft.getInstance();
+                    final Minecraft minecraft = Minecraft.getInstance();
+                    KnightLibAnimationAssets.reload(resourceManager);
                     KnightLibEvents.CLIENT.dispatch(new ClientResourcesReloadedEvent(minecraft, resourceManager));
                 }
 
