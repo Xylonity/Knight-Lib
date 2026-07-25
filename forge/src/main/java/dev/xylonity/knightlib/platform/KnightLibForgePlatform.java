@@ -2,12 +2,10 @@ package dev.xylonity.knightlib.platform;
 
 import dev.xylonity.knightlib.api.armor.KnightLibArmorMaterial;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
-import dev.xylonity.knightlib.common.item.armor.KnightLibArmorItemForge;
 import dev.xylonity.knightlib.common.block.GreatChaliceBlock;
-import dev.xylonity.knightlib.common.item.blockitem.GreatChaliceBlockItem;
+import dev.xylonity.knightlib.common.item.armor.KnightLibArmorItem;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
-import dev.xylonity.knightlib.registry.KnightLibItems;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.network.FriendlyByteBuf;
@@ -48,25 +46,8 @@ public class KnightLibForgePlatform implements KnightLibPlatform {
     }
 
     @Override
-    public <T extends Block> Supplier<T> createBlock(String id, BlockBehaviour.Properties properties, KnightLibBlocks.BlockType blockType) {
-        return switch (blockType) {
-            default -> // CHALICE
-                    () -> (T) new GreatChaliceBlock(properties);
-        };
-    }
-
-    @Override
-    public <T extends Item> Supplier<T> createItem(String id, Item.Properties properties, KnightLibItems.ItemType itemType) {
-        return switch (itemType) {
-            default -> // CHALICE
-                    () -> (T) new GreatChaliceBlockItem(KnightLibBlocks.GREAT_CHALICE.get(), properties, id);
-        };
-
-    }
-
-    @Override
     public ArmorItem createArmorItem(KnightLibArmorMaterial material, ArmorItem.Type type, Item.Properties properties, ResourceLocation modelId) {
-        return new KnightLibArmorItemForge(material.get(), type, properties, modelId);
+        return new KnightLibArmorItem(material.get(), type, properties, modelId);
     }
 
     @Override

@@ -2,6 +2,7 @@ package dev.xylonity.knightlib.platform;
 
 import dev.xylonity.knightlib.api.armor.KnightLibArmorMaterial;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
+import dev.xylonity.knightlib.common.item.blockitem.GreatChaliceBlockItem;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibBlocks;
 import dev.xylonity.knightlib.registry.KnightLibItems;
@@ -29,8 +30,6 @@ import java.util.function.Supplier;
 
 public interface KnightLibPlatform {
     <T extends ParticleType<?>> Supplier<T> createParticle(boolean overrideLimiter);
-    <T extends Block> Supplier<T> createBlock(String id, BlockBehaviour.Properties properties, KnightLibBlocks.BlockType blockType);
-    <T extends Item> Supplier<T> createItem(String id, Item.Properties properties, KnightLibItems.ItemType itemType);
 
     ArmorItem createArmorItem(KnightLibArmorMaterial material, ArmorItem.Type type, Item.Properties properties, ResourceLocation modelId);
 
