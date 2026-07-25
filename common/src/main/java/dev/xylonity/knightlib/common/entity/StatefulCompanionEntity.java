@@ -14,16 +14,12 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.level.Level;
+import dev.xylonity.knightlib.api.animation.KnightLibAnimatable;
+import dev.xylonity.knightlib.api.animation.KnightLibAnimationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
-public abstract class StatefulCompanionEntity<E extends StatefulCompanionEntity<E, S>, S extends Enum<S> & StateEnum> extends TamableAnimal implements GeoEntity {
-
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+public abstract class StatefulCompanionEntity<E extends StatefulCompanionEntity<E, S>, S extends Enum<S> & StateEnum> extends TamableAnimal {
 
     private static final EntityDataAccessor<Integer> CURRENT_STATE = SynchedEntityData.defineId(StatefulCompanionEntity.class, EntityDataSerializers.INT);
 
@@ -147,15 +143,5 @@ public abstract class StatefulCompanionEntity<E extends StatefulCompanionEntity<
 
     @NotNull
     protected abstract S getDefaultState();
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
-        ;;
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
-    }
 
 }
