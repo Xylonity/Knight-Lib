@@ -2,7 +2,7 @@ package dev.xylonity.knightlib.network.packets;
 
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.camera.path.impl.CameraPath;
-import dev.xylonity.knightlib.api.camera.path.impl.CameraPathManager;
+import dev.xylonity.knightlib.network.ClientPacketDispatcher;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
@@ -24,15 +24,7 @@ public record CameraPathS2C(
                     ID,
                     CameraPathS2C.class,
                     PacketCodec.of(CameraPathS2C::encode, CameraPathS2C::decode),
-                    message -> {
-                        if (message.path() == null) {
-                            CameraPathManager.stop();
-                        }
-                        else {
-                            CameraPathManager.play(message.path());
-                        }
-
-                    }
+                    ClientPacketDispatcher::dispatch
 
             );
 

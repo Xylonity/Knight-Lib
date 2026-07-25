@@ -1,9 +1,8 @@
 package dev.xylonity.knightlib.client.event.impl;
 
-import dev.xylonity.knightlib.api.armor.KnightLibArmorItems;
 import dev.xylonity.knightlib.api.client.armor.KnightLibArmorModel;
 import dev.xylonity.knightlib.api.event.impl.client.ArmorModelRegistrationEvent;
-import dev.xylonity.knightlib.client.armor.KnightLibForgeArmorModels;
+import dev.xylonity.knightlib.client.armor.KnightLibArmorModels;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
@@ -23,11 +22,7 @@ public final class ArmorModelRegistrationEventForge extends ArmorModelRegistrati
 
     @Override
     public void register(ResourceLocation modelId, ModelLayerLocation layer, Supplier<LayerDefinition> layerDefinition, Function<ModelPart, KnightLibArmorModel> modelFactory, ResourceLocation texture) {
-        if (KnightLibArmorItems.getRegisteredItems(modelId).isEmpty()) {
-            throw new IllegalStateException("[KnightLib] No armor items use model " + modelId);
-        }
-
-        KnightLibForgeArmorModels.register(modelId, layer, modelFactory, texture);
+        KnightLibArmorModels.register(modelId, layer, modelFactory, texture);
         this.event.registerLayerDefinition(layer, layerDefinition);
     }
 

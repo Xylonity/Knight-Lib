@@ -2,7 +2,7 @@ package dev.xylonity.knightlib.network.packets;
 
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.sound.persistent.KnightLibPersistentSounds;
-import dev.xylonity.knightlib.client.sound.persistent.internal.PersistentSoundPacketClientHandler;
+import dev.xylonity.knightlib.network.ClientPacketDispatcher;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
@@ -27,7 +27,7 @@ public record PersistentSoundTickS2C(
                     ID,
                     PersistentSoundTickS2C.class,
                     PacketCodec.of(PersistentSoundTickS2C::encode, PersistentSoundTickS2C::decode),
-                    packet -> PersistentSoundPacketClientHandler.handle(packet)
+                    ClientPacketDispatcher::dispatch
             );
 
     public static void encode(PersistentSoundTickS2C packet, FriendlyByteBuf buf) {

@@ -8,6 +8,8 @@
     "EntityPersistentDataMixin"
   ],
   "client": [
+    "KnightLibArmorTextureClientMixin",
+    "KnightLibItemRendererClientMixin"
   ],
   "server": [
   ],
