@@ -6,6 +6,7 @@ import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.client.animation.KnightLibAnimationAssets;
+import dev.xylonity.knightlib.client.armor.KnightLibForgeArmorRenderers;
 import dev.xylonity.knightlib.client.ClientProxy;
 import dev.xylonity.knightlib.client.event.impl.*;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
@@ -79,6 +80,8 @@ public class KnightLibForgeClientEvents {
 
                 final RenderLayerRegistrationEventForge renderLayerEvent = new RenderLayerRegistrationEventForge();
                 KnightLibEvents.CLIENT.dispatch(renderLayerEvent);
+
+                KnightLibForgeArmorRenderers.bootstrap();
             });
 
         }
