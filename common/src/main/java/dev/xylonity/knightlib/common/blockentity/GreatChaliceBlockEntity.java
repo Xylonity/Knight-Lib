@@ -1,7 +1,6 @@
 package dev.xylonity.knightlib.common.blockentity;
 
-import dev.xylonity.knightlib.api.animation.KnightLibAnimatable;
-import dev.xylonity.knightlib.api.animation.KnightLibAnimationHandler;
+import dev.xylonity.knightlib.api.animation.*;
 import dev.xylonity.knightlib.api.interop.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.api.interop.GreatChaliceState;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
@@ -24,6 +23,8 @@ import java.util.Random;
 public class GreatChaliceBlockEntity extends BlockEntity implements KnightLibAnimatable {
 
     private final KnightLibAnimationHandler animations = KnightLibAnimationHandler.of(this);
+
+    private static final KnightLibAnim IDLE = KnightLibAnim.begin().thenLoop("idle");
 
     private int charges;
     private int prevCharges;
@@ -187,6 +188,15 @@ public class GreatChaliceBlockEntity extends BlockEntity implements KnightLibAni
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void registerAnimationControllers(KnightLibAnimationControllerRegistrar controllers) {
+        controllers.add("main", this::mainController);
+    }
+
+    public KnightLibAnim mainController(final KnightLibAnimationState state) {
+        return IDLE;
     }
 
     @Override

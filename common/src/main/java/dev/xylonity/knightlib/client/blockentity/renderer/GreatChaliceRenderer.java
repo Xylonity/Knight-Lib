@@ -1,40 +1,51 @@
 package dev.xylonity.knightlib.client.blockentity.renderer;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import dev.xylonity.knightlib.client.blockentity.model.GreatChaliceModel;
+import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.client.animation.KnightLibAnimationSource;
+import dev.xylonity.knightlib.client.animation.KnightLibModelSource;
+import dev.xylonity.knightlib.client.animation.model.KnightLibModel;
+import dev.xylonity.knightlib.client.animation.renderer.KnightLibBlockEntityRenderer;
 import dev.xylonity.knightlib.common.blockentity.GreatChaliceBlockEntity;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import software.bernie.geckolib.cache.object.GeoBone;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
+import net.minecraft.resources.ResourceLocation;
 
-public class GreatChaliceRenderer extends GeoBlockRenderer<GreatChaliceBlockEntity> {
+public class GreatChaliceRenderer extends KnightLibBlockEntityRenderer<GreatChaliceBlockEntity> {
 
-    public GreatChaliceRenderer(BlockEntityRendererProvider.Context rendererDispatcher) {
-        super(new GreatChaliceModel());
+    private static final ResourceLocation NORMAL_TEXTURE = KnightLib.of("textures/block/great_chalice.png");
+    private static final ResourceLocation CHAOTIC_TEXTURE = KnightLib.of("textures/block/great_chalice_chaotic.png");
+
+    public GreatChaliceRenderer(BlockEntityRendererProvider.Context context) {
+        ;;
     }
 
     @Override
-    public void renderRecursively(PoseStack poseStack, GreatChaliceBlockEntity animatable, GeoBone bone, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-        if (bone.getName().equals("liquid")) {
-            if (animatable.getCharges() == 0) return;
+    protected KnightLibModelSource defineModel(GreatChaliceBlockEntity chalice) {
+        return KnightLibModelSource.geo(KnightLib.of("geo/great_chalice.geo.json"));
+    }
 
-            poseStack.pushPose();
+    @Override
+    protected KnightLibAnimationSource defineAnimations(GreatChaliceBlockEntity chalice) {
+        return KnightLibAnimationSource.geo(KnightLib.of("animations/great_chalice.animation.json"));
+    }
 
-            if (animatable.getCharges() > 0) {
-                float yOffset = ((animatable.getCharges() / 12f) * 8f) / 16f;
-                poseStack.translate(bone.getPosX(),  yOffset, bone.getPosZ());
-            }
+    @Override
+    public ResourceLocation getTextureLocation(GreatChaliceBlockEntity chalice) {
+        return switch (chalice.getState()) {
+            case CHAOTIC -> CHAOTIC_TEXTURE;
+            default -> NORMAL_TEXTURE; // EMPTY/NORMAL
+        };
 
-            super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
+    }
 
-            poseStack.popPose();
-            return;
+    @Override
+    protected void setupPose(GreatChaliceBlockEntity chalice, KnightLibModel model, float partialTicks) {
+        model.setBoneVisible("liquid", chalice.getCharges() > 0);
+
+        if (chalice.getCharges() > 0) {
+            // The liquid surface rises up to 8/16 of a block at max charges
+            model.applyPosition("liquid", 0f, (chalice.getCharges() / 12f) * 8f, 0f);
         }
 
-        super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
 
 }

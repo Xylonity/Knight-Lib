@@ -1,0 +1,18 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"idle": {
+			"loop": true,
+			"bones": {
+				"liquid": {
+					"rotation": {
+						"vector": ["-math.cos(query.anim_time*180)", "math.sin(query.anim_time*180)", "-math.sin(query.anim_time*180)"]
+					},
+					"scale": {
+						"vector": [1.04, 1.04, 1.04]
+					}
+				}
+			}
+		}
+	}
+}
