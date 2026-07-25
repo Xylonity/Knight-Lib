@@ -2,10 +2,7 @@ package dev.xylonity.knightlib.platform;
 
 import dev.xylonity.knightlib.api.armor.KnightLibArmorMaterial;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
-import dev.xylonity.knightlib.common.block.GreatChaliceBlock;
-import dev.xylonity.knightlib.common.item.armor.KnightLibArmorItem;
-import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
-import dev.xylonity.knightlib.registry.KnightLibBlocks;
+import dev.xylonity.knightlib.common.item.armor.GenericArmorItem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
@@ -31,13 +28,11 @@ import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -51,7 +46,7 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
 
     @Override
     public ArmorItem createArmorItem(KnightLibArmorMaterial material, ArmorItem.Type type, Item.Properties properties, ResourceLocation modelId) {
-        return new KnightLibArmorItem(material.get(), type, properties, modelId);
+        return new GenericArmorItem(material.get(), type, properties, modelId);
     }
 
     @Override
