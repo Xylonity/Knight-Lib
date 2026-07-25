@@ -32,8 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;
 import org.joml.Vector3f;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
-import software.bernie.geckolib.renderer.GeoEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 
 public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFillingRecipe> {
 
@@ -163,14 +162,10 @@ public class ChaliceFillingRecipeCategory implements IRecipeCategory<ChaliceFill
         GreatChaliceBlockEntity blockEntity = getOrCreateBlockEntity();
         GreatChaliceStartsetRing entity = getOrCreateEntity();
 
-        GeoBlockRenderer<GreatChaliceBlockEntity> blockRenderer = (GeoBlockRenderer<GreatChaliceBlockEntity>) Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(blockEntity);
-        GeoEntityRenderer<GreatChaliceStartsetRing> entityRenderer = null;
+        BlockEntityRenderer<GreatChaliceBlockEntity> blockRenderer = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(blockEntity);
+        EntityRenderer<? super GreatChaliceStartsetRing> entityRenderer = null;
         if (entity != null) {
-            EntityRenderer<?> rawRenderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
-            if (rawRenderer instanceof GeoEntityRenderer<?>) {
-                entityRenderer = (GeoEntityRenderer<GreatChaliceStartsetRing>) rawRenderer;
-            }
-
+            entityRenderer = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(entity);
         }
 
         if (blockRenderer == null) {
