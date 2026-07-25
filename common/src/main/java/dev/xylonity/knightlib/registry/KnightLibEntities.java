@@ -15,10 +15,6 @@ public class KnightLibEntities {
 
     public static final ResourceRegistry<EntityType<?>> ENTITIES = ResourceDispatcher.create(BuiltInRegistries.ENTITY_TYPE, KnightLib.MOD_ID);
 
-    public static final ResourceEntry<EntityType<GreatChaliceStartsetRing>> GREAT_CHALICE_STARSET_RING;
-
-    static {
-        GREAT_CHALICE_STARSET_RING = ENTITIES.registerEntity("great_chalice_starset_ring", GreatChaliceStartsetRing::new, MobCategory.MISC, 0.1f, 0.1f, List.of(EntityType.Builder::noSummon, b -> b.clientTrackingRange(128), b -> b.updateInterval(1)));
-    }
+    public static final ResourceEntry<EntityType<GreatChaliceStartsetRing>> GREAT_CHALICE_STARSET_RING = ENTITIES.registerEntity("great_chalice_starset_ring", GreatChaliceStartsetRing::new, MobCategory.MISC, 0.1f, 0.1f, List.of(EntityType.Builder::noSummon, b -> b.clientTrackingRange(128), b -> b.updateInterval(1)));
 
 }

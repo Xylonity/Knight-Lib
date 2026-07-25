@@ -32,8 +32,8 @@ public class KnightLib {
 
     protected static void init() {
         KnightLibEntities.ENTITIES.init();
-        KnightLibBlocks.BLOCKS.init();
         KnightLibItems.ITEMS.init();
+        KnightLibBlocks.BLOCKS.init();
         KnightLibParticles.PARTICLES.init();
         KnightLibBlockEntities.BLOCK_ENTITIES.init();
         KnightLibRecipeTypes.RECIPE_TYPES.init();
