@@ -1,5 +1,7 @@
 package dev.xylonity.knightlib.common.entity;
 
+import dev.xylonity.knightlib.api.animation.KnightLibAnimatable;
+import dev.xylonity.knightlib.api.animation.KnightLibAnimationHandler;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -8,18 +10,14 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
-public abstract class AbstractProjectile extends Projectile implements GeoEntity {
-
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+public abstract class AbstractProjectile extends Projectile implements KnightLibAnimatable {
 
     private static final EntityDataAccessor<Integer> LIFETIME = SynchedEntityData.defineId(AbstractProjectile.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> MAX_LIFETIME = SynchedEntityData.defineId(AbstractProjectile.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(AbstractProjectile.class, EntityDataSerializers.FLOAT);
+
+    private final KnightLibAnimationHandler animations = KnightLibAnimationHandler.of(this);
 
     public AbstractProjectile(EntityType<? extends Projectile> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -95,7 +93,7 @@ public abstract class AbstractProjectile extends Projectile implements GeoEntity
             this.setLifetime(pCompound.getInt("Lifetime"));
         }
         if (pCompound.contains("MaxLifetime")) {
-            this.setLifetime(pCompound.getInt("MaxLifetime"));
+            this.setMaxLifetime(pCompound.getInt("MaxLifetime"));
         }
         if (pCompound.contains("EntitySize")) {
             this.setSize(pCompound.getFloat("EntitySize"));
@@ -111,16 +109,11 @@ public abstract class AbstractProjectile extends Projectile implements GeoEntity
         pCompound.putFloat("EntitySize", this.getSize());
     }
 
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return this.cache;
-    }
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
-        ;;
-    }
-
     protected abstract int baseLifetime();
+
+    @Override
+    public KnightLibAnimationHandler getAnimationHandler() {
+        return this.animations;
+    }
 
 }

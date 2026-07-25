@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.common.event;
 
+import dev.xylonity.knightlib.api.animation.KnightLibAnimatable;
 import dev.xylonity.knightlib.api.event.RegisterEvent;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.api.event.impl.server.PlayerChangedDimensionEvent;
@@ -37,6 +38,11 @@ public class KnightLibServerEvents {
     @RegisterEvent
     public static void onStartTracking(final PlayerStartTrackingEvent event) {
         AttachmentsInternal.syncAllTo(event.getTarget(), event.getPlayer());
+
+        if (event.getTarget() instanceof KnightLibAnimatable animatable) {
+            animatable.getAnimationHandler().syncAllTo(event.getPlayer());
+        }
+
     }
 
     @RegisterEvent

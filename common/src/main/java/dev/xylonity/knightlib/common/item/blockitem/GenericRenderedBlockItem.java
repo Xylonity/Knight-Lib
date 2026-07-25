@@ -2,7 +2,7 @@ package dev.xylonity.knightlib.common.item.blockitem;
 
 import dev.xylonity.knightlib.api.animation.KnightLibItemAnimations;
 import dev.xylonity.knightlib.api.item.KnightLibRenderedItem;
-import dev.xylonity.knightlib.client.item.GenericBlockItemRenderer;
+import dev.xylonity.knightlib.client.item.GenericRenderedBlockItemRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
@@ -44,7 +44,7 @@ public class GenericRenderedBlockItem extends BlockItem implements KnightLibRend
      */
     @Override
     public Supplier<Object> rendererFactory() {
-        return () -> new GenericBlockItemRenderer(rendererId);
+        return () -> new GenericRenderedBlockItemRenderer(rendererId);
     }
 
 }
