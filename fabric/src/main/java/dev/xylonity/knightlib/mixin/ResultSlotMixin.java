@@ -26,6 +26,10 @@ public class ResultSlotMixin {
 
     @Inject(method = "checkTakeAchievements", at = @At("HEAD"))
     private void knightlib$onCraft(ItemStack stack, CallbackInfo ci) {
+        if (player.level().isClientSide) {
+            return;
+        }
+
         KnightLibEvents.SERVER.dispatch(new PlayerItemCraftedEvent(player, stack, craftSlots));
     }
 

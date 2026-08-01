@@ -49,7 +49,6 @@ public final class KnightLibFabricServerEvents {
         onEntityLevelEvents();
         onPlayerConnectionEvents();
         onLootTableModificationEvent();
-        onLivingDeathEvents();
         onPlayerTrackingEvents();
         onPlayerRespawnEvents();
     }
@@ -69,16 +68,6 @@ public final class KnightLibFabricServerEvents {
         ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) ->
                 KnightLibEvents.SERVER.dispatch(new ServerPlayerRespawnEvent(newPlayer, alive))
         );
-
-    }
-
-    private static void onLivingDeathEvents() {
-        ServerLivingEntityEvents.ALLOW_DEATH.register((entity, source, amount) -> {
-            final LivingDeathEvent event = new LivingDeathEvent(entity, source);
-            KnightLibEvents.SERVER.dispatch(event);
-
-            return !event.isCancelled();
-        });
 
     }
 
