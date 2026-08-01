@@ -15,6 +15,10 @@ public class LivingEntityUseItemMixin {
     @Redirect(method = "completeUsingItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;finishUsingItem(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/item/ItemStack;"))
     private ItemStack knightlib$onFinishUsingItem(ItemStack instance, Level level, LivingEntity entity) {
         final ItemStack result = instance.finishUsingItem(level, entity);
+        if (level.isClientSide) {
+            return result;
+        }
+
         final LivingUseItemFinishEvent event = new LivingUseItemFinishEvent(entity, instance, result);
         KnightLibEvents.SERVER.dispatch(event);
         return event.getResult();

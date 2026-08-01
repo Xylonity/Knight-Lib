@@ -20,6 +20,10 @@ public class BlockItemPlaceMixin {
     @Inject(method = "place", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/BlockItem;placeBlock(Lnet/minecraft/world/item/context/BlockPlaceContext;Lnet/minecraft/world/level/block/state/BlockState;)Z", shift = At.Shift.AFTER))
     private void knightlib$onPlace(BlockPlaceContext context, CallbackInfoReturnable<InteractionResult> cir) {
         final Level level = context.getLevel();
+        if (level.isClientSide) {
+            return;
+        }
+
         final BlockPos clickedPos = context.getClickedPos();
         final BlockState placed = level.getBlockState(clickedPos);
         final Player player = context.getPlayer();

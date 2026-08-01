@@ -87,6 +87,10 @@ public class KnightLibForgeServerEvents {
 
         @SubscribeEvent
         public static void onLivingDeath(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+            if (event.getEntity().level().isClientSide()) {
+                return;
+            }
+
             final LivingDeathEvent deathEvent = new LivingDeathEvent(event.getEntity(), event.getSource());
             KnightLibEvents.SERVER.dispatch(deathEvent);
 
@@ -204,6 +208,10 @@ public class KnightLibForgeServerEvents {
 
         @SubscribeEvent
         public static void onLivingUseItemFinish(LivingEntityUseItemEvent.Finish event) {
+            if (event.getEntity().level().isClientSide()) {
+                return;
+            }
+
             final LivingUseItemFinishEvent knightEvent = new LivingUseItemFinishEvent(event.getEntity(), event.getItem(), event.getResultStack());
             KnightLibEvents.SERVER.dispatch(knightEvent);
 
@@ -228,6 +236,10 @@ public class KnightLibForgeServerEvents {
 
         @SubscribeEvent
         public static void onPlayerItemCrafted(PlayerEvent.ItemCraftedEvent event) {
+            if (event.getEntity().level().isClientSide()) {
+                return;
+            }
+
             KnightLibEvents.SERVER.dispatch(new PlayerItemCraftedEvent(event.getEntity(), event.getCrafting(), event.getInventory()));
         }
 

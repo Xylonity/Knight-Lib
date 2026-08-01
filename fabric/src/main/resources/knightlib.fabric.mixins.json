@@ -7,6 +7,7 @@
   "mixins": [
     "BlockItemPlaceMixin",
     "EntityPersistentDataMixin",
+    "LivingEntityDeathMixin",
     "LivingEntityHurtMixin",
     "LivingEntityUseItemMixin",
     "ResultSlotMixin",
