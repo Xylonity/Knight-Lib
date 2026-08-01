@@ -28,7 +28,8 @@ public record KnightLibAnim(
         int transitionTicks,
         KnightLibEasings transitionEasing,
         float speed,
-        int durationTicks
+        int durationTicks,
+        KnightLibAnimationBlendMode blendMode
 ) {
 
     public static final int MAX_STEPS = 32;
@@ -42,6 +43,11 @@ public record KnightLibAnim(
         steps = List.copyOf(steps);
         Objects.requireNonNull(controller, "controller");
         Objects.requireNonNull(transitionEasing, "transitionEasing");
+        Objects.requireNonNull(blendMode, "blendMode");
+    }
+
+    public KnightLibAnim(List<Step> steps, String controller, int transitionTicks, KnightLibEasings transitionEasing, float speed, int durationTicks) {
+        this(steps, controller, transitionTicks, transitionEasing, speed, durationTicks, KnightLibAnimationBlendMode.AUTHORED);
     }
 
     /**
@@ -90,27 +96,27 @@ public record KnightLibAnim(
         appended.addAll(steps);
         appended.add(new Step(animation, mode));
 
-        return new KnightLibAnim(appended, controller, transitionTicks, transitionEasing, speed, durationTicks);
+        return new KnightLibAnim(appended, controller, transitionTicks, transitionEasing, speed, durationTicks, blendMode);
     }
 
     public KnightLibAnim controller(String controller) {
-        return new KnightLibAnim(steps, controller, transitionTicks, transitionEasing, speed, durationTicks);
+        return new KnightLibAnim(steps, controller, transitionTicks, transitionEasing, speed, durationTicks, blendMode);
     }
 
     public KnightLibAnim transition(int ticks) {
-        return new KnightLibAnim(steps, controller, ticks, transitionEasing, speed, durationTicks);
+        return new KnightLibAnim(steps, controller, ticks, transitionEasing, speed, durationTicks, blendMode);
     }
 
     public KnightLibAnim transition(int ticks, KnightLibEasings easing) {
-        return new KnightLibAnim(steps, controller, ticks, easing, speed, durationTicks);
+        return new KnightLibAnim(steps, controller, ticks, easing, speed, durationTicks, blendMode);
     }
 
     public KnightLibAnim easing(KnightLibEasings easing) {
-        return new KnightLibAnim(steps, controller, transitionTicks, easing, speed, durationTicks);
+        return new KnightLibAnim(steps, controller, transitionTicks, easing, speed, durationTicks, blendMode);
     }
 
     public KnightLibAnim speed(float speed) {
-        return new KnightLibAnim(steps, controller, transitionTicks, transitionEasing, speed, durationTicks);
+        return new KnightLibAnim(steps, controller, transitionTicks, transitionEasing, speed, durationTicks, blendMode);
     }
 
     /**
@@ -118,7 +124,22 @@ public record KnightLibAnim(
      * whole animation rather than to each individual step.
      */
     public KnightLibAnim duration(int ticks) {
-        return new KnightLibAnim(steps, controller, transitionTicks, transitionEasing, speed, Math.max(0, ticks));
+        return new KnightLibAnim(steps, controller, transitionTicks, transitionEasing, speed, Math.max(0, ticks), blendMode);
+    }
+
+    /**
+     * Forces how this command combines with animation controllers evaluated before it
+     */
+    public KnightLibAnim blendMode(KnightLibAnimationBlendMode blendMode) {
+        return new KnightLibAnim(steps, controller, transitionTicks, transitionEasing, speed, durationTicks, blendMode);
+    }
+
+    public KnightLibAnim overridePreviousAnimation() {
+        return blendMode(KnightLibAnimationBlendMode.OVERRIDE);
+    }
+
+    public KnightLibAnim additive() {
+        return blendMode(KnightLibAnimationBlendMode.ADDITIVE);
     }
 
     /**
