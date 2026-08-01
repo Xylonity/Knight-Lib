@@ -108,7 +108,9 @@ public final class GeoAnimationParser {
             loopMode = KnightLibAnimation.LoopMode.HOLD_ON_LAST_FRAME;
         }
 
-        return new KnightLibAnimation(name, lengthTicks, loopMode, bones, events);
+        final boolean overridePreviousAnimation = animation.has("override_previous_animation")
+                && animation.get("override_previous_animation").getAsBoolean();
+        return new KnightLibAnimation(name, lengthTicks, loopMode, bones, events, overridePreviousAnimation);
     }
 
     private static void parseEventTrack(JsonObject animation, String key, KnightLibKeyframeEvent.Type type, List<KnightLibAnimation.KeyframeEvent> output) {
