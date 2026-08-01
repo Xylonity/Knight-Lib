@@ -378,8 +378,82 @@ public enum KnightLibEasings {
         return id;
     }
 
+    public float apply(float progress, float argument) {
+        if (this == STEP) {
+            return stepped(progress, Float.isFinite(argument) ? Math.round(argument) : 2);
+        }
+        if (!Float.isFinite(argument)) {
+            return apply(progress);
+        }
+
+        return switch (this) {
+            case EASE_IN_BACK -> {
+                yield backIn(progress, argument * 1.70158f);
+            }
+            case EASE_OUT_BACK -> {
+                yield 1f - backIn(1f - progress, argument * 1.70158f);
+            }
+            case EASE_IN_OUT_BACK -> {
+                yield progress < 0.5f
+                    ? backIn(progress * 2f, argument * 1.70158f) / 2f
+                    : 1f - backIn((1f - progress) * 2f, argument * 1.70158f) / 2f;
+            }
+            case EASE_IN_ELASTIC -> {
+                yield elasticIn(progress, argument);
+            }
+            case EASE_OUT_ELASTIC -> {
+                yield 1f - elasticIn(1f - progress, argument);
+            }
+            case EASE_IN_OUT_ELASTIC -> {
+                yield progress < 0.5f
+                    ? elasticIn(progress * 2f, argument) / 2f
+                    : 1f - elasticIn((1f - progress) * 2f, argument) / 2f;
+            }
+            case EASE_IN_BOUNCE -> {
+                yield 1f - adjustableBounce(1f - progress, argument);
+            }
+            case EASE_OUT_BOUNCE -> {
+                yield adjustableBounce(progress, argument);
+            }
+            case EASE_IN_OUT_BOUNCE -> {
+                yield progress < 0.5f
+                    ? (1f - adjustableBounce(1f - progress * 2f, argument)) / 2f
+                    : (1f + adjustableBounce(progress * 2f - 1f, argument)) / 2f;
+            }
+            default -> {
+                yield apply(progress);
+            }
+
+        };
+
+    }
+
+    private static float backIn(float progress, float overshoot) {
+        return (overshoot + 1f) * progress * progress * progress - overshoot * progress * progress;
+    }
+
+    private static float stepped(float progress, int requestedSteps) {
+        final int steps = Math.max(2, requestedSteps);
+        final float time = Mth.clamp(progress, 0f, 1f);
+        final int index = Mth.clamp((int) Math.ceil(time * steps) - 1, 0, steps - 1);
+        return index / (float) steps;
+    }
+
+    private static float elasticIn(float progress, float elasticity) {
+        final double cos = Math.cos(progress * Math.PI / 2.0);
+        return (float) (1.0 - cos * cos * cos * Math.cos(progress * elasticity * Math.PI));
+    }
+
+    private static float adjustableBounce(float progress, float bounciness) {
+        final double one = 121.0 / 16.0 * progress * progress;
+        final double two = 121.0 / 4.0 * bounciness * Math.pow(progress - 6.0 / 11.0, 2) + 1.0 - bounciness;
+        final double three = 121.0 * bounciness * bounciness * Math.pow(progress - 9.0 / 11.0, 2) + 1.0 - bounciness * bounciness;
+        final double four = 484.0 * bounciness * bounciness * bounciness * Math.pow(progress - 10.5 / 11.0, 2) + 1.0 - bounciness * bounciness * bounciness;
+        return (float) Math.min(Math.min(one, two), Math.min(three, four));
+    }
+
     public static KnightLibEasings byId(int id) {
-        for (KnightLibEasings easing : values()) {
+        for (final KnightLibEasings easing : values()) {
             if (easing.id == id) {
                 return easing;
             }
