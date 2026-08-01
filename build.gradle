@@ -109,7 +109,6 @@ subprojects {
                 "license": license,
                 "description": project.description,
                 "jei_version": jei_version,
-                "geckolib_version": geckolib_version,
                 "credits": credits
         ]
 

@@ -32,14 +32,19 @@ minecraft {
 
 dependencies {
     compileOnly group:'org.spongepowered', name:'mixin', version:'0.8.5'
-    compileOnly ("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
     implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.1'
 
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
-    implementation "mezz.jei:jei-${minecraft_version}-common:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-common:${jei_version}"
 
     compileOnly "com.electronwill.night-config:toml:3.6.6"
     compileOnly "com.electronwill.night-config:core:3.6.6"
+
+    testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
+}
+
+test {
+    useJUnitPlatform()
 }
 
 publishing {

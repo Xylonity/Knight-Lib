@@ -15,7 +15,7 @@
 | ⚙️ <strong>Auto Config</strong> |TOML config with auto generated ingame GUI, hot-reload, and Configured/ModMenu (fabric) compatibility                           |
 | ⚡ <strong>Event Bus</strong> |A common event system that abstracts the calls to their respective loaders, so that everything can be managed in common package |
 | 🤖 <strong>Automaton AI</strong> |Finite state machine system for complex entity AI behavior                                                                      |
-| 📦 <strong>OBB Hitboxes</strong> <em>(exp.)</em> |Oriented bounding boxes (OBBs) linked to individual GeckoLib bones, to manage hitboxes dynamically                              |
+| 📦 <strong>OBB Hitboxes</strong> <em>(exp.)</em> |Oriented bounding boxes (OBBs) linked to individual animated-model bones, to manage hitboxes dynamically                        |
 | 🎥 <strong>Camera Shake</strong> |<span class="HwtZe" lang="en"><span class="jCAhz ChMk0b"><span class="ryNqvb">API to manage camera shake for specific players, with several levels of configuration</span></span></span> |
 | 👑 <strong>Boss Bars</strong> |Allows to specify and configure custom boss bars for the entities you want                                                      |
 | 🎵 <strong>Music Provider</strong> |Loops music tracks for entities under custom conditions                                                                         |
@@ -37,6 +37,6 @@
 
 <span style="font-size: 16px; font-family: tahoma;">See the installation instructions on the [project wiki on GitHub](https://github.com/Xylonity/Knight-Lib/wiki).</span>
 
-[![Discord](https://media.forgecdn.net/attachments/description/1018043/description_a255b953-62ec-43d7-b4b3-8a1a94b36bac.png)](https://discord.gg/mb2XhhNNwS) [![Geckolib](https://media.forgecdn.net/attachments/description/1018043/description_1b32b3dd-8aa3-4fa4-b6f4-d7c186884e91.png)](https://www.curseforge.com/minecraft/mc-mods/geckolib)
+[![Discord](https://media.forgecdn.net/attachments/description/1018043/description_a255b953-62ec-43d7-b4b3-8a1a94b36bac.png)](https://discord.gg/mb2XhhNNwS)
 
 <span style="font-size: 16px; font-family: tahoma;">To report bugs or suggest features, join our <a href="https://discord.gg/mb2XhhNNwS" rel="nofollow">Discord server</a> or report them via [issues](https://github.com/Xylonity/Knight-Lib/issues)!</span>

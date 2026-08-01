@@ -28,7 +28,6 @@ dependencies {
         officialMojangMappings()
         parchment("org.parchmentmc.data:parchment-1.20.1:2023.09.03@zip")
     }
-    modCompileOnly("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
     //modImplementation "curse.maven:knight-quest-fabric-1016595:6025270"
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
