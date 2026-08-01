@@ -9,6 +9,7 @@
     "EntityAnimationMixin",
     "ItemStackAnimationMixin",
     "LevelBlockEntityAnimationMixin",
+    "ProjectileUtilMixin",
     "RecipeManagerMixin",
     "SmithingMenuMixin"
   ],
@@ -19,6 +20,7 @@
     "GameRendererAccessor",
     "GameRendererMixin",
     "ModelPartAccessor",
+    "MultiPlayerGameModeMixin",
     "PostChainAccessor",
     "PostPassAccessor"
   ],
