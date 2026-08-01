@@ -46,6 +46,7 @@ public abstract class EntityRenderDispatcherMixin {
         if (entity instanceof BoneHitboxHolder hitboxHolder) {
             final BoneHitboxManager manager = hitboxHolder.getBoneHitboxManager();
             if (manager != null && manager.isActive()) {
+                manager.updateClientPose(partialTicks);
                 for (final BoneHitbox hitbox : manager.getAll()) {
                     if (!hitbox.isEnabled()) {
                         continue;

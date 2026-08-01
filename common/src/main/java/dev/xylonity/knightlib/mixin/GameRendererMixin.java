@@ -2,6 +2,7 @@ package dev.xylonity.knightlib.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import dev.xylonity.knightlib.api.camera.path.impl.CameraPathManager;
+import dev.xylonity.knightlib.client.entity.layer.BoneHitboxPicker;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderContext;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
@@ -28,6 +29,14 @@ public class GameRendererMixin {
     @Final
     @Shadow
     private Camera mainCamera;
+
+    @Inject(
+            method = "pick",
+            at = @At("TAIL")
+    )
+    private void knightlib$pickBoneHitboxes(float partialTicks, CallbackInfo ci) {
+        BoneHitboxPicker.pick(minecraft, partialTicks);
+    }
 
     @Inject(
             method = "renderLevel",
