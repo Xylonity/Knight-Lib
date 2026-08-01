@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.api.animation;
 
+import java.util.Objects;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -9,6 +10,14 @@ import java.util.function.Supplier;
  * Client sided animation controller registration, analogous to GeckoLib's controller predicates. Registration happens once per animatable instance
  */
 public interface KnightLibAnimationControllerRegistrar {
+
+    /**
+     * Adds a preconfigured controller
+     */
+    default void add(KnightLibAnimationController controller) {
+        Objects.requireNonNull(controller, "controller");
+        add(controller.name(), controller.stopTransitionTicks(), controller.resolvedSelector());
+    }
 
     /**
      * Adds a continuously active controller. Return an animation to play it when the selection
