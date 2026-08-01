@@ -220,7 +220,7 @@ public final class GeoModel extends KnightLibModel {
     @Override
     public void setupRootTransform(PoseStack poseStack, float bodyYawDegrees, boolean entityContext) {
         if (entityContext) {
-            root.rotY += -bodyYawDegrees;
+            root.rotY += 180f - bodyYawDegrees;
         }
 
     }
@@ -234,7 +234,7 @@ public final class GeoModel extends KnightLibModel {
     public void renderLiving(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a) {
         poseStack.pushPose();
         poseStack.translate(0f, 1.501f, 0f);
-        poseStack.scale(1f, -1f, -1f);
+        poseStack.scale(-1f, -1f, 1f);
         render(poseStack, consumer, packedLight, packedOverlay, r, g, b, a);
         poseStack.popPose();
     }
@@ -248,7 +248,7 @@ public final class GeoModel extends KnightLibModel {
     public void visitLivingBones(PoseStack poseStack, Set<String> names, BoneVisitor visitor) {
         poseStack.pushPose();
         poseStack.translate(0f, 1.501f, 0f);
-        poseStack.scale(1f, -1f, -1f);
+        poseStack.scale(-1f, -1f, 1f);
         visitBones(poseStack, names, visitor);
         poseStack.popPose();
     }
