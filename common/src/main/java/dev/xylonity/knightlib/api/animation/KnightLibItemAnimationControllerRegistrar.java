@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.api.animation;
 
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -9,6 +10,14 @@ import java.util.function.Predicate;
  * <p>An {@code Item} is a singleton, so selectors receive a {@link KnightLibAnimationState} describing the particular stack being evaluated.</p>
  */
 public interface KnightLibItemAnimationControllerRegistrar {
+
+    /**
+     * Adds a preconfigured controller
+     */
+    default void add(KnightLibAnimationController controller) {
+        Objects.requireNonNull(controller, "controller");
+        add(controller.name(), controller.stopTransitionTicks(), controller.resolvedSelector());
+    }
 
     /**
      * Adds a continuously active controller. Return an animation to play it when the selection
