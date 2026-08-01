@@ -3,9 +3,11 @@ package dev.xylonity.knightlib.client.event;
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.camera.path.impl.CameraPathManager;
 import dev.xylonity.knightlib.api.camera.shake.CameraShakeManager;
+import dev.xylonity.knightlib.api.animation.KnightLibItemAnimations;
 import dev.xylonity.knightlib.api.event.RegisterEvent;
 import dev.xylonity.knightlib.client.camera.editor.CameraPathEditor;
 import dev.xylonity.knightlib.client.camera.editor.EditorPathRenderer;
+import dev.xylonity.knightlib.client.animation.AnimationSyncClient;
 import dev.xylonity.knightlib.client.entity.data.internal.AttachmentsClient;
 import dev.xylonity.knightlib.client.screen.bossbar.BossBarLinks;
 import dev.xylonity.knightlib.api.event.impl.client.*;
@@ -20,6 +22,14 @@ import dev.xylonity.knightlib.client.particle.StarsetParticle;
 import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
 import dev.xylonity.knightlib.client.sound.music.internal.BossMusicManager;
 import dev.xylonity.knightlib.client.sound.music.internal.BossMusicRegistry;
+import dev.xylonity.knightlib.client.sound.persistent.internal.PersistentSoundPacketClientHandler;
+import dev.xylonity.knightlib.client.texture.KnightLibAnimatedTextures;
+import dev.xylonity.knightlib.network.packets.AnimationSyncS2C;
+import dev.xylonity.knightlib.network.packets.AttachmentSyncS2C;
+import dev.xylonity.knightlib.network.packets.BossBarLinkS2C;
+import dev.xylonity.knightlib.network.packets.CameraPathS2C;
+import dev.xylonity.knightlib.network.packets.CameraShakeS2C;
+import dev.xylonity.knightlib.network.packets.PersistentSoundTickS2C;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
 import dev.xylonity.knightlib.registry.KnightLibEntities;
 import dev.xylonity.knightlib.registry.KnightLibParticles;
@@ -43,11 +53,30 @@ public class KnightLibClientEvents {
     }
 
     @RegisterEvent(priority = 100)
+    public static void registerPacketHandlers(final ClientPacketHandlerRegistrationEvent event) {
+        event.register(AnimationSyncS2C.class, AnimationSyncClient::handle);
+        event.register(AttachmentSyncS2C.class, AttachmentsClient::handle);
+        event.register(BossBarLinkS2C.class, message -> BossBarLinks.INSTANCE.put(message.bossEventId(), new BossBarLinks.Reference(message.entityId(), message.entityUuid(), message.entityType(), message.dimension())));
+        event.register(CameraPathS2C.class, message -> {
+            if (message.path() == null) {
+                CameraPathManager.stop();
+            }
+            else {
+                CameraPathManager.play(message.path());
+            }
+
+        });
+        event.register(CameraShakeS2C.class, message -> CameraShakeManager.shake(message.spec(), message.replace()));
+        event.register(PersistentSoundTickS2C.class, PersistentSoundPacketClientHandler::handle);
+    }
+
+    @RegisterEvent(priority = 100)
     public static void onClientTick(final ClientTickEvent event) {
         if (event.getPhase() == TickPhase.START) {
             PostShaderManager.clientTick();
         }
         else {
+            AnimationSyncClient.tick();
             BossMusicManager.clientTick(event.getClient());
             handleCameraEditorKeys(event.getClient());
 
@@ -61,6 +90,8 @@ public class KnightLibClientEvents {
                 KnightLibPersistentSounds.clearAll();
                 AttachmentsClient.clearAll();
                 BossBarLinks.INSTANCE.clear();
+                AnimationSyncClient.clear();
+                KnightLibItemAnimations.clear();
                 return;
             }
 
@@ -136,6 +167,7 @@ public class KnightLibClientEvents {
     @RegisterEvent(priority = 100)
     public static void onLogout(final ClientLogoutEvent event) {
         PostShaderManager.onLogout();
+        KnightLibItemAnimations.clear();
     }
 
     @RegisterEvent(priority = 100)
@@ -164,6 +196,8 @@ public class KnightLibClientEvents {
         CameraPathEditor.discard();
         AttachmentsClient.clearAll();
         BossBarLinks.INSTANCE.clear();
+        AnimationSyncClient.clear();
+        KnightLibItemAnimations.clear();
     }
 
     @RegisterEvent(priority = 100)
@@ -176,6 +210,8 @@ public class KnightLibClientEvents {
         KnightLibPersistentSounds.clearAll();
         AttachmentsClient.clearAll();
         BossBarLinks.INSTANCE.clear();
+        AnimationSyncClient.clear();
+        KnightLibItemAnimations.clear();
         PostShaderManager.onWorldUnload();
 
         TickScheduler.markForClean(event.getLevel());
@@ -195,6 +231,7 @@ public class KnightLibClientEvents {
     @RegisterEvent(priority = 100)
     public static void onResourcesReloaded(final ClientResourcesReloadedEvent event) {
         final Minecraft minecraft = event.getClient();
+        KnightLibAnimatedTextures.onResourceReload();
         PostShaderManager.onResourcesReloaded(
                 minecraft.getTextureManager(),
                 event.getResourceManager(),
@@ -206,7 +243,6 @@ public class KnightLibClientEvents {
     @RegisterEvent(priority = 100)
     public static void registerEntityRenderers(final EntityRendererRegistrationEvent event) {
         event.register(KnightLibEntities.GREAT_CHALICE_STARSET_RING.get(), GreatChaliceStarsetRingRenderer::new);
-        //event.register(KnightLibEntities.ENTITY_PART.get(), TestRenderer::new);
     }
 
     @RegisterEvent(priority = 100)
