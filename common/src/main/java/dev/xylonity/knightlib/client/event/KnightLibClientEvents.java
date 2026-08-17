@@ -17,6 +17,7 @@ import dev.xylonity.knightlib.api.sound.persistent.KnightLibPersistentSounds;
 import dev.xylonity.knightlib.api.scheduler.TickScheduler;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderContext;
+import dev.xylonity.knightlib.client.shader.KnightLibShaders;
 import dev.xylonity.knightlib.client.blockentity.renderer.GreatChaliceRenderer;
 import dev.xylonity.knightlib.client.particle.StarsetParticle;
 import dev.xylonity.knightlib.client.projectile.renderer.GreatChaliceStarsetRingRenderer;
@@ -39,6 +40,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.IOException;
+
 public class KnightLibClientEvents {
 
     private static KeyMapping campathEditorKey;
@@ -50,6 +53,11 @@ public class KnightLibClientEvents {
 
     public static KeyMapping campathPreviewKey() {
         return campathPreviewKey;
+    }
+
+    @RegisterEvent(priority = 100)
+    public static void registerShaders(final ShaderRegistrationEvent event) throws IOException {
+        KnightLibShaders.register(event);
     }
 
     @RegisterEvent(priority = 100)

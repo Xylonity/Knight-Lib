@@ -7,7 +7,7 @@ import dev.xylonity.knightlib.api.camera.path.impl.CameraPathManager;
 import dev.xylonity.knightlib.api.camera.path.impl.CameraPathSampler;
 import dev.xylonity.knightlib.api.event.impl.client.ClientRenderLevelStageEvent;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
-import dev.xylonity.knightlib.registry.KnightLibRenderTypes;
+import dev.xylonity.knightlib.client.KnightLibRenderTypes;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
