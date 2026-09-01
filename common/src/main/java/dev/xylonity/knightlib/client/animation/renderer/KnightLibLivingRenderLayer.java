@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Render layer for a trivial layer within the vanilla's rendering pipeline
+ * Render layer for a trivial layer within the vanilla's rendering pipeline.
  */
 final class KnightLibLivingRenderLayer<T extends LivingEntity & KnightLibAnimatable> extends RenderLayer<T, KnightLibLivingModel<T>> {
 

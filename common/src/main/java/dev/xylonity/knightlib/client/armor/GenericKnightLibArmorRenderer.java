@@ -11,7 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Default renderer used by {@code KnightLibArmorItem} and its subclasses
+ * Default renderer for conventionally registered vanilla armor models.
  */
 public class GenericKnightLibArmorRenderer extends KnightLibArmorRenderer {
 

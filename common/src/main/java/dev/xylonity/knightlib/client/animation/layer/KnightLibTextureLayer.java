@@ -12,7 +12,7 @@ import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
 /**
- * Base class for a texture pass over the current animated model
+ * Base class for a texture pass over the current model.
  */
 public abstract class KnightLibTextureLayer<T> extends KnightLibRenderLayer<T> {
 

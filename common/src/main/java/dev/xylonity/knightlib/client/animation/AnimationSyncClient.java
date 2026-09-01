@@ -12,15 +12,15 @@ import java.util.Deque;
 import java.util.Iterator;
 
 /**
- * Client sink for {@link AnimationSyncS2C} that queues animations
+ * Client end of server-triggered animations.
+ *
+ * Based off Citadel implementation
+ * https://github.com/AlexModGuy/Citadel/blob/1.20/src/main/java/com/github/alexthe666/citadel/server/message/AnimationMessage.java
+ * https://github.com/AlexModGuy/Citadel/blob/1.20/src/main/java/com/github/alexthe666/citadel/ClientProxy.java
  */
 public final class AnimationSyncClient {
 
     private static final Deque<Pending> PENDING = new ArrayDeque<>();
-
-    private AnimationSyncClient() {
-        ;;
-    }
 
     public static void handle(AnimationSyncS2C message) {
         final ClientLevel level = Minecraft.getInstance().level;

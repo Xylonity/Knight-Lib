@@ -27,7 +27,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * Vanilla {@link EntityModel} bridge for KnightLib geometry
+ * Vanilla {@link EntityModel} bridge backed by a dynamically selected {@link KnightLibModel}.
  */
 public final class KnightLibLivingModel<T extends LivingEntity & KnightLibAnimatable> extends EntityModel<T> implements ArmedModel, HeadedModel {
 

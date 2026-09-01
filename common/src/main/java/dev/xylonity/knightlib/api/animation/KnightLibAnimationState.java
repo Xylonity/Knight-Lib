@@ -8,11 +8,13 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Context handed to a client controller while it is being evaluated.
+ * Reusable context handed to a client controller while its selector is being evaluated.
  *
- * <p>Controllers run once per client tick from {@link KnightLibAnimationHandler#tick()}, not once per frame</p>
+ * <p>Controllers run once per client tick from {@link KnightLibAnimationHandler#tick()}, not once per frame. This same wrapper is
+ * reused per controller so selectors must not keep it.</p>
  *
- * This same state wrapper is reused on every controller of the same handler.
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimationState.java
  */
 public final class KnightLibAnimationState {
 

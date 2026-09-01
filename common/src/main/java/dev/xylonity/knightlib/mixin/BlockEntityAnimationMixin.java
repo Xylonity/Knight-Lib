@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Adds chunk sync animation state to every KnightLib's animatable blockentity
+ * Hooks animatable blockentities into KnightLib's independent ticker.
  */
 @Mixin(BlockEntity.class)
 public abstract class BlockEntityAnimationMixin {

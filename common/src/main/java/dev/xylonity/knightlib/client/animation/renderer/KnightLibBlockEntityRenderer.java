@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Base renderer for block entities animated through KnightLib
+ * Base renderer for block entities animated through KnightLib.
  */
 public abstract class KnightLibBlockEntityRenderer<T extends BlockEntity & KnightLibAnimatable> implements BlockEntityRenderer<T> {
 

@@ -13,7 +13,13 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Keyframe animation, where values are stored in space and happen over ticks
+ * Parsed keyframe data ready for the animator to sample.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/Animation.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/keyframe/BoneAnimation.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/keyframe/Keyframe.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/keyframe/KeyframeStack.java
  */
 public final class KnightLibAnimation {
 
@@ -120,6 +126,7 @@ public final class KnightLibAnimation {
         final float span = to.tick() - from.tick();
         final float alpha = span <= 0f ? 1f : (tick - from.tick()) / span;
 
+        // Bedrock's discontinuous keyframes leave from.post and arrive at to.pre
         final Vector3f start = from.post().resolve(context, new Vector3f());
         final Vector3f end = to.target().resolve(context, new Vector3f());
         if (!finite(start) || !finite(end)) {
@@ -127,6 +134,7 @@ public final class KnightLibAnimation {
         }
 
         if (to.lerp() == Lerp.CATMULLROM) {
+            // Duplicates the nearest endpoint when the spline has no outer neighbour
             final Vector3f p0 = frames.get(Math.max(0, index - 1)).post().resolve(context, new Vector3f());
             final Vector3f p3 = frames.get(Math.min(frames.size() - 1, index + 2)).post().resolve(context, new Vector3f());
             if (!finite(p0) || !finite(p3)) {
@@ -163,6 +171,8 @@ public final class KnightLibAnimation {
 
     private static boolean resolveFinite(KeyframeValue value, MolangContext context, Vector3f destination) {
         final Vector3f resolved = value.resolve(context, new Vector3f());
+
+        // A bad molang result should skip this channel and not contaminate every matrix below it
         if (!finite(resolved)) {
             return false;
         }

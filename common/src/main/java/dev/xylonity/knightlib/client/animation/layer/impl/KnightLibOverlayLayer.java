@@ -32,9 +32,7 @@ public class KnightLibOverlayLayer<T> extends KnightLibTextureLayer<T> {
 
     @Override
     protected RenderType getRenderType(KnightLibRenderLayerContext<T> context, ResourceLocation texture, int resolvedColor) {
-        return KnightLibColor.fromArgb(resolvedColor).isTranslucent()
-                ? RenderType.entityTranslucent(texture)
-                : RenderType.entityCutoutNoCull(texture);
+        return KnightLibColor.fromArgb(resolvedColor).isTranslucent() ? RenderType.entityTranslucent(texture) : RenderType.entityCutoutNoCull(texture);
     }
 
 }

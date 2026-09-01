@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.xylonity.knightlib.client.animation.KnightLibPose;
 import dev.xylonity.knightlib.client.animation.model.GeoModel;
+import dev.xylonity.knightlib.client.animation.model.KnightLibModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -15,7 +16,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Humanoid bridge that lets vanilla's equipped-armor layer draw geo geometry
+ * Humanoud armor model with a {@link KnightLibModel} underneath that lets vanilla draw geo geometry.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/renderer/GeoArmorRenderer.java
  */
 public final class KnightLibGeoArmorModel extends KnightLibArmorModel {
 

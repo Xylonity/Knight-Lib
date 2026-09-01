@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * Common vanilla render state supplied to every {@link KnightLibRenderLayer}.
+ * Render state context supplied to every {@link KnightLibRenderLayer}.
  */
 public final class KnightLibRenderLayerContext<T> {
 

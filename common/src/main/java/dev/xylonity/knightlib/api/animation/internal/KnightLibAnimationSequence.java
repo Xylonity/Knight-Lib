@@ -8,13 +8,9 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Sequence timing shared by rendered models and authoritative geo hitbox rigs
+ * The boring but important thing that decides which step of an animation command is active right now
  */
 public final class KnightLibAnimationSequence {
-
-    private KnightLibAnimationSequence() {
-        ;;
-    }
 
     /**
      * Resolves an animation-relative elapsed tick to its current step and sample position
@@ -50,10 +46,12 @@ public final class KnightLibAnimationSequence {
                     stepStart = stepEnd;
                 }
                 case LOOP -> {
+                    // Loops the rest of the sequence by contract so it doesn't really advance
                     final float tick = (float) (rawTick % length);
                     return new Playback(index, step, animation, stepStart, rawTick, tick, Double.POSITIVE_INFINITY, false);
                 }
                 case HOLD_ON_LAST_FRAME -> {
+                    // Keeps the raw tick growing for molang while clamping only the transform sample
                     final float tick = (float) Math.min(rawTick, length);
                     return new Playback(index, step, animation, stepStart, rawTick, tick, Double.POSITIVE_INFINITY, false);
                 }

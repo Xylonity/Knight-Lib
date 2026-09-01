@@ -23,7 +23,13 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * Evaluates every controller of a handler into a model each frame
+ * Samples every controller in a handler and builds the model pose for one frame. This means external models (not linked to a specific
+ * entity for example), can be rendered and animated in the current frame.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimationController.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimationProcessor.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/state/BoneSnapshot.java
  */
 public final class KnightLibAnimator {
 
@@ -109,6 +115,7 @@ public final class KnightLibAnimator {
 
         final KnightLibPose rest = model.capturePose();
         KnightLibPose composed = rest;
+
         for (int pass = 0; pass < 2; pass++) {
             final boolean overridePass = pass == 1;
             for (KnightLibAnimationHandler.Controller controller : handler.controllers()) {

@@ -15,18 +15,22 @@ import java.util.Objects;
 import java.util.WeakHashMap;
 
 /**
- * Backing store for per-stack animation handlers, although using {@link KnightLibAnimatedItem} methods should be sufficient.
+ * Backing store for per-stack animation handlers. Normal callers should use {@link KnightLibAnimatedItem}, since this class
+ * mostly exists to keep an item's instance separate from the state of each physical stack.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animatable/instance/SingletonAnimatableInstanceCache.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/cache/AnimatableIdCache.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/animatable/SingletonGeoAnimatable.java
  */
 public final class KnightLibItemAnimations {
 
     static final String TAG = "KnightLibAnimations";
+
     private static final ListTag EMPTY_STATE = new ListTag();
 
     private static final Map<ItemStack, CacheEntry> HANDLERS = new WeakHashMap<>();
 
-    private KnightLibItemAnimations() {
-        ;;
-    }
 
     public static KnightLibAnimationHandler getAnimationHandler(ItemStack stack, @Nullable Level level) {
         return getAnimationHandler(animatedItem(stack), stack, level, null);

@@ -11,15 +11,11 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Internal client-side model definition wrapper shared by the loader specific armor model registration events
+ * Loader agnostic registry for vanilla armor model layers. Fabric and Forge fill this table through their own registration hooks.
  */
 public final class KnightLibArmorModels {
 
     private static final Map<ResourceLocation, Definition> DEFINITIONS = new HashMap<>();
-
-    private KnightLibArmorModels() {
-        ;;
-    }
 
     public static void register(ResourceLocation modelId, ModelLayerLocation layer, Function<ModelPart, KnightLibArmorModel> modelFactory, ResourceLocation texture) {
         DEFINITIONS.put(

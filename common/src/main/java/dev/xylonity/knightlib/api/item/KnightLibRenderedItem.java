@@ -3,8 +3,7 @@ package dev.xylonity.knightlib.api.item;
 import java.util.function.Supplier;
 
 /**
- * Common-side capability for vanilla {@code Item} subclasses that provide a custom item-stack
- * renderer through KnightLib
+ * Common-side capability for vanilla {@code Item} subclasses that provide a custom KnightLib item renderer.
  */
 public interface KnightLibRenderedItem extends KnightLibAnimatedItem {
 

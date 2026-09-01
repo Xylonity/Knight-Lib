@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import java.util.Objects;
 
 /**
- * One modular render pass attached to a KnightLib renderer
+ * One optional render pass attached to a KnightLib renderer.
  */
 public abstract class KnightLibRenderLayer<T> {
 

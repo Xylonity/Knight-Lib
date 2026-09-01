@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Mob-specific KnightLib renderer
+ * Base renderer for mob entities animated through KnightLib.
  */
 public abstract class KnightLibMobRenderer<T extends Mob & KnightLibAnimatable> extends MobRenderer<T, KnightLibLivingModel<T>> {
 

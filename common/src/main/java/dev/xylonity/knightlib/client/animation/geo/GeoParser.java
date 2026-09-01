@@ -19,7 +19,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Geo-model .json parser, based off Geckolib's implementation
+ * Reads geo geometry and bakes it into KnightLib's own bone/cube format. This is where Bedrock pivots, UVs, mirror flags and
+ * coordinate conventions are translated to Minecraft's render space.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/loading/object/GeometryTree.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/loading/object/BakedModelFactory.java
  */
 public final class GeoParser {
 

@@ -14,7 +14,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * Poseable bone-tree backend the animator drives. Two impls exist, geo and vanilla.
+ * Poseable model implementation driven by {@code KnightLibAnimator}. Geo bones store degrees and model units, while
+ * vanilla parts store radians and their own pivot convention.
+ *
+ * <p>The two built-in implementations are {@link GeoModel} and {@link VanillaModel}.</p>
  */
 public abstract class KnightLibModel {
 

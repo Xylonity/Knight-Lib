@@ -12,10 +12,14 @@ import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Common per-stack animation API shared by ordinary custom-rendered items and equipped armor.
+ * Common per-stack animation API shared by ordinary custom-rendered items and equipped armor. It mirrors the entity API, but every call includes the stack.
  *
  * <p>An {@code Item} is a singleton, so every method receives the particular stack whose
  * controllers are being queried or changed.</p>
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/animatable/GeoItem.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/animatable/SingletonGeoAnimatable.java
  */
 public interface KnightLibAnimatedItem {
 

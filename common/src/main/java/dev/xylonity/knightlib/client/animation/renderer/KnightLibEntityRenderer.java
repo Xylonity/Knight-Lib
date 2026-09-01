@@ -31,7 +31,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Base renderer for entities animated through KnightLib
+ * Base renderer for entities animated through KnightLib.
  */
 public abstract class KnightLibEntityRenderer<T extends Entity & KnightLibAnimatable> extends EntityRenderer<T> {
 
@@ -190,7 +190,7 @@ public abstract class KnightLibEntityRenderer<T extends Entity & KnightLibAnimat
             return true;
         }
 
-        final double inflation = Math.max(0.0, getCullingInflation(entity));
+        final double inflation = Math.max(0, getCullingInflation(entity));
         final AABB box = entity.getBoundingBoxForCulling().inflate(inflation);
         return !box.hasNaN() && frustum.isVisible(box);
     }

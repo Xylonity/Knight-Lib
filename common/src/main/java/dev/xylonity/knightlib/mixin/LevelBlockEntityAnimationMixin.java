@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Runs every registered blockentity animation handler once per logical level tick
+ * Runs the independent blockentity animation registry once at the end of each logical level tick.
  */
 @Mixin(Level.class)
 public abstract class LevelBlockEntityAnimationMixin {

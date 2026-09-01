@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * Default renderer for a named animated block item using the knightlib animation system with a custom geo model
+ * Default renderer for a named animated block item using the knightlib animation system with a custom geo model.
  */
 public final class GenericRenderedBlockItemRenderer extends KnightLibItemRenderer {
 

@@ -17,7 +17,10 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Client-side base for an equipped vanilla-pipeline armor renderer
+ * Client sided base for animated armor rendered through vanilla's equipped armor pipeline.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/renderer/GeoArmorRenderer.java
  */
 public abstract class KnightLibArmorRenderer {
 
@@ -110,6 +113,7 @@ public abstract class KnightLibArmorRenderer {
         final KnightLibPose restPose = animationModel.capturePose();
         model.composeWithWearer(contextModel, animatedPose, restPose);
 
+        // Hides unused slot bones only after the complete pose has been composed
         model.prepareForSlot(slot);
         setupPose(stack, wearer, slot, animationModel, partialTicks);
         animationModel.forEachBone(bone -> setupBone(stack, wearer, slot, animationModel, bone, partialTicks));

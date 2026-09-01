@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.api.animation;
 
 /**
- * Determines how an animation layer combines with controllers evaluated before it
+ * Decides what a controller does with the pose left by controllers evaluated before it.
  */
 public enum KnightLibAnimationBlendMode {
 

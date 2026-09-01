@@ -21,6 +21,9 @@ import java.util.Objects;
  * <p>{@link #thenPlay} advances to the next step when the authored animation length is reached.
  * {@link #thenLoop} and {@link #thenPlayAndHold} never advance and must therefore be the final
  * step.</p>
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/RawAnimation.java
  */
 public record KnightLibAnim(
         List<Step> steps,

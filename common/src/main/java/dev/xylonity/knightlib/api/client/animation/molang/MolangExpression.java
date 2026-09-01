@@ -1,7 +1,10 @@
 package dev.xylonity.knightlib.api.client.animation.molang;
 
 /**
- * A compiled molang expression. Parsed once at load time and evaluated per frame against a {@link MolangContext}
+ * A compiled Molang expression, where parsing happens once when the asset is loaded.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/molang/expressions/MolangValue.java
  */
 @FunctionalInterface
 public interface MolangExpression {

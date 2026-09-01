@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Persistence and ticking for every animatable entity
+ * Wires {@link KnightLibAnimatable} into the three vanilla entity lifecycle points the animation handler needs (tick, save, load).
  */
 @Mixin(Entity.class)
 public abstract class EntityAnimationMixin {

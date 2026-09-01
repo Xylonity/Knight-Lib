@@ -33,7 +33,12 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Resolves standalone textures used by KnightLib renderers without modifying their original TextureManager entry
+ * Gives standalone textures vanilla-style {@code .mcmeta} animation without replacing their normal {@link TextureManager} entry.
+ * Animated files are loaded under a private alias, while static files keep using their original location and pay no extra cost.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/cache/texture/AnimatableTexture.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/mixin/client/TextureManagerMixin.java
  */
 @ApiStatus.Internal
 public final class KnightLibAnimatedTextures {

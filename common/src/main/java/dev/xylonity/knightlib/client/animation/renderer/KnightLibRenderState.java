@@ -3,7 +3,7 @@ package dev.xylonity.knightlib.client.animation.renderer;
 import dev.xylonity.knightlib.api.util.KnightLibColor;
 
 /**
- * Immutable properties calculated once for a complete model render
+ * Immutable wrapper of properties calculated once for a complete model render.
  */
 public record KnightLibRenderState(
         float scale,

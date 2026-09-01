@@ -36,7 +36,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Geo bone tree and animation evaluator used only by the logical server, derived from the KnightLibAnimator
+ * Server only copy of the geo bone tree and animation evaluator. This basically mirrors {@code KnightLibAnimator}.
+ *
+ * TODO: refactor common logic
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/loading/object/BakedModelFactory.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/loading/json/typeadapter/BakedAnimationsAdapter.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimationProcessor.java
  */
 public final class GeoBoneHitboxRig implements BoneHitboxRig {
 

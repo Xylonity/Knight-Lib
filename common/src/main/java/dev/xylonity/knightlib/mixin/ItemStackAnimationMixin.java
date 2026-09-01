@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Ticks itemstack animation controllers through vanilla's inventory tick
+ * Ticks itemstack animation controllers through vanilla's inventory tick.
  */
 @Mixin(ItemStack.class)
 public abstract class ItemStackAnimationMixin {

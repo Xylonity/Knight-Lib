@@ -14,7 +14,13 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * Mutable bone of the geo backend. Position is stored in model units (16ths of a block) relative to the parent pivot
+ * One mutable bone in the geo geometry. Its rest transform comes from the parsed model and its public transform
+ * fields are rewritten by the animator every frame.
+ *
+ * Positions use model units (16ths of a block) relative to the parent pivot.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/cache/object/GeoBone.java
  */
 public final class GeoBone {
 

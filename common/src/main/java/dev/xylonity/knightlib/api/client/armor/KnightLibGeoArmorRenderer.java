@@ -11,7 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 /**
- * Equipped-armor renderer backed by a geo model
+ * Client sided base for animated armor backed by a geo model.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/renderer/GeoArmorRenderer.java
  */
 public abstract class KnightLibGeoArmorRenderer extends KnightLibArmorRenderer {
 

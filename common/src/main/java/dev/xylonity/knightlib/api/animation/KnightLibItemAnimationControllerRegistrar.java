@@ -5,9 +5,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * Trivial client sided animation controller registration for item stacks.
+ * Itemstack version of {@link KnightLibAnimationControllerRegistrar}. Items are singletons, so the stack and
+ * its holder have to come from the state passed to each selector instead of fields on the item.
  *
  * <p>An {@code Item} is a singleton, so selectors receive a {@link KnightLibAnimationState} describing the particular stack being evaluated.</p>
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimatableManager.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/animatable/SingletonGeoAnimatable.java
  */
 public interface KnightLibItemAnimationControllerRegistrar {
 

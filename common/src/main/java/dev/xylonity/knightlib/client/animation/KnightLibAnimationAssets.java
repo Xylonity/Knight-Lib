@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Client-side cache of parsed geo assets
+ * Client cache for parsed geo models and animation files.
  */
 public final class KnightLibAnimationAssets {
 
@@ -27,10 +27,6 @@ public final class KnightLibAnimationAssets {
 
     private static volatile ResourceManager resourceManager;
     private static volatile int generation;
-
-    private KnightLibAnimationAssets() {
-        ;;
-    }
 
     public static void reload(ResourceManager resourceManager) {
         Objects.requireNonNull(resourceManager, "resourceManager");
@@ -93,7 +89,7 @@ public final class KnightLibAnimationAssets {
             final int lastDot = key.lastIndexOf('.');
             if (lastDot >= 0 && key.substring(lastDot + 1).equals(name)) {
                 if (match != null) {
-                    // Ambiguous
+                    // Two namespaces end in the same short name
                     return null;
                 }
 

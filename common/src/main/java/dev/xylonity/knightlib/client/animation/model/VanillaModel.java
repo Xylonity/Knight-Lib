@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * Wraps a baked {@link ModelPart} tree and drives it with vanilla conventions
+ * {@link ModelPart} implementation of the KnightLib model API.
  */
 public final class VanillaModel extends KnightLibModel {
 

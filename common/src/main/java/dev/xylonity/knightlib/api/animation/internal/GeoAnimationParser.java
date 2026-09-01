@@ -23,15 +23,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Bedrock animation parser shared by the client rendering and hitbox rigs. Based off Geckolib's implementation of the geoparser
+ * Turns a Bedrock animation JSON into the small runtime format used by both rendering and server sided hitbox rigs
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/loading/json/typeadapter/BakedAnimationsAdapter.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/loading/json/typeadapter/KeyFramesAdapter.java
  */
 public final class GeoAnimationParser {
 
     private static final Set<String> WARNED_EASINGS = ConcurrentHashMap.newKeySet();
-
-    private GeoAnimationParser() {
-        ;;
-    }
 
     public static Map<String, KnightLibAnimation> parse(JsonObject root) {
         final Map<String, KnightLibAnimation> animations = new LinkedHashMap<>();
@@ -41,6 +41,7 @@ public final class GeoAnimationParser {
         }
 
         for (final Map.Entry<String, JsonElement> entry : entries.entrySet()) {
+            // One broken animation should not make every other animation in the file disappear
             try {
                 animations.put(entry.getKey(), parseAnimation(entry.getKey(), entry.getValue().getAsJsonObject()));
             }
@@ -210,6 +211,7 @@ public final class GeoAnimationParser {
 
             final KnightLibAnimation.KeyframeValue pre = frame.has("pre") ? parseValue(unwrapVector(frame.get("pre"))) : null;
 
+            // pre arrives, post leaves the timestamp
             final KnightLibAnimation.KeyframeValue post;
             if (frame.has("post")) {
                 post = parseValue(unwrapVector(frame.get("post")));

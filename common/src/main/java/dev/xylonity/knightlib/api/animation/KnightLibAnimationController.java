@@ -9,7 +9,8 @@ import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 /**
- * A configurable animation controller, based on GeckoLib's {@code AnimationController}.
+ * Configures one named animation lane. A controller asks its selector what should be playing, handles the
+ * transition when that answer changes and may calculate a different speed every tick.
  *
  * <pre>{@code
  * controllers.add(KnightLibAnimationController.of("movement")
@@ -17,13 +18,11 @@ import java.util.function.ToDoubleFunction;
  *         .movementSpeed(BLOCKS_PER_CYCLE, CYCLE_SECONDS)
  *         .transition(5, KnightLibEasings.EASE_IN_OUT_QUAD));
  * }</pre>
+ *
+ * A chunk of the code is based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimationController.java
  */
 public final class KnightLibAnimationController {
-
-    public static final float MIN_SPEED = 0.001f;
-    public static final float MAX_SPEED = 100f;
-    public static final float DEFAULT_MIN_MOVEMENT_SPEED = 0.25f;
-    public static final float DEFAULT_MAX_MOVEMENT_SPEED = 3f;
 
     private final String name;
 
@@ -134,7 +133,7 @@ public final class KnightLibAnimationController {
      * resolves to 0.5)
      */
     public KnightLibAnimationController movementSpeed(double blocksPerCycle, double cycleSeconds) {
-        return movementSpeed(blocksPerCycle, cycleSeconds, DEFAULT_MIN_MOVEMENT_SPEED, DEFAULT_MAX_MOVEMENT_SPEED);
+        return movementSpeed(blocksPerCycle, cycleSeconds, 0.25f, 3);
     }
 
     public KnightLibAnimationController movementSpeed(double blocksPerCycle, double cycleSeconds, double minimumSpeed, double maximumSpeed) {
@@ -236,7 +235,7 @@ public final class KnightLibAnimationController {
             return 1f;
         }
 
-        return (float) Math.min(MAX_SPEED, Math.max(MIN_SPEED, speed));
+        return (float) Math.min(100, Math.max(0.001f, speed));
     }
 
 }

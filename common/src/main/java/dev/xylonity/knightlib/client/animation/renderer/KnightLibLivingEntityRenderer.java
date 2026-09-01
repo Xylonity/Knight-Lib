@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * KnightLib renderer built directly on vanilla's {@link LivingEntityRenderer}
+ * KnightLib renderer built directly on vanilla's {@link LivingEntityRenderer}.
  */
 public abstract class KnightLibLivingEntityRenderer<T extends LivingEntity & KnightLibAnimatable> extends LivingEntityRenderer<T, KnightLibLivingModel<T>> {
 

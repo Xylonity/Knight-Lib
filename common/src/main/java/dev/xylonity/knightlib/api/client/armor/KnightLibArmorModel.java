@@ -9,7 +9,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 
 /**
- * Vanilla humanoid armor model with slot-specific part visibility
+ * Vanilla humanoid armor model with a {@link KnightLibModel} underneath.
  */
 public abstract class KnightLibArmorModel extends HumanoidModel<LivingEntity> {
 

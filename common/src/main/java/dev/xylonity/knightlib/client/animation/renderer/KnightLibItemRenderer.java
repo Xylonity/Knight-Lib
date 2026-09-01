@@ -33,7 +33,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 /**
- * Base item renderer (BEWLR) for items rendered with a KnightLib model
+ * Base item renderer (BEWLR) for items rendered with a KnightLib model.
  */
 public abstract class KnightLibItemRenderer extends BlockEntityWithoutLevelRenderer {
 

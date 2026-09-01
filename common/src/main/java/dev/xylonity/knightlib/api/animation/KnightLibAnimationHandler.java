@@ -23,7 +23,14 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * Per-instance animation state for a {@link KnightLibAnimatable} entity/block entity or a particular {@link ItemStack}
+ * Owns the live animation state for one entity, blockentity or itemstack. Controllers are computed in insertion order because
+ * later controllers layer over the pose produced by earlier ones.
+ *
+ * Based off Citadel implementation
+ * https://github.com/AlexModGuy/Citadel/blob/1.20/src/main/java/com/github/alexthe666/citadel/animation/AnimationHandler.java
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimatableManager.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimationController.java
  */
 public final class KnightLibAnimationHandler {
 
@@ -160,6 +167,7 @@ public final class KnightLibAnimationHandler {
 
         Objects.requireNonNull(blendMode, "blendMode");
         final Controller controller = controller(controllerName);
+
         controller.command(steps, transitionTicks, transitionEasing, speed, startedAt, durationTicks, blendMode);
 
         sync(controller);
@@ -204,6 +212,8 @@ public final class KnightLibAnimationHandler {
         final Iterator<Controller> iterator = controllers.values().iterator();
         while (iterator.hasNext()) {
             final Controller controller = iterator.next();
+
+            // Duration is measured in animation ticks, hence the speed multiplier here
             if (controller.animation() != null && controller.durationTicks() > 0 && (now - controller.commandGameTime()) * controller.speed() >= controller.durationTicks()) {
                 controller.command(List.of(), controller.transitionTicks(), controller.easing(), 1f, now, 0, controller.blendMode());
                 sync(controller);
@@ -220,9 +230,9 @@ public final class KnightLibAnimationHandler {
 
     private void updateClientControllers() {
         if (!clientControllersRegistered) {
-            final List<ClientControllerBinding> bindings = new ArrayList<>();
-            target.registerAnimationControllers(bindings);
-            clientControllerBindings = List.copyOf(bindings);
+            final List<ClientControllerBinding> controllers = new ArrayList<>();
+            target.registerAnimationControllers(controllers);
+            clientControllerBindings = List.copyOf(controllers);
             clientControllersRegistered = true;
         }
 
@@ -318,6 +328,8 @@ public final class KnightLibAnimationHandler {
     public void load(CompoundTag ownerTag) {
         final ListTag list = ownerTag.contains(KnightLibItemAnimations.TAG, Tag.TAG_LIST) ? ownerTag.getList(KnightLibItemAnimations.TAG, Tag.TAG_COMPOUND) : new ListTag();
         final Map<String, SavedController> restored = new LinkedHashMap<>();
+
+        // Tags may come from an older save or a modified stack
         final int count = Math.min(list.size(), 64);
         for (int i = 0; i < count; i++) {
             final CompoundTag tag = list.getCompound(i);
@@ -368,6 +380,7 @@ public final class KnightLibAnimationHandler {
 
     private static List<KnightLibAnim.Step> readSteps(CompoundTag tag, String legacyAnimation) {
         if (!tag.contains("Steps", Tag.TAG_LIST)) {
+            // Old knightlib saves only stored the first animation name
             if (legacyAnimation.isEmpty()) {
                 return List.of();
             }
@@ -796,6 +809,7 @@ public final class KnightLibAnimationHandler {
         public void update(KnightLibAnimationHandler handler) {
             handler.clientState.controller(name);
             final boolean active = trigger.test(handler.clientState);
+
             if (active && !previous) {
                 handler.play(animation);
             }

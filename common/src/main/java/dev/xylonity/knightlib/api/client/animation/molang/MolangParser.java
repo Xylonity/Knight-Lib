@@ -10,9 +10,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Molang expression parser, based off Geckolib's implementation.
+ * Small Molang expression compiler used by Bedrock animation structure.
  *
- * Queries are only loaded once at the start.
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/molang/MolangParser.java
  */
 public final class MolangParser {
 

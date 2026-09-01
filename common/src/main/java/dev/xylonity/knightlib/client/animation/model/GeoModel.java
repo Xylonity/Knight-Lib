@@ -13,7 +13,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
- * Mutable geo bone tree instantiated from a parsed {@link GeoModelDefinition}
+ * Mutable geo bone tree instantiated from a parsed {@link GeoModelDefinition}.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/cache/object/BakedGeoModel.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/renderer/GeoRenderer.java
  */
 public final class GeoModel extends KnightLibModel {
 
@@ -233,9 +237,11 @@ public final class GeoModel extends KnightLibModel {
     @Override
     public void renderLiving(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a) {
         poseStack.pushPose();
+
         poseStack.translate(0f, 1.501f, 0f);
         poseStack.scale(-1f, -1f, 1f);
         render(poseStack, consumer, packedLight, packedOverlay, r, g, b, a);
+
         poseStack.popPose();
     }
 

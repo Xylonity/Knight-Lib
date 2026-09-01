@@ -6,8 +6,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Absolute per-bone transform snapshot in the owning backend's space. Layout per bone:
- * [x, y, z, xRot, yRot, zRot, xScale, yScale, zScale].
+ * Absolute pose snapshot used while blending controllers.
+ *
+ * Each bone stores {@code [x, y, z, xRot, yRot, zRot, xScale, yScale, zScale]}
  */
 public final class KnightLibPose {
 

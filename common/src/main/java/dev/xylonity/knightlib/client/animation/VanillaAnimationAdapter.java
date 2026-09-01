@@ -13,13 +13,9 @@ import java.util.Map;
 import java.util.ArrayList;
 
 /**
- * Converts a code vanilla {@link AnimationDefinition} into KnightLib's internal representation
+ * Converts a vanilla code {@link AnimationDefinition} into KnightLib's internal representation.
  */
 public final class VanillaAnimationAdapter {
-
-    private VanillaAnimationAdapter() {
-        ;;
-    }
 
     public static KnightLibAnimation convert(String name, AnimationDefinition definition) {
         return convert(name, definition, null);

@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
- * Immutable description of a model used by a KnightLib renderer
+ * Immutable recipe for building a renderer model.
  */
 public interface KnightLibModelSource {
 

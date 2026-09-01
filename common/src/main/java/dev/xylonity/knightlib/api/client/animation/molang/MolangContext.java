@@ -10,7 +10,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Molang query context, based off GeckoLib's implementation
+ * Values exposed to Molang while an animation is being sampled.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/molang/MolangQueries.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/model/GeoModel.java
  */
 public final class MolangContext {
 

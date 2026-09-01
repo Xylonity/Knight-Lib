@@ -3,7 +3,7 @@ package dev.xylonity.knightlib.api.animation;
 import dev.xylonity.knightlib.api.util.KnightLibEasings;
 
 /**
- * Implemented by entities and block entities animated through KnightLib.
+ * The common entry point for an entity or blockentity animated through KnightLib.
  *
  * <p>The implementor holds a single {@link KnightLibAnimationHandler} instance for its whole lifetime and returns it from {@link #getAnimationHandler()}:</p>
  *
@@ -21,6 +21,11 @@ import dev.xylonity.knightlib.api.util.KnightLibEasings;
  *
  * <p>Block entities that override {@code getUpdateTag()} must call {@code super.getUpdateTag()} or explicitly save this handler
  * into their returned tag. An override that bypasses the vanilla method also bypasses KnightLib's automatic update-tag injection.</p>
+ *
+ * Based off Citadel implementation
+ * https://github.com/AlexModGuy/Citadel/blob/1.20/src/main/java/com/github/alexthe666/citadel/animation/IAnimatedEntity.java
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animatable/GeoAnimatable.java
  */
 public interface KnightLibAnimatable {
 

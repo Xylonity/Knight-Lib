@@ -5,8 +5,11 @@ import dev.xylonity.knightlib.client.animation.model.GeoCube;
 import java.util.List;
 
 /**
- * Immutable parsed {@code .geo.json} geometry. Bone offsets are relative to the parent pivot,
- * already converted to KnightLib's geo model space
+ * Immutable point between a geo model file and a live {@code GeoModel}. Pivots, rotations, UVs and cubes are already converted
+ * here, leaving model instances free to focus on mutable pose.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/cache/object/BakedGeoModel.java
  */
 public record GeoModelDefinition(List<BoneDefinition> bones) {
 

@@ -3,8 +3,7 @@ package dev.xylonity.knightlib.api.item;
 import java.util.function.Supplier;
 
 /**
- * Common-side capability for vanilla {@code ArmorItem} subclasses that replace the model used
- * while the stack is equipped
+ * Common-side capability for {@code ArmorItem}s that replace the equipped model through KnightLib.
  */
 public interface KnightLibRenderedArmorItem extends KnightLibAnimatedItem {
 

@@ -8,7 +8,12 @@ import org.joml.Vector3f;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Immutable cube geometry in model space, already converted to the world's format
+ * Immutable baked cube geometry. By the time a cube gets here means it's ready for rendering as almost every pass is applied.
+ *
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/cache/object/GeoCube.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/cache/object/GeoQuad.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/cache/object/GeoVertex.java
  */
 public final class GeoCube {
 
@@ -55,6 +60,7 @@ public final class GeoCube {
         for (final Face face : faces) {
             final Vector3f normal = normalMatrix.transform(face.normal().x(), face.normal().y(), face.normal().z(), scratch);
             fixInvertedFlatNormal(normal);
+
             for (final Vertex vertex : face.vertices()) {
                 final Vector3f position = vertex.position();
                 consumer.vertex(pose, position.x(), position.y(), position.z());

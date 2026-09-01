@@ -15,7 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Where a KnightLib renderer's animation keyframes come from
+ * Tells a renderer where named animations come from.
  */
 @FunctionalInterface
 public interface KnightLibAnimationSource {
@@ -51,10 +51,6 @@ public interface KnightLibAnimationSource {
         private static final Map<Map<String, AnimationDefinition>, Map<String, KnightLibAnimation>> CONVERTED = new IdentityHashMap<>();
         private static final Map<Class<?>, Map<String, KnightLibAnimation>> CONVERTED_CLASSES = new IdentityHashMap<>();
 
-        private Cache() {
-            ;;
-        }
-
         private static Map<String, KnightLibAnimation> convert(Map<String, AnimationDefinition> definitions) {
             synchronized (CONVERTED) {
                 return CONVERTED.computeIfAbsent(definitions, source -> {
@@ -79,6 +75,7 @@ public interface KnightLibAnimationSource {
 
         private static Map<String, KnightLibAnimation> discover(Class<?> definitions) {
             final Field[] fields = definitions.getDeclaredFields();
+
             Arrays.sort(fields, Comparator.comparing(Field::getName));
 
             final Map<String, KnightLibAnimation> converted = new LinkedHashMap<>();

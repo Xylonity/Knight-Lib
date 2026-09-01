@@ -12,15 +12,11 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * Internal registry used to tick animatable blockentities independently of vanilla block tickers
+ * Keeps animatable block entities ticking even when they do not have a vanilla be ticker
  */
 public final class BlockEntityAnimationTicker {
 
     private static final Map<Level, Set<BlockEntity>> BY_LEVEL = new WeakHashMap<>();
-
-    private BlockEntityAnimationTicker() {
-        ;;
-    }
 
     public static void register(BlockEntity blockEntity) {
         if (!(blockEntity instanceof KnightLibAnimatable) || blockEntity.getLevel() == null || blockEntity.isRemoved()) {
@@ -28,6 +24,7 @@ public final class BlockEntityAnimationTicker {
         }
 
         synchronized (BY_LEVEL) {
+            // Keeping the same instance per dimension
             removeFromAll(blockEntity);
             BY_LEVEL.computeIfAbsent(blockEntity.getLevel(), ignored -> Collections.newSetFromMap(new WeakHashMap<>()))
                     .add(blockEntity);
