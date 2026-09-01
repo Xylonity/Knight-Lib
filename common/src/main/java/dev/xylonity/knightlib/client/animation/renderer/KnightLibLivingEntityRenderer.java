@@ -141,6 +141,10 @@ public abstract class KnightLibLivingEntityRenderer<T extends LivingEntity & Kni
         addRenderLayer(new KnightLibEmissiveLayer<>(texture));
     }
 
+    protected final void addEmissiveLayer(Function<T, ResourceLocation> texture, KnightLibEmissiveLayer.AnimatedTint<T> animatedTint) {
+        addRenderLayer(new KnightLibEmissiveLayer<>(texture, animatedTint));
+    }
+
     protected final void addOverlayLayer(Function<T, ResourceLocation> texture) {
         addRenderLayer(new KnightLibOverlayLayer<>(texture));
     }

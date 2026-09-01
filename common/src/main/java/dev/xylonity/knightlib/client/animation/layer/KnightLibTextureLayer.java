@@ -52,7 +52,7 @@ public abstract class KnightLibTextureLayer<T> extends KnightLibRenderLayer<T> {
 
         final int resolvedColor = context.multiplyColor(getColor(context));
         final RenderType renderType = Objects.requireNonNull(getRenderType(context, resolvedTexture, resolvedColor), "renderType");
-        context.renderModel(renderType, getPackedLight(context), getPackedOverlay(context), resolvedColor);
+        renderTexture(context, resolvedTexture, renderType, resolvedColor);
     }
 
     /**
@@ -71,6 +71,13 @@ public abstract class KnightLibTextureLayer<T> extends KnightLibRenderLayer<T> {
     }
 
     protected abstract RenderType getRenderType(KnightLibRenderLayerContext<T> context, ResourceLocation texture, int resolvedColor);
+
+    /**
+     * Draws the resolved texture pass. Subclasses may add a preparatory pass before delegating here.
+     */
+    protected void renderTexture(KnightLibRenderLayerContext<T> context, ResourceLocation texture, RenderType renderType, int resolvedColor) {
+        context.renderModel(renderType, getPackedLight(context), getPackedOverlay(context), resolvedColor);
+    }
 
     protected int getPackedLight(KnightLibRenderLayerContext<T> context) {
         return context.packedLight();

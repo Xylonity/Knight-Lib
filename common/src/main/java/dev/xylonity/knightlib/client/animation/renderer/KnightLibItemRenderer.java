@@ -118,6 +118,10 @@ public abstract class KnightLibItemRenderer extends BlockEntityWithoutLevelRende
         addRenderLayer(new KnightLibEmissiveLayer<>(texture));
     }
 
+    protected final void addEmissiveLayer(Function<ItemStack, ResourceLocation> texture, KnightLibEmissiveLayer.AnimatedTint<ItemStack> animatedTint) {
+        addRenderLayer(new KnightLibEmissiveLayer<>(texture, animatedTint));
+    }
+
     protected final void addOverlayLayer(Function<ItemStack, ResourceLocation> texture) {
         addRenderLayer(new KnightLibOverlayLayer<>(texture));
     }

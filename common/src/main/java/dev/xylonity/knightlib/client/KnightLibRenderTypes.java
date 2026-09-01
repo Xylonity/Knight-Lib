@@ -4,51 +4,62 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import dev.xylonity.knightlib.client.shader.KnightLibShaders;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.function.Function;
 
-public final class KnightLibRenderTypes {
+public final class KnightLibRenderTypes extends RenderType {
 
-    private static final Function<ResourceLocation, RenderType> ENTITY_EMISSIVE = Util.memoize(texture -> createEntityUnshadedEmissive(texture, false));
-    private static final Function<ResourceLocation, RenderType> ENTITY_EMISSIVE_DEPTH = Util.memoize(texture -> createEntityUnshadedEmissive(texture, true));
+    private static final Function<ResourceLocation, RenderType> ENTITY_EMISSIVE = Util.memoize(texture -> createEntityEmissive(texture, false));
+    private static final Function<ResourceLocation, RenderType> ENTITY_EMISSIVE_DEPTH = Util.memoize(texture -> createEntityEmissive(texture, true));
+    private static final Function<ResourceLocation, RenderType> ENTITY_EMISSIVE_DEPTH_MASK = Util.memoize(KnightLibRenderTypes::createEntityEmissiveDepthMask);
 
-    private static RenderType createEntityUnshadedEmissive(ResourceLocation texture, boolean writeDepth) {
-        final RenderType emissive = RenderType.entityTranslucentEmissive(texture);
-        return new RenderType(
-                writeDepth ? "knightlib_entity_unshaded_emissive_depth" : "knightlib_entity_unshaded_emissive",
-                DefaultVertexFormat.NEW_ENTITY,
-                VertexFormat.Mode.QUADS,
-                256,
-                true,
-                true,
-                () -> {
-                    emissive.setupRenderState();
-                    RenderSystem.setShader(KnightLibShaders::getEntityEmissive);
-                    if (writeDepth) {
-                        RenderSystem.depthMask(true);
-                    }
+    private KnightLibRenderTypes(String name, VertexFormat format, VertexFormat.Mode mode, int bufferSize, boolean affectsCrumbling, boolean sortOnUpload, Runnable setupState, Runnable clearState) {
+        super(name, format, mode, bufferSize, affectsCrumbling, sortOnUpload, setupState, clearState);
+    }
 
-                },
-                emissive::clearRenderState
-        ) {
-            ;;
-        };
+    /**
+     * Pass backed by vanilla's eyes shader
+     */
+    private static RenderType createEntityEmissive(ResourceLocation texture, boolean writeDepth) {
+        final RenderType.CompositeState state = RenderType.CompositeState.builder()
+                .setShaderState(RENDERTYPE_EYES_SHADER)
+                .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setCullState(NO_CULL)
+                .setWriteMaskState(writeDepth ? COLOR_DEPTH_WRITE : COLOR_WRITE)
+                .createCompositeState(false);
 
+        return create(
+                writeDepth ? "knightlib_entity_emissive_depth" : "knightlib_entity_emissive",
+                DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, false, true, state
+        );
+    }
+
+    /**
+     * Depth alpha pass, computed below the emissive layer, preventing actual geometry from culling clouds
+     */
+    private static RenderType createEntityEmissiveDepthMask(ResourceLocation texture) {
+        final RenderType.CompositeState state = RenderType.CompositeState.builder()
+                .setShaderState(RENDERTYPE_ENTITY_CUTOUT_NO_CULL_SHADER)
+                .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                .setTransparencyState(NO_TRANSPARENCY)
+                .setCullState(NO_CULL)
+                .setLightmapState(LIGHTMAP)
+                .setOverlayState(OVERLAY)
+                .setWriteMaskState(DEPTH_WRITE)
+                .createCompositeState(false);
+
+        return create("knightlib_entity_emissive_depth_mask", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, false, false, state);
     }
 
     public static final RenderType LINES_SEE_THROUGH = new RenderType(
-            "knightlib_editor_lines_see_through",
-            DefaultVertexFormat.POSITION_COLOR_NORMAL,
-            VertexFormat.Mode.LINES,
-            1536,
-            false,
-            false,
+            "knightlib_editor_lines_see_through", DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.LINES, 1536, false, false,
             () -> {
                 RenderSystem.setShader(GameRenderer::getRendertypeLinesShader);
                 RenderSystem.enableBlend();
@@ -66,6 +77,7 @@ public final class KnightLibRenderTypes {
                 RenderSystem.defaultBlendFunc();
                 RenderSystem.lineWidth(1f);
             }
+
     ) {
         ;;
     };
@@ -76,6 +88,10 @@ public final class KnightLibRenderTypes {
 
     public static RenderType entityEmissive(ResourceLocation texture, boolean writeDepth) {
         return (writeDepth ? ENTITY_EMISSIVE_DEPTH : ENTITY_EMISSIVE).apply(texture);
+    }
+
+    public static RenderType entityEmissiveDepthMask(ResourceLocation texture) {
+        return ENTITY_EMISSIVE_DEPTH_MASK.apply(texture);
     }
 
 }
