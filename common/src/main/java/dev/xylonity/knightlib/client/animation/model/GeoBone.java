@@ -140,6 +140,35 @@ public final class GeoBone {
         poseStack.popPose();
     }
 
+    void renderSelected(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a, Set<String> selectedBones) {
+        if (!visible) {
+            return;
+        }
+
+        poseStack.pushPose();
+
+        poseStack.translate(x / 16f, y / 16f, z / 16f);
+        if (rotX != 0f || rotY != 0f || rotZ != 0f) {
+            poseStack.mulPose(new Quaternionf().rotationZYX((float) Math.toRadians(rotZ), (float) Math.toRadians(rotY), (float) Math.toRadians(rotX)));
+        }
+        if (scaleX != 1f || scaleY != 1f || scaleZ != 1f) {
+            poseStack.scale(scaleX, scaleY, scaleZ);
+        }
+
+        if (selectedBones.contains(name)) {
+            for (final GeoCube cube : cubes) {
+                cube.render(poseStack, consumer, packedLight, packedOverlay, r, g, b, a);
+            }
+
+        }
+
+        for (final GeoBone child : children) {
+            child.renderSelected(poseStack, consumer, packedLight, packedOverlay, r, g, b, a, selectedBones);
+        }
+
+        poseStack.popPose();
+    }
+
     public void visit(PoseStack poseStack, Set<String> names, KnightLibModel.BoneVisitor visitor) {
         if (!visible) {
             return;

@@ -235,6 +235,11 @@ public final class GeoModel extends KnightLibModel {
     }
 
     @Override
+    public void renderBones(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a, Set<String> boneNames) {
+        root.renderSelected(poseStack, consumer, packedLight, packedOverlay, r, g, b, a, boneNames);
+    }
+
+    @Override
     public void renderLiving(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a) {
         poseStack.pushPose();
 

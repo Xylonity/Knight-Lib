@@ -157,6 +157,20 @@ public final class KnightLibRenderLayerContext<T> {
     }
 
     /**
+     * Renders only the named bones through the supplied render type. Ancestor transforms are preserved but their cubes are not drawn unless selected.
+     */
+    public void renderBones(Set<String> boneNames, RenderType renderType, int light, int overlay, int argb) {
+        renderBones(boneNames, buffer(renderType), light, overlay, argb);
+    }
+
+    public void renderBones(Set<String> boneNames, VertexConsumer consumer, int light, int overlay, int argb) {
+        Objects.requireNonNull(boneNames, "boneNames");
+        Objects.requireNonNull(consumer, "consumer");
+        final KnightLibColor color = KnightLibColor.fromArgb(argb);
+        model.renderBones(poseStack, consumer, light, overlay, color.red(), color.green(), color.blue(), color.alpha(), boneNames);
+    }
+
+    /**
      * Visits all bones in the frame used by this layer
      */
     public void visitBones(KnightLibModel.BoneVisitor visitor) {

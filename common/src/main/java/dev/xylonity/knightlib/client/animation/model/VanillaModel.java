@@ -246,6 +246,33 @@ public final class VanillaModel extends KnightLibModel {
     }
 
     @Override
+    public void renderBones(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a, Set<String> boneNames) {
+        renderSelectedPart(ROOT, root, poseStack, consumer, packedLight, packedOverlay, r, g, b, a, boneNames);
+    }
+
+    private void renderSelectedPart(String name, ModelPart part, PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a, Set<String> selectedBones) {
+        if (!part.visible) {
+            return;
+        }
+
+        poseStack.pushPose();
+
+        part.translateAndRotate(poseStack);
+        if (!part.skipDraw && selectedBones.contains(name) && (ROOT.equals(name) || bones.get(name) == part)) {
+            for (final ModelPart.Cube cube : ((ModelPartAccessor) (Object) part).knightlib$getCubes()) {
+                cube.compile(poseStack.last(), consumer, packedLight, packedOverlay, r, g, b, a);
+            }
+
+        }
+
+        for (final Map.Entry<String, ModelPart> child : ((ModelPartAccessor) (Object) part).knightlib$getChildren().entrySet()) {
+            renderSelectedPart(child.getKey(), child.getValue(), poseStack, consumer, packedLight, packedOverlay, r, g, b, a, selectedBones);
+        }
+
+        poseStack.popPose();
+    }
+
+    @Override
     public void visitBones(PoseStack poseStack, Set<String> names, BoneVisitor visitor) {
         visitPart(ROOT, root, poseStack, names, visitor);
     }

@@ -81,6 +81,16 @@ public abstract class KnightLibModel {
     public abstract void render(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a);
 
     /**
+     * Renders only the cubes owned by the requested bones while retaining their complete ancestor transforms (while children are not implicitly selected)
+     */
+    public void renderBones(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a, Set<String> boneNames) {
+        if (boneNames.containsAll(boneNames())) {
+            render(poseStack, consumer, packedLight, packedOverlay, r, g, b, a);
+        }
+
+    }
+
+    /**
      * Renders from inside vanilla's model frame
      */
     public void renderLiving(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a) {

@@ -154,9 +154,6 @@ public final class GeoParser {
     private static GeoCube parseCube(JsonObject cube, Vector3f bonePivot, int textureWidth, int textureHeight, boolean defaultMirror, float defaultInflate) {
         final Vector3f origin = parseVector(cube, "origin");
         final Vector3f size = parseVector(cube, "size");
-        if (size.x() < 0f || size.y() < 0f || size.z() < 0f) {
-            throw new IllegalArgumentException("[KnightLib] Cube size cannot be negative");
-        }
 
         final float inflate = cube.has("inflate") ? cube.get("inflate").getAsFloat() : defaultInflate;
         if (!Float.isFinite(inflate)) {
@@ -171,9 +168,6 @@ public final class GeoParser {
         final float extentX = size.x() + inflate * 2f;
         final float extentY = size.y() + inflate * 2f;
         final float extentZ = size.z() + inflate * 2f;
-        if (extentX < 0f || extentY < 0f || extentZ < 0f) {
-            throw new IllegalArgumentException("[KnightLib] Cube inflate cannot invert its size");
-        }
 
         // Per-cube rotation around its own pivot
         final Matrix4f transform = new Matrix4f();

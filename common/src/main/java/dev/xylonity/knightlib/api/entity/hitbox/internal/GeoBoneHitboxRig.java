@@ -555,9 +555,6 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
             final JsonObject cube = element.getAsJsonObject();
             final Vector3f origin = parseVector(cube, "origin");
             final Vector3f size = parseVector(cube, "size");
-            if (size.x() < 0f || size.y() < 0f || size.z() < 0f) {
-                throw new IllegalArgumentException("[KnightLib] Cube size cannot be negative");
-            }
 
             final float inflate = cube.has("inflate") ? cube.get("inflate").getAsFloat() : defaultInflate;
             if (!Float.isFinite(inflate)) {
@@ -570,9 +567,6 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
             final float sx = size.x() + inflate * 2f;
             final float sy = size.y() + inflate * 2f;
             final float sz = size.z() + inflate * 2f;
-            if (sx < 0f || sy < 0f || sz < 0f) {
-                throw new IllegalArgumentException("[KnightLib] Cube inflate cannot invert its size");
-            }
 
             final Matrix4f cubeTransform = new Matrix4f();
             if (cube.has("rotation")) {
