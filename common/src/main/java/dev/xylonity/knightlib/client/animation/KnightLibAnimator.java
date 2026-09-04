@@ -16,10 +16,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -48,6 +51,20 @@ public final class KnightLibAnimator {
      * game time in ticks, including the partial tick.
      */
     public static void animate(KnightLibAnimationHandler handler, KnightLibModel model, Function<String, KnightLibAnimation> resolver, double now) {
+        animate(handler, model, resolver, now, handler::dispatchKeyframe, (controller, animation) -> notifyFinished(handler, controller, animation));
+    }
+
+    /**
+     * Returns keyframes instead of dispatching them immediately. Mainly used for locators to update their position based on the current model pose of the object in question.
+     */
+    public static DeferredEvents animateDeferred(KnightLibAnimationHandler handler, KnightLibModel model, Function<String, KnightLibAnimation> resolver, double now) {
+        final List<Notification> notifications = new ArrayList<>();
+        animate(handler, model, resolver, now, event -> notifications.add(Notification.keyframe(event)),
+                (controller, animation) -> notifications.add(Notification.finished(controller, animation)));
+        return new DeferredEvents(notifications);
+    }
+
+    private static void animate(KnightLibAnimationHandler handler, KnightLibModel model, Function<String, KnightLibAnimation> resolver, double now, Consumer<KnightLibKeyframeEvent> keyframeConsumer, BiConsumer<String, String> finishedConsumer) {
         final MolangContext molang = clientMolang(handler.animationEntity(), now);
 
         // Consumes new commands and expires sequences
@@ -92,7 +109,7 @@ public final class KnightLibAnimator {
 
             if (!clock.steps.isEmpty() && !clock.finished) {
                 final double elapsed = Math.max(0.0, (now - clock.start) * clock.speed);
-                fireEvents(handler, controller, clock, resolver, elapsed);
+                fireEvents(controller, clock, resolver, elapsed, keyframeConsumer, finishedConsumer);
                 final KnightLibAnimationSequence.Playback playback = KnightLibAnimationSequence.sample(clock.steps, resolver, elapsed);
                 if (playback.animation() != null) {
                     clock.overridePreviousAnimation = overridesPreviousAnimation(playback.animation(), clock.blendMode);
@@ -411,7 +428,7 @@ public final class KnightLibAnimator {
         WARNED_BONES.clear();
     }
 
-    private static void fireEvents(KnightLibAnimationHandler handler, KnightLibAnimationHandler.Controller controller, Clock clock, Function<String, KnightLibAnimation> resolver, double sequenceTick) {
+    private static void fireEvents(KnightLibAnimationHandler.Controller controller, Clock clock, Function<String, KnightLibAnimation> resolver, double sequenceTick, Consumer<KnightLibKeyframeEvent> keyframeConsumer, BiConsumer<String, String> finishedConsumer) {
         if (sequenceTick < clock.lastSequenceTick) {
             clock.lastSequenceTick = sequenceTick;
             return;
@@ -449,7 +466,7 @@ public final class KnightLibAnimator {
                     for (final KnightLibAnimation.KeyframeEvent event : animation.events()) {
                         final double occurrence = stepStart + cycle * length + event.tick();
                         if (occurrence > eventFrom && occurrence <= sequenceTick && fired++ < 128) {
-                            notifyEvent(handler, controller.name(), animation.name(), event);
+                            notifyEvent(keyframeConsumer, controller.name(), animation.name(), event);
                         }
 
                     }
@@ -463,7 +480,7 @@ public final class KnightLibAnimator {
             for (final KnightLibAnimation.KeyframeEvent event : animation.events()) {
                 final double occurrence = stepStart + event.tick();
                 if (occurrence > eventFrom && occurrence <= eventEnd && fired++ < 128) {
-                    notifyEvent(handler, controller.name(), animation.name(), event);
+                    notifyEvent(keyframeConsumer, controller.name(), animation.name(), event);
                 }
 
             }
@@ -474,7 +491,7 @@ public final class KnightLibAnimator {
 
             final double stepEnd = stepStart + length;
             if (stepEnd > sequenceFrom && stepEnd <= sequenceTick) {
-                notifyFinished(handler, controller.name(), animation.name());
+                finishedConsumer.accept(controller.name(), animation.name());
             }
 
             stepStart = stepEnd;
@@ -487,9 +504,9 @@ public final class KnightLibAnimator {
         clock.lastSequenceTick = sequenceTick;
     }
 
-    private static void notifyEvent(KnightLibAnimationHandler handler, String controller, String animation, KnightLibAnimation.KeyframeEvent event) {
+    private static void notifyEvent(Consumer<KnightLibKeyframeEvent> consumer, String controller, String animation, KnightLibAnimation.KeyframeEvent event) {
         try {
-            handler.dispatchKeyframe(new KnightLibKeyframeEvent(controller, animation, event.type(), event.payload(), event.locator()));
+            consumer.accept(new KnightLibKeyframeEvent(controller, animation, event.type(), event.payload(), event.locator()));
         }
         catch (Exception exception) {
             KnightLib.LOGGER.error("Animation keyframe callback failed for '{}'", animation, exception);
@@ -503,6 +520,47 @@ public final class KnightLibAnimator {
         }
         catch (Exception exception) {
             KnightLib.LOGGER.error("Animation completion callback failed for '{}'", animation, exception);
+        }
+
+    }
+
+    /**
+     * Ordered animation callbacks waiting for the renderer to resolve locator positions
+     */
+    public static final class DeferredEvents {
+
+        private final List<Notification> notifications;
+
+        private DeferredEvents(List<Notification> notifications) {
+            this.notifications = List.copyOf(notifications);
+        }
+
+        public boolean isEmpty() {
+            return notifications.isEmpty();
+        }
+
+        List<Notification> notifications() {
+            return notifications;
+        }
+
+    }
+
+    record Notification(
+            KnightLibKeyframeEvent keyframe,
+            String controller,
+            String animation
+    ) {
+
+        static Notification keyframe(KnightLibKeyframeEvent event) {
+            return new Notification(event, null, null);
+        }
+
+        static Notification finished(String controller, String animation) {
+            return new Notification(null, controller, animation);
+        }
+
+        boolean isKeyframe() {
+            return keyframe != null;
         }
 
     }

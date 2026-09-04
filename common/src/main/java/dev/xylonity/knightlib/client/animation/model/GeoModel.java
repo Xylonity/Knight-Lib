@@ -26,6 +26,7 @@ public final class GeoModel extends KnightLibModel {
     private final GeoBone root;
     private final Map<String, GeoBone> bones = new LinkedHashMap<>();
     private final Set<String> boneNames;
+    private final Set<String> locatorNames;
 
     public GeoModel(GeoModelDefinition definition) {
         this.root = new GeoBone(ROOT, 0f, 0f, 0f, 0f, 0f, 0f, true, java.util.List.of());
@@ -53,8 +54,24 @@ public final class GeoModel extends KnightLibModel {
             parent.addChild(bone);
         }
 
-        boneNames = Set.copyOf(bones.keySet());
+        for (final GeoModelDefinition.LocatorDefinition locatorDefinition : definition.locators()) {
+            final GeoBone bone = bones.get(locatorDefinition.bone());
+            if (bone == null) {
+                throw new IllegalStateException("[KnightLib] Locator '" + locatorDefinition.name() + "' references unknown bone '" + locatorDefinition.bone() + "'");
+            }
 
+            bone.addLocator(
+                    locatorDefinition.name(),
+                    locatorDefinition.offsetX(), locatorDefinition.offsetY(), locatorDefinition.offsetZ(),
+                    locatorDefinition.rotX(), locatorDefinition.rotY(), locatorDefinition.rotZ()
+            );
+
+        }
+
+        boneNames = Set.copyOf(bones.keySet());
+        final Set<String> locators = new java.util.LinkedHashSet<>();
+        root.forEachLocator(locators::add);
+        locatorNames = Set.copyOf(locators);
     }
 
     public GeoBone bone(String name) {
@@ -77,6 +94,16 @@ public final class GeoModel extends KnightLibModel {
     @Override
     public boolean hasBone(String name) {
         return bones.containsKey(name);
+    }
+
+    @Override
+    public Set<String> locatorNames() {
+        return locatorNames;
+    }
+
+    @Override
+    public boolean hasLocator(String name) {
+        return locatorNames.contains(name);
     }
 
     @Override
@@ -261,6 +288,20 @@ public final class GeoModel extends KnightLibModel {
         poseStack.translate(0f, 1.501f, 0f);
         poseStack.scale(-1f, -1f, 1f);
         visitBones(poseStack, names, visitor);
+        poseStack.popPose();
+    }
+
+    @Override
+    public void visitLocators(PoseStack poseStack, Set<String> names, BoneVisitor visitor) {
+        root.visitLocators(poseStack, names, visitor);
+    }
+
+    @Override
+    public void visitLivingLocators(PoseStack poseStack, Set<String> names, BoneVisitor visitor) {
+        poseStack.pushPose();
+        poseStack.translate(0f, 1.501f, 0f);
+        poseStack.scale(-1f, -1f, 1f);
+        visitLocators(poseStack, names, visitor);
         poseStack.popPose();
     }
 

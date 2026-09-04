@@ -57,8 +57,10 @@ public final class GeoParser {
         }
 
         final List<GeoModelDefinition.BoneDefinition> bones = new ArrayList<>();
+        final List<GeoModelDefinition.LocatorDefinition> locators = new ArrayList<>();
         final Map<String, JsonObject> rawBones = new LinkedHashMap<>();
         final Map<String, Vector3f> absolutePivots = new LinkedHashMap<>();
+        final Set<String> locatorNames = new HashSet<>();
 
         if (geometry.has("bones")) {
             for (final JsonElement element : geometry.getAsJsonArray("bones")) {
@@ -94,6 +96,25 @@ public final class GeoParser {
 
                 }
 
+                if (bone.has("locators")) {
+                    final JsonObject rawLocators = bone.getAsJsonObject("locators");
+                    for (final Map.Entry<String, JsonElement> entry : rawLocators.entrySet()) {
+                        final String locatorName = entry.getKey();
+                        if (locatorName.isBlank() || !locatorNames.add(locatorName)) {
+                            throw new IllegalArgumentException("[KnightLib] Duplicate or empty locator name '" + locatorName + "'");
+                        }
+
+                        final LocatorTransform locator = parseLocator(entry.getValue(), pivot, locatorName);
+                        locators.add(new GeoModelDefinition.LocatorDefinition(
+                                locatorName, name,
+                                locator.offset().x(), locator.offset().y(), locator.offset().z(),
+                                locator.rotation().x(), locator.rotation().y(), locator.rotation().z()
+                        ));
+
+                    }
+
+                }
+
                 final Vector3f parentPivot = absolutePivots.getOrDefault(parent, new Vector3f());
 
                 bones.add(new GeoModelDefinition.BoneDefinition(
@@ -104,13 +125,12 @@ public final class GeoParser {
                         List.copyOf(cubes)
                 ));
 
-                warnUnsupported(bone, "poly_mesh", "texture_mesh", "texture_meshes", "locators",
-                        "binding", "bind_pose_rotation", "render_group_id");
+                warnUnsupported(bone, "poly_mesh", "texture_mesh", "texture_meshes", "binding", "bind_pose_rotation", "render_group_id");
             }
 
         }
 
-        return new GeoModelDefinition(List.copyOf(bones));
+        return new GeoModelDefinition(List.copyOf(bones), List.copyOf(locators));
     }
 
     private static String parentName(JsonObject bone) {
@@ -246,6 +266,28 @@ public final class GeoParser {
         return new GeoCube(faces.toArray(GeoCube.Face[]::new), size.x(), size.y(), size.z());
     }
 
+    private static LocatorTransform parseLocator(JsonElement element, Vector3f bonePivot, String name) {
+        final Vector3f position;
+        final Vector3f rotation;
+        if (element.isJsonArray()) {
+            position = parseVector(element, "locator '" + name + "'");
+            rotation = new Vector3f();
+        }
+        else if (element.isJsonObject()) {
+            final JsonObject locator = element.getAsJsonObject();
+            position = parseVector(locator, "offset");
+            rotation = parseVector(locator, "rotation").mul(-1, -1, 1);
+            warnUnsupported(locator, "ignore_inherited_scale");
+        }
+        else {
+            throw new IllegalArgumentException("[KnightLib] Locator '" + name + "' must be an array or object");
+        }
+
+        position.mul(-1, 1, 1).sub(bonePivot);
+
+        return new LocatorTransform(position, rotation);
+    }
+
     private static Vector3f corner(Matrix4f transform, float x, float y, float z) {
         return transform.transformPosition(new Vector3f(x, y, z));
     }
@@ -310,10 +352,18 @@ public final class GeoParser {
             return new Vector3f();
         }
 
-        final JsonArray array = object.getAsJsonArray(key);
+        return parseVector(object.get(key), key);
+    }
+
+    private static Vector3f parseVector(JsonElement element, String name) {
+        if (!element.isJsonArray() || element.getAsJsonArray().size() < 3) {
+            throw new IllegalArgumentException("[KnightLib] Geometry vector '" + name + "' must contain three values");
+        }
+
+        final JsonArray array = element.getAsJsonArray();
         final Vector3f value = new Vector3f(array.get(0).getAsFloat(), array.get(1).getAsFloat(), array.get(2).getAsFloat());
         if (!Float.isFinite(value.x()) || !Float.isFinite(value.y()) || !Float.isFinite(value.z())) {
-            throw new IllegalArgumentException("[KnightLib] Geometry vector '" + key + "' must be finite");
+            throw new IllegalArgumentException("[KnightLib] Geometry vector '" + name + "' must be finite");
         }
 
         return value;
@@ -321,6 +371,13 @@ public final class GeoParser {
 
     public static Map<String, KnightLibAnimation> parseAnimations(JsonObject root) {
         return GeoAnimationParser.parse(root);
+    }
+
+    private record LocatorTransform(
+            Vector3f offset,
+            Vector3f rotation
+    ) {
+        ;;
     }
 
 }

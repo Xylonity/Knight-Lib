@@ -5,6 +5,7 @@ import dev.xylonity.knightlib.api.animation.KnightLibAnimatable;
 import dev.xylonity.knightlib.api.util.KnightLibColor;
 import dev.xylonity.knightlib.client.animation.KnightLibAnimationSource;
 import dev.xylonity.knightlib.client.animation.KnightLibAnimator;
+import dev.xylonity.knightlib.client.animation.KnightLibKeyframeEvents;
 import dev.xylonity.knightlib.client.animation.KnightLibModelSource;
 import dev.xylonity.knightlib.client.animation.layer.impl.KnightLibEmissiveLayer;
 import dev.xylonity.knightlib.client.animation.layer.impl.KnightLibOverlayLayer;
@@ -131,7 +132,7 @@ public abstract class KnightLibEntityRenderer<T extends Entity & KnightLibAnimat
         final KnightLibAnimationSource animations = defineAnimations(entity);
 
         final double now = entity.level().getGameTime() + partialTicks;
-        KnightLibAnimator.animate(entity.getAnimationHandler(), model, animations::get, now);
+        final KnightLibAnimator.DeferredEvents keyframeEvents = KnightLibAnimator.animateDeferred(entity.getAnimationHandler(), model, animations::get, now);
 
         setupPose(entity, model, partialTicks);
         model.forEachBone(boneName -> setupBone(entity, model, boneName, partialTicks));
@@ -152,6 +153,7 @@ public abstract class KnightLibEntityRenderer<T extends Entity & KnightLibAnimat
         }
 
         model.setupRootTransform(poseStack, bodyYaw, true);
+        KnightLibKeyframeEvents.dispatch(entity.getAnimationHandler(), keyframeEvents, model, poseStack, false);
 
         final int packedOverlay = entity instanceof LivingEntity living
                 ? LivingEntityRenderer.getOverlayCoords(living, 0f)

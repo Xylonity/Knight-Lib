@@ -7,6 +7,7 @@ import dev.xylonity.knightlib.api.animation.KnightLibAnimatable;
 import dev.xylonity.knightlib.api.util.KnightLibColor;
 import dev.xylonity.knightlib.client.animation.KnightLibAnimationSource;
 import dev.xylonity.knightlib.client.animation.KnightLibAnimator;
+import dev.xylonity.knightlib.client.animation.KnightLibKeyframeEvents;
 import dev.xylonity.knightlib.client.animation.KnightLibModelSource;
 import dev.xylonity.knightlib.client.animation.layer.impl.KnightLibEmissiveLayer;
 import dev.xylonity.knightlib.client.animation.layer.impl.KnightLibOverlayLayer;
@@ -140,7 +141,14 @@ public abstract class KnightLibBlockEntityRenderer<T extends BlockEntity & Knigh
 
         // Level-less block entities (JEI previews and similar) still render at rest pose
         final double now = blockEntity.getLevel() != null ? blockEntity.getLevel().getGameTime() + partialTicks : partialTicks;
-        KnightLibAnimator.animate(blockEntity.getAnimationHandler(), model, animations::get, now);
+        final KnightLibAnimator.DeferredEvents keyframeEvents;
+        if (blockEntity.getLevel() == null) {
+            KnightLibAnimator.animate(blockEntity.getAnimationHandler(), model, animations::get, now);
+            keyframeEvents = null;
+        }
+        else {
+            keyframeEvents = KnightLibAnimator.animateDeferred(blockEntity.getAnimationHandler(), model, animations::get, now);
+        }
 
         setupPose(blockEntity, model, partialTicks);
         model.forEachBone(boneName -> setupBone(blockEntity, model, boneName, partialTicks));
@@ -168,6 +176,9 @@ public abstract class KnightLibBlockEntityRenderer<T extends BlockEntity & Knigh
         }
 
         model.setupRootTransform(poseStack, 0f, false);
+        if (keyframeEvents != null) {
+            KnightLibKeyframeEvents.dispatch(blockEntity.getAnimationHandler(), keyframeEvents, model, poseStack, false);
+        }
 
         final ResourceLocation baseTexture = getTextureLocation(blockEntity);
         final TextureAtlasSprite baseSprite = getTextureSprite(blockEntity, baseTexture);

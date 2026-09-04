@@ -6,6 +6,7 @@ import dev.xylonity.knightlib.api.animation.KnightLibAnimatable;
 import dev.xylonity.knightlib.api.util.KnightLibColor;
 import dev.xylonity.knightlib.client.animation.KnightLibAnimationSource;
 import dev.xylonity.knightlib.client.animation.KnightLibAnimator;
+import dev.xylonity.knightlib.client.animation.KnightLibKeyframeEvents;
 import dev.xylonity.knightlib.client.animation.KnightLibModelSource;
 import net.minecraft.client.model.ArmedModel;
 import net.minecraft.client.model.EntityModel;
@@ -41,6 +42,7 @@ public final class KnightLibLivingModel<T extends LivingEntity & KnightLibAnimat
     private int activeRenderColor = KnightLibColor.WHITE_ARGB;
     private float partialTick;
     private T activeEntity;
+    private KnightLibAnimator.DeferredEvents pendingKeyframeEvents;
     private boolean attachmentsPrepared;
 
     private Function<T, String> headBone = entity -> "head";
@@ -75,6 +77,7 @@ public final class KnightLibLivingModel<T extends LivingEntity & KnightLibAnimat
 
     @Override
     public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        pendingKeyframeEvents = null;
         if (modelSource == null) {
             return;
         }
@@ -83,7 +86,7 @@ public final class KnightLibLivingModel<T extends LivingEntity & KnightLibAnimat
 
         final KnightLibAnimationSource animations = animationSource.apply(entity);
         final double now = entity.level().getGameTime() + partialTick;
-        KnightLibAnimator.animate(entity.getAnimationHandler(), activeModel, animations::get, now);
+        pendingKeyframeEvents = KnightLibAnimator.animateDeferred(entity.getAnimationHandler(), activeModel, animations::get, now);
 
         poseSetup.setup(entity, activeModel, limbSwing, limbSwingAmount, partialTick, netHeadYaw, headPitch);
 
@@ -97,10 +100,30 @@ public final class KnightLibLivingModel<T extends LivingEntity & KnightLibAnimat
     @Override
     public void renderToBuffer(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
         if (activeModel != null) {
+            dispatchKeyframeEvents(poseStack);
             final KnightLibColor color = KnightLibColor.fromArgb(activeRenderColor);
-            activeModel.renderLiving(poseStack, consumer, packedLight, packedOverlay,
-                    red * color.red(), green * color.green(),
-                    blue * color.blue(), alpha * color.alpha());
+            activeModel.renderLiving(poseStack, consumer, packedLight, packedOverlay, red * color.red(), green * color.green(), blue * color.blue(), alpha * color.alpha());
+        }
+
+    }
+
+    private void dispatchKeyframeEvents(PoseStack poseStack) {
+        final KnightLibAnimator.DeferredEvents events = pendingKeyframeEvents;
+        pendingKeyframeEvents = null;
+        if (activeEntity != null && events != null && !events.isEmpty()) {
+            KnightLibKeyframeEvents.dispatch(activeEntity.getAnimationHandler(), events, activeModel, poseStack, true);
+        }
+
+    }
+
+    /**
+     * Delivers callbacks left unresolved because vanilla skipped this model's render pass
+     */
+    public void dispatchPendingKeyframeEvents() {
+        final KnightLibAnimator.DeferredEvents events = pendingKeyframeEvents;
+        pendingKeyframeEvents = null;
+        if (activeEntity != null) {
+            KnightLibKeyframeEvents.dispatchUnresolved(activeEntity.getAnimationHandler(), events);
         }
 
     }

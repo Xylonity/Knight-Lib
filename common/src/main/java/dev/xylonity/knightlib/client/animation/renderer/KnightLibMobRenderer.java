@@ -182,6 +182,7 @@ public abstract class KnightLibMobRenderer<T extends Mob & KnightLibAnimatable> 
         try {
             beforeRender(entity, entityYaw, partialTick, poseStack, buffers, packedLight);
             super.render(entity, entityYaw, partialTick, poseStack, buffers, packedLight);
+            model.dispatchPendingKeyframeEvents();
             afterRender(entity, entityYaw, partialTick, poseStack, buffers, packedLight);
         }
         finally {

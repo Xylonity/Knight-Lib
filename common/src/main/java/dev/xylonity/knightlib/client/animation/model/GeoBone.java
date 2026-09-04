@@ -47,6 +47,7 @@ public final class GeoBone {
 
     private final List<GeoCube> cubes;
     private final List<GeoBone> children = new ArrayList<>();
+    private final List<Locator> locators = new ArrayList<>();
 
     public GeoBone(String name, float restX, float restY, float restZ, float restRotX, float restRotY, float restRotZ, boolean restVisible, List<GeoCube> cubes) {
         this.name = name;
@@ -64,6 +65,20 @@ public final class GeoBone {
 
     public void addChild(GeoBone child) {
         children.add(child);
+    }
+
+    void addLocator(String name, float x, float y, float z, float rotX, float rotY, float rotZ) {
+        locators.add(new Locator(name, x, y, z, rotX, rotY, rotZ));
+    }
+
+    void forEachLocator(Consumer<String> visitor) {
+        for (final Locator locator : locators) {
+            visitor.accept(locator.name());
+        }
+        for (final GeoBone child : children) {
+            child.forEachLocator(visitor);
+        }
+
     }
 
     void forEachBone(Consumer<String> visitor) {
@@ -196,6 +211,56 @@ public final class GeoBone {
         }
 
         poseStack.popPose();
+    }
+
+    void visitLocators(PoseStack poseStack, Set<String> names, KnightLibModel.BoneVisitor visitor) {
+        if (!visible) {
+            return;
+        }
+
+        poseStack.pushPose();
+        poseStack.translate(x / 16f, y / 16f, z / 16f);
+        if (rotX != 0f || rotY != 0f || rotZ != 0f) {
+            poseStack.mulPose(new Quaternionf().rotationZYX((float) Math.toRadians(rotZ), (float) Math.toRadians(rotY), (float) Math.toRadians(rotX)));
+        }
+        if (scaleX != 1f || scaleY != 1f || scaleZ != 1f) {
+            poseStack.scale(scaleX, scaleY, scaleZ);
+        }
+
+        for (final Locator locator : locators) {
+            if (!names.contains(locator.name())) {
+                continue;
+            }
+
+            poseStack.pushPose();
+
+            poseStack.translate(locator.x() / 16f, locator.y() / 16f, locator.z() / 16f);
+            if (locator.rotX() != 0f || locator.rotY() != 0f || locator.rotZ() != 0f) {
+                poseStack.mulPose(new Quaternionf().rotationZYX((float) Math.toRadians(locator.rotZ()), (float) Math.toRadians(locator.rotY()), (float) Math.toRadians(locator.rotX())));
+            }
+
+            visitor.visit(locator.name(), new Matrix4f(poseStack.last().pose()), new Matrix3f(poseStack.last().normal()));
+
+            poseStack.popPose();
+        }
+
+        for (final GeoBone child : children) {
+            child.visitLocators(poseStack, names, visitor);
+        }
+
+        poseStack.popPose();
+    }
+
+    private record Locator(
+            String name,
+            float x,
+            float y,
+            float z,
+            float rotX,
+            float rotY,
+            float rotZ
+    ) {
+        ;;
     }
 
 }

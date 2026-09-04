@@ -37,6 +37,17 @@ public abstract class KnightLibModel {
     public abstract boolean hasBone(String name);
 
     /**
+     * Names of the locators declared by the active geometry (vanilla baked models do not expose locators)
+     */
+    public Set<String> locatorNames() {
+        return Set.of();
+    }
+
+    public boolean hasLocator(String name) {
+        return locatorNames().contains(name);
+    }
+
+    /**
      * Restores every bone to its rest pose
      */
     public abstract void resetPose();
@@ -125,6 +136,20 @@ public abstract class KnightLibModel {
         final Set<String> names = new LinkedHashSet<>();
         forEachBone(names::add);
         visitLivingBones(Objects.requireNonNull(poseStack, "poseStack"), names, Objects.requireNonNull(visitor, "visitor"));
+    }
+
+    /**
+     * Visits selected geometry locators using their current matrices
+     */
+    public void visitLocators(PoseStack poseStack, Set<String> names, BoneVisitor visitor) {
+        ;;
+    }
+
+    /**
+     * Visits selected geometry locators from inside vanilla's coordinate frame
+     */
+    public void visitLivingLocators(PoseStack poseStack, Set<String> names, BoneVisitor visitor) {
+        visitLocators(poseStack, names, visitor);
     }
 
     /**
