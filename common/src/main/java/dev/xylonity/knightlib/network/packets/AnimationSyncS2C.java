@@ -3,6 +3,8 @@ package dev.xylonity.knightlib.network.packets;
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.animation.KnightLibAnim;
 import dev.xylonity.knightlib.api.animation.KnightLibAnimationBlendMode;
+import dev.xylonity.knightlib.api.animation.KnightLibAnimationMask;
+import dev.xylonity.knightlib.api.animation.internal.AnimationMaskCodec;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.ClientPacketDispatcher;
 import dev.xylonity.knightlib.network.PacketCodec;
@@ -30,10 +32,21 @@ public record AnimationSyncS2C(
         int easingId,
         float speed,
         long commandGameTime,
-        KnightLibAnimationBlendMode blendMode
+        KnightLibAnimationBlendMode blendMode,
+        boolean snapshot,
+        KnightLibAnimationMask mask,
+        float weight
 ) {
 
-    public static final ResourceLocation ID = KnightLib.of("animation_sync");
+    public AnimationSyncS2C(boolean entityTarget, int entityId, BlockPos pos, String controller, List<KnightLibAnim.Step> steps, int transitionTicks, int easingId, float speed, long commandGameTime, KnightLibAnimationBlendMode blendMode) {
+        this(entityTarget, entityId, pos, controller, steps, transitionTicks, easingId, speed, commandGameTime, blendMode, false);
+    }
+
+    public AnimationSyncS2C(boolean entityTarget, int entityId, BlockPos pos, String controller, List<KnightLibAnim.Step> steps, int transitionTicks, int easingId, float speed, long commandGameTime, KnightLibAnimationBlendMode blendMode, boolean snapshot) {
+        this(entityTarget, entityId, pos, controller, steps, transitionTicks, easingId, speed, commandGameTime, blendMode, snapshot, KnightLibAnimationMask.ALL, 1f);
+    }
+
+    public static final ResourceLocation ID = new ResourceLocation(KnightLib.MOD_ID, "animation_sync");
 
     public AnimationSyncS2C {
         steps = List.copyOf(steps);
@@ -42,6 +55,11 @@ public record AnimationSyncS2C(
         }
 
         Objects.requireNonNull(blendMode, "blendMode");
+        Objects.requireNonNull(mask, "mask");
+        if (!Float.isFinite(weight) || weight < 0f || weight > 1f) {
+            throw new IllegalArgumentException("[KnightLib] Invalid animation weight");
+        }
+
     }
 
     public static final ClientboundPacketType<AnimationSyncS2C> TYPE =
@@ -73,6 +91,9 @@ public record AnimationSyncS2C(
         buf.writeFloat(packet.speed());
         buf.writeVarInt(packet.blendMode().id());
         buf.writeLong(packet.commandGameTime());
+        buf.writeBoolean(packet.snapshot());
+        buf.writeFloat(packet.weight());
+        AnimationMaskCodec.write(packet.mask(), buf);
     }
 
     public static AnimationSyncS2C decode(FriendlyByteBuf buf) {
@@ -119,7 +140,21 @@ public record AnimationSyncS2C(
             throw new DecoderException("[KnightLib] Invalid animation sync payload");
         }
 
-        return new AnimationSyncS2C(entityTarget, entityId, pos, controller, steps, transition, easing, speed, commandGameTime, blendMode);
+        final boolean snapshot = buf.isReadable() && buf.readBoolean();
+        float weight = 1f;
+        KnightLibAnimationMask mask = KnightLibAnimationMask.ALL;
+        try {
+            if (buf.isReadable()) {
+                weight = buf.readFloat();
+                mask = AnimationMaskCodec.read(buf);
+            }
+
+            return new AnimationSyncS2C(entityTarget, entityId, pos, controller, steps, transition, easing, speed, commandGameTime, blendMode, snapshot, mask, weight);
+        }
+        catch (Exception exception) {
+            throw new DecoderException("[KnightLib] Invalid animation mask or weight", exception);
+        }
+
     }
 
 }
