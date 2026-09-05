@@ -75,7 +75,7 @@ public final class KnightLibItemAnimations {
 
             entry.handler.updateItemContext(stack, level, holder);
             if (!entry.state.equals(state)) {
-                entry.handler.load(wrap(state));
+                entry.handler.load(wrap(state), false);
                 entry.state = copy(state);
             }
 
