@@ -30,6 +30,8 @@ public final class KnightLibAnimationController {
     private KnightLibEasings transitionEasing;
     private int stopTransitionTicks = KnightLibAnimatable.DEFAULT_TRANSITION_TICKS;
     private Function<KnightLibAnimationState, KnightLibAnim> selector = state -> null;
+    private KnightLibAnimationMask mask;
+    private ToDoubleFunction<KnightLibAnimationState> weight;
     private ToDoubleFunction<KnightLibAnimationState> speed;
     private ToDoubleFunction<KnightLibAnimationState> speedMultiplier;
 
@@ -67,6 +69,7 @@ public final class KnightLibAnimationController {
      * Transition used when the selector declines to pick an animation and the controller stops
      */
     public KnightLibAnimationController stopTransitionTicks(int ticks) {
+        validateTransitionTicks(ticks);
         this.stopTransitionTicks = ticks;
         return this;
     }
@@ -156,6 +159,31 @@ public final class KnightLibAnimationController {
 
     }
 
+    public KnightLibAnimationController mask(KnightLibAnimationMask mask) {
+        this.mask = Objects.requireNonNull(mask, "mask");
+        return this;
+    }
+
+    public KnightLibAnimationController bones(String... names) {
+        return mask(KnightLibAnimationMask.bones(names));
+    }
+
+    public KnightLibAnimationController weight(double weight) {
+        if (!Double.isFinite(weight) || weight < 0.0 || weight > 1.0) {
+            throw new IllegalArgumentException("[KnightLib] Animation weight must be finite and in [0, 1]");
+        }
+
+        return weight(state -> weight);
+    }
+
+    /**
+     * Updates pose influence every tick without restarting playback (values are clamped to [0, 1])
+     */
+    public KnightLibAnimationController weight(ToDoubleFunction<KnightLibAnimationState> weight) {
+        this.weight = Objects.requireNonNull(weight, "weight");
+        return this;
+    }
+
     public String name() {
         return name;
     }
@@ -173,7 +201,9 @@ public final class KnightLibAnimationController {
         final KnightLibEasings resolvedTransitionEasing = transitionEasing;
         final ToDoubleFunction<KnightLibAnimationState> resolvedSpeed = speed;
         final ToDoubleFunction<KnightLibAnimationState> resolvedSpeedMultiplier = speedMultiplier;
-        if (resolvedTransitionTicks < 0 && resolvedSpeed == null && resolvedSpeedMultiplier == null) {
+        final KnightLibAnimationMask resolvedMask = mask;
+        final ToDoubleFunction<KnightLibAnimationState> resolvedWeight = weight;
+        if (resolvedTransitionTicks < 0 && resolvedSpeed == null && resolvedSpeedMultiplier == null && resolvedMask == null && resolvedWeight == null) {
             return picked;
         }
 
@@ -200,14 +230,21 @@ public final class KnightLibAnimationController {
                 animation = animation.speed(clamp(playbackSpeed));
             }
 
+            if (resolvedMask != null) {
+                animation = animation.mask(resolvedMask);
+            }
+            if (resolvedWeight != null) {
+                animation = animation.weight((float) Math.min(1.0, Math.max(0.0, finiteOrDefault(resolvedWeight.applyAsDouble(state), 1.0))));
+            }
+            
             return animation;
         };
 
     }
 
     private static void validateTransitionTicks(int ticks) {
-        if (ticks < 0) {
-            throw new IllegalArgumentException("[KnightLib] transitionTicks must be non-negative");
+        if (ticks < 0 || ticks > 1200) {
+            throw new IllegalArgumentException("[KnightLib] transitionTicks must be in [0, 1200]");
         }
 
     }

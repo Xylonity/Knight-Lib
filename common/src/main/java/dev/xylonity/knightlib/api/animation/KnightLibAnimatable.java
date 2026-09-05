@@ -1,6 +1,7 @@
 package dev.xylonity.knightlib.api.animation;
 
 import dev.xylonity.knightlib.api.util.KnightLibEasings;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The common entry point for an entity or blockentity animated through KnightLib.
@@ -72,10 +73,21 @@ public interface KnightLibAnimatable {
     }
 
     /**
-     * Stops whatever the controller is playing, blending back to the rest pose over the given {@code transitionTicks}.
+     * Stops whatever the controller is playing, blending back to the lower controllers over the given {@code transitionTicks}.
      */
     default void stopAnimation(String controller, int transitionTicks) {
         getAnimationHandler().stop(controller, transitionTicks);
+    }
+
+    /**
+     * Returns the last evaluated step and progress, or null until a pose has been evaluated.
+     */
+    default @Nullable KnightLibAnimationPlayback getAnimationPlayback(String controller) {
+        return getAnimationHandler().getPlayback(controller);
+    }
+
+    default @Nullable KnightLibAnimationPlayback getAnimationPlayback() {
+        return getAnimationPlayback(KnightLibAnimationHandler.MAIN_CONTROLLER);
     }
 
     /**
