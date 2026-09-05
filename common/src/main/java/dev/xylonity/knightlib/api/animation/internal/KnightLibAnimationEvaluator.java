@@ -388,7 +388,7 @@ public final class KnightLibAnimationEvaluator {
 
     private static final class Clock {
         final KnightLibAnimationHandler.Controller controller;
-        final AnimationEventCursor events = new AnimationEventCursor();
+        final AnimationEventHistory events = new AnimationEventHistory();
         AnimationLayer from;
         long sequence = -1;
         long seen;
