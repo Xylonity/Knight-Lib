@@ -218,6 +218,9 @@ public abstract class KnightLibLivingEntityRenderer<T extends LivingEntity & Kni
 
     @Override
     public boolean shouldRender(T entity, Frustum frustum, double cameraX, double cameraY, double cameraZ) {
+        if (!entity.shouldRender(cameraX, cameraY, cameraZ)) {
+            return false;
+        }
         if (super.shouldRender(entity, frustum, cameraX, cameraY, cameraZ)) {
             return true;
         }

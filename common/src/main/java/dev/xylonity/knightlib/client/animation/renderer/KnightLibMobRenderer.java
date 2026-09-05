@@ -219,6 +219,9 @@ public abstract class KnightLibMobRenderer<T extends Mob & KnightLibAnimatable> 
 
     @Override
     public boolean shouldRender(T entity, Frustum frustum, double cameraX, double cameraY, double cameraZ) {
+        if (!entity.shouldRender(cameraX, cameraY, cameraZ)) {
+            return false;
+        }
         if (super.shouldRender(entity, frustum, cameraX, cameraY, cameraZ)) {
             return true;
         }
