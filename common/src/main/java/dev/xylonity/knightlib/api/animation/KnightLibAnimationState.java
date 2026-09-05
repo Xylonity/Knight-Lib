@@ -6,6 +6,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
+import java.lang.ref.WeakReference;
 
 /**
  * Reusable context handed to a client controller while its selector is being evaluated.
@@ -27,8 +28,10 @@ public final class KnightLibAnimationState {
     private BlockEntity blockEntity;
     private ItemStack stack;
     private Level level;
-    private Entity sampledEntity;
-    private Level sampledLevel;
+
+    private WeakReference<Entity> sampledEntity = new WeakReference<>(null);
+    private WeakReference<Level> sampledLevel = new WeakReference<>(null);
+
     private long sampledGameTime = Long.MIN_VALUE;
     private double sampledX;
     private double sampledZ;
@@ -44,6 +47,15 @@ public final class KnightLibAnimationState {
         this.stack = stack;
         this.level = level;
         updateMovementSample(entity, level);
+    }
+
+    // retaining the stack (or its inventory owner) here would keep its own cache key alive forever
+    void clearContext() {
+        entity = null;
+        blockEntity = null;
+        stack = null;
+        level = null;
+        controller = null;
     }
 
     void controller(String controller) {
@@ -88,6 +100,13 @@ public final class KnightLibAnimationState {
      */
     public @Nullable String current() {
         return controller == null ? null : handler.getActiveAnimation(controller);
+    }
+
+    /**
+     * Last evaluated step of this controller
+     */
+    public @Nullable KnightLibAnimationPlayback playback() {
+        return controller == null ? null : handler.getPlayback(controller);
     }
 
     /**
@@ -142,17 +161,17 @@ public final class KnightLibAnimationState {
 
     private void updateMovementSample(Entity entity, Level level) {
         if (entity == null || level == null) {
-            sampledEntity = null;
-            sampledLevel = null;
+            sampledEntity.clear();
+            sampledLevel.clear();
             sampledGameTime = Long.MIN_VALUE;
             blocksPerTick = 0.0D;
             return;
         }
 
         final long gameTime = level.getGameTime();
-        if (sampledEntity != entity || sampledLevel != level || gameTime < sampledGameTime) {
-            sampledEntity = entity;
-            sampledLevel = level;
+        if (sampledEntity.get() != entity || sampledLevel.get() != level || gameTime < sampledGameTime) {
+            sampledEntity = new WeakReference<>(entity);
+            sampledLevel = new WeakReference<>(level);
             sampledGameTime = gameTime;
             sampledX = entity.getX();
             sampledZ = entity.getZ();

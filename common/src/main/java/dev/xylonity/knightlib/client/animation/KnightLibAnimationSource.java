@@ -7,12 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Tells a renderer where named animations come from.
@@ -48,29 +43,39 @@ public interface KnightLibAnimationSource {
 
     final class Cache {
 
-        private static final Map<Map<String, AnimationDefinition>, Map<String, KnightLibAnimation>> CONVERTED = new IdentityHashMap<>();
-        private static final Map<Class<?>, Map<String, KnightLibAnimation>> CONVERTED_CLASSES = new IdentityHashMap<>();
+        private static final Map<Map<String, AnimationDefinition>, Map<String, KnightLibAnimation>> CONVERTED = new LinkedHashMap<>(16, 0.75f, true);
+        private static final ClassValue<Map<String, KnightLibAnimation>> CONVERTED_CLASSES = new ClassValue<>() {
+            @Override
+            protected Map<String, KnightLibAnimation> computeValue(Class<?> type) {
+                return discover(type);
+            }
+
+        };
 
         private static Map<String, KnightLibAnimation> convert(Map<String, AnimationDefinition> definitions) {
             synchronized (CONVERTED) {
-                return CONVERTED.computeIfAbsent(definitions, source -> {
+                Map<String, KnightLibAnimation> result = CONVERTED.get(definitions);
+                if (result == null) {
+                    final Map<String, AnimationDefinition> snapshot = Map.copyOf(definitions);
                     final Map<String, KnightLibAnimation> converted = new LinkedHashMap<>();
-                    for (final Map.Entry<String, AnimationDefinition> entry : source.entrySet()) {
-                        converted.put(entry.getKey(), VanillaAnimationAdapter.convert(entry.getKey(), entry.getValue()));
+                    snapshot.forEach((name, definition) -> converted.put(name, VanillaAnimationAdapter.convert(name, definition)));
+                    result = Map.copyOf(converted);
+                    CONVERTED.put(snapshot, result);
+                    if (CONVERTED.size() > 128) {
+                        final var oldest = CONVERTED.entrySet().iterator();
+                        oldest.next();
+                        oldest.remove();
                     }
 
-                    return Map.copyOf(converted);
-                });
+                }
 
+                return result;
             }
 
         }
 
         private static Map<String, KnightLibAnimation> convert(Class<?> definitions) {
-            synchronized (CONVERTED_CLASSES) {
-                return CONVERTED_CLASSES.computeIfAbsent(definitions, Cache::discover);
-            }
-
+            return CONVERTED_CLASSES.get(definitions);
         }
 
         private static Map<String, KnightLibAnimation> discover(Class<?> definitions) {

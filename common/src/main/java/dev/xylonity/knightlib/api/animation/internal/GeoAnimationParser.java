@@ -4,13 +4,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.animation.KnightLibKeyframeEvent;
 import dev.xylonity.knightlib.api.client.animation.KnightLibAnimation;
 import dev.xylonity.knightlib.api.client.animation.molang.MolangContext;
 import dev.xylonity.knightlib.api.client.animation.molang.MolangExpression;
 import dev.xylonity.knightlib.api.util.KnightLibEasings;
 import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class GeoAnimationParser {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("KnightLib");
+
     private static final Set<String> WARNED_EASINGS = ConcurrentHashMap.newKeySet();
 
     public static Map<String, KnightLibAnimation> parse(JsonObject root) {
@@ -46,7 +49,7 @@ public final class GeoAnimationParser {
                 animations.put(entry.getKey(), parseAnimation(entry.getKey(), entry.getValue().getAsJsonObject()));
             }
             catch (Exception exception) {
-                KnightLib.LOGGER.error("Failed to parse animation '{}', skipping it", entry.getKey(), exception);
+                LOGGER.error("Failed to parse animation '{}', skipping it", entry.getKey(), exception);
             }
 
         }
@@ -77,9 +80,9 @@ public final class GeoAnimationParser {
         if (animation.has("bones")) {
             for (final Map.Entry<String, JsonElement> bone : animation.getAsJsonObject("bones").entrySet()) {
                 final JsonObject channels = bone.getValue().getAsJsonObject();
-                final List<KnightLibAnimation.Keyframe> position = channels.has("position") ? parseKeyframes(name, channels.get("position")) : null;
-                final List<KnightLibAnimation.Keyframe> rotation = channels.has("rotation") ? parseKeyframes(name, channels.get("rotation")) : null;
-                final List<KnightLibAnimation.Keyframe> scale = channels.has("scale") ? parseKeyframes(name, channels.get("scale")) : null;
+                final List<KnightLibAnimation.Keyframe> position = parseChannel(name, bone.getKey(), channels, "position");
+                final List<KnightLibAnimation.Keyframe> rotation = parseChannel(name, bone.getKey(), channels, "rotation");
+                final List<KnightLibAnimation.Keyframe> scale = parseChannel(name, bone.getKey(), channels, "scale");
 
                 maxTick = Math.max(maxTick, lastTick(position));
                 maxTick = Math.max(maxTick, lastTick(rotation));
@@ -112,6 +115,20 @@ public final class GeoAnimationParser {
         final boolean overridePreviousAnimation = animation.has("override_previous_animation")
                 && animation.get("override_previous_animation").getAsBoolean();
         return new KnightLibAnimation(name, lengthTicks, loopMode, bones, events, overridePreviousAnimation);
+    }
+
+    private static List<KnightLibAnimation.Keyframe> parseChannel(String animation, String bone, JsonObject channels, String channel) {
+        if (!channels.has(channel)) {
+            return null;
+        }
+
+        try {
+            return parseKeyframes(animation, channels.get(channel));
+        }
+        catch (Exception exception) {
+            throw new IllegalArgumentException("[KnightLib] Invalid " + channel + " channel on bone '" + bone + "' in animation '" + animation + "'", exception);
+        }
+
     }
 
     private static void parseEventTrack(JsonObject animation, String key, KnightLibKeyframeEvent.Type type, List<KnightLibAnimation.KeyframeEvent> output) {
@@ -289,7 +306,7 @@ public final class GeoAnimationParser {
         }
 
         if (WARNED_EASINGS.add(name)) {
-            KnightLib.LOGGER.warn("[KnightLib] Unknown animation easing '{}', falling back to linear", name);
+            LOGGER.warn("[KnightLib] Unknown animation easing '{}', falling back to linear", name);
         }
 
         return KnightLibEasings.LINEAR;

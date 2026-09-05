@@ -2,7 +2,7 @@ package dev.xylonity.knightlib.client.animation;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.api.animation.internal.AnimationNotification;
 import dev.xylonity.knightlib.api.animation.KnightLibAnimationHandler;
 import dev.xylonity.knightlib.api.animation.KnightLibKeyframeEvent;
 import dev.xylonity.knightlib.client.animation.model.KnightLibModel;
@@ -11,6 +11,8 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -22,6 +24,8 @@ import java.util.Set;
  */
 public final class KnightLibKeyframeEvents {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("KnightLib");
+
     /**
      * Adds positions to events that reference a geometry locator. A bone with the same name as a locator is also accepted.
      */
@@ -32,7 +36,7 @@ public final class KnightLibKeyframeEvents {
 
         final Set<String> locators = new LinkedHashSet<>();
         final Set<String> fallbackBones = new LinkedHashSet<>();
-        for (final KnightLibAnimator.Notification notification : events.notifications()) {
+        for (final AnimationNotification notification : events.notifications()) {
             if (!notification.isKeyframe()) {
                 continue;
             }
@@ -86,7 +90,7 @@ public final class KnightLibKeyframeEvents {
     }
 
     private static void dispatch(KnightLibAnimationHandler handler, KnightLibAnimator.DeferredEvents events, Map<String, Vec3> positions) {
-        for (final KnightLibAnimator.Notification notification : events.notifications()) {
+        for (final AnimationNotification notification : events.notifications()) {
             try {
                 if (notification.isKeyframe()) {
                     final KnightLibKeyframeEvent event = notification.keyframe();
@@ -99,7 +103,7 @@ public final class KnightLibKeyframeEvents {
             }
             catch (Exception exception) {
                 final String animation = notification.isKeyframe() ? notification.keyframe().animation() : notification.animation();
-                KnightLib.LOGGER.error("Animation callback failed for '{}'", animation, exception);
+                LOGGER.error("Animation callback failed for '{}'", animation, exception);
             }
 
         }

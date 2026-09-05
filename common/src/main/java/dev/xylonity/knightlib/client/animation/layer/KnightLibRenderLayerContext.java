@@ -167,7 +167,13 @@ public final class KnightLibRenderLayerContext<T> {
         Objects.requireNonNull(boneNames, "boneNames");
         Objects.requireNonNull(consumer, "consumer");
         final KnightLibColor color = KnightLibColor.fromArgb(argb);
-        model.renderBones(poseStack, consumer, light, overlay, color.red(), color.green(), color.blue(), color.alpha(), boneNames);
+        if (livingModelFrame) {
+            model.renderLivingBones(poseStack, consumer, light, overlay, color.red(), color.green(), color.blue(), color.alpha(), boneNames);
+        }
+        else {
+            model.renderBones(poseStack, consumer, light, overlay, color.red(), color.green(), color.blue(), color.alpha(), boneNames);
+        }
+
     }
 
     /**

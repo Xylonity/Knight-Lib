@@ -1,7 +1,8 @@
 package dev.xylonity.knightlib.api.client.animation.molang;
 
-import dev.xylonity.knightlib.KnightLib;
 import net.minecraft.util.Mth;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/molang/MolangParser.java
  */
 public final class MolangParser {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("KnightLib");
 
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
 
@@ -261,7 +264,7 @@ public final class MolangParser {
 
         // Unsupported identifiers evaluate as 0 instead of breaking the whole animation file
         if (WARNED.add(name)) {
-            KnightLib.LOGGER.warn("[KnightLib] Unsupported molang identifier '{}' in: {}", name, source);
+            LOGGER.warn("[KnightLib] Unsupported molang identifier '{}' in: {}", name, source);
         }
 
         skipWhitespace();
@@ -358,7 +361,7 @@ public final class MolangParser {
             case "hermite_blend" -> unary(function, args, value -> value * value * (3f - 2f * value));
             default -> {
                 if (WARNED.add("math." + function)) {
-                    KnightLib.LOGGER.warn("Unsupported molang function 'math.{}' in: {}", function, source);
+                    LOGGER.warn("Unsupported molang function 'math.{}' in: {}", function, source);
                 }
 
                 yield context -> 0f;

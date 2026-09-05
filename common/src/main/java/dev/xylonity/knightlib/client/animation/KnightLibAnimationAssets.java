@@ -2,13 +2,15 @@ package dev.xylonity.knightlib.client.animation;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.api.animation.internal.AnimationLookup;
 import dev.xylonity.knightlib.api.client.animation.KnightLibAnimation;
 import dev.xylonity.knightlib.client.animation.geo.GeoModelDefinition;
 import dev.xylonity.knightlib.client.animation.geo.GeoParser;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.util.HashMap;
@@ -19,6 +21,8 @@ import java.util.Objects;
  * Client cache for parsed geo models and animation files.
  */
 public final class KnightLibAnimationAssets {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("KnightLib");
 
     private static final Object LOCK = new Object();
 
@@ -78,27 +82,7 @@ public final class KnightLibAnimationAssets {
 
         }
 
-        final KnightLibAnimation exact = animations.get(name);
-        if (exact != null) {
-            return exact;
-        }
-
-        KnightLibAnimation match = null;
-        for (final Map.Entry<String, KnightLibAnimation> entry : animations.entrySet()) {
-            final String key = entry.getKey();
-            final int lastDot = key.lastIndexOf('.');
-            if (lastDot >= 0 && key.substring(lastDot + 1).equals(name)) {
-                if (match != null) {
-                    // Two namespaces end in the same short name
-                    return null;
-                }
-
-                match = entry.getValue();
-            }
-
-        }
-
-        return match;
+        return animations.get(name);
     }
 
     private static GeoModelDefinition loadModel(ResourceLocation id) {
@@ -119,16 +103,16 @@ public final class KnightLibAnimationAssets {
             resource = findResource(file, "Animation file");
         }
         catch (IllegalStateException exception) {
-            KnightLib.LOGGER.error(exception.getMessage());
+            LOGGER.error(exception.getMessage());
             return Map.of();
         }
 
         try (final BufferedReader reader = resource.openAsReader()) {
             final JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
-            return Map.copyOf(GeoParser.parseAnimations(json));
+            return AnimationLookup.withAliases(GeoParser.parseAnimations(json));
         }
         catch (Exception exception) {
-            KnightLib.LOGGER.error("[KnightLib] Failed to parse requested animation file {} at {}", file, assetPath(file), exception);
+            LOGGER.error("Failed to parse requested animation file {} at {}", file, assetPath(file), exception);
             return Map.of();
         }
 
