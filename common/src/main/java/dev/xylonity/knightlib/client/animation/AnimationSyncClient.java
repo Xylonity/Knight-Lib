@@ -102,7 +102,7 @@ public final class AnimationSyncClient {
         if (target != null) {
             target.getAnimationHandler().applyRemote(message.controller(), message.steps(),
                     message.transitionTicks(), message.easingId(), message.speed(),
-                    message.commandGameTime(), message.blendMode()
+                    message.commandGameTime(), message.blendMode(), message.snapshot(), message.mask(), message.weight()
             );
 
             return true;

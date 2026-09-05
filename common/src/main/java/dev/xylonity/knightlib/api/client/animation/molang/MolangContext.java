@@ -1,10 +1,11 @@
 package dev.xylonity.knightlib.api.client.animation.molang;
 
-import dev.xylonity.knightlib.KnightLib;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,6 +18,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/model/GeoModel.java
  */
 public final class MolangContext {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("KnightLib");
 
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
 
@@ -52,10 +55,7 @@ public final class MolangContext {
 
     public void setEntity(Entity entity) {
         this.entity = entity;
-        if (entity != null) {
-            this.level = entity.level();
-        }
-
+        this.level = entity == null ? null : entity.level();
     }
 
     /**
@@ -87,9 +87,9 @@ public final class MolangContext {
             case "life_time" -> entity != null ? (entity.tickCount + partialTick()) / 20f : (float) (now / 20.0);
             case "controller_speed" -> controllerSpeed;
             case "actor_count" -> actorCount;
-            case "time_of_day" -> level == null ? 0f : level.getDayTime() / 24000f;
+            case "time_of_day" -> level == null ? 0f : timeOfDay(level.getDayTime());
             case "moon_phase" -> level == null ? 0f : level.getMoonPhase();
-            case "ground_speed" -> entity == null ? 0f : (float) entity.getDeltaMovement().horizontalDistance();
+            case "ground_speed" -> entity == null ? 0f : (float) entity.getDeltaMovement().horizontalDistance() * 20f;
             case "vertical_speed" -> entity == null ? 0f : (float) entity.getDeltaMovement().y() * 20f;
             case "yaw_speed" -> entity instanceof LivingEntity living ? Mth.wrapDegrees(living.getYHeadRot() - living.yHeadRotO) : entity == null ? 0f : Mth.wrapDegrees(entity.getYRot() - entity.yRotO);
             case "body_y_rotation" -> entity instanceof LivingEntity living ? living.yBodyRot : entity == null ? 0f : entity.getYRot();
@@ -118,7 +118,7 @@ public final class MolangContext {
             case "distance_from_camera" -> distanceFromCamera;
             default -> {
                 if (WARNED.add(name)) {
-                    KnightLib.LOGGER.warn("[KnightLib] Unsupported molang query '{}', evaluating as 0", name);
+                    LOGGER.warn("[KnightLib] Unsupported molang query '{}', evaluating as 0", name);
                 }
 
                 yield 0f;
@@ -130,6 +130,10 @@ public final class MolangContext {
 
     private float partialTick() {
         return (float) (now - Math.floor(now));
+    }
+
+    static float timeOfDay(long dayTime) {
+        return ((Math.floorMod(dayTime, 24000L) + 6000L) % 24000L) / 24000f;
     }
 
 }
