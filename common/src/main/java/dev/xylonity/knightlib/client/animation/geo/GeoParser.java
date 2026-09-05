@@ -3,13 +3,14 @@ package dev.xylonity.knightlib.client.animation.geo;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.animation.internal.GeoAnimationParser;
 import dev.xylonity.knightlib.api.client.animation.KnightLibAnimation;
 import dev.xylonity.knightlib.client.animation.model.GeoCube;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,6 +28,8 @@ import java.util.Set;
  * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/loading/object/BakedModelFactory.java
  */
 public final class GeoParser {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("KnightLib");
 
     private static final Vector3f[] BASE_NORMALS = {
             new Vector3f(0, 0, -1),
@@ -66,6 +69,9 @@ public final class GeoParser {
             for (final JsonElement element : geometry.getAsJsonArray("bones")) {
                 final JsonObject bone = element.getAsJsonObject();
                 final String name = bone.get("name").getAsString();
+                if (name.equals("__root")) {
+                    throw new IllegalArgumentException("[KnightLib] Bone name __root is reserved for the model root");
+                }
                 if (name.isBlank() || rawBones.putIfAbsent(name, bone) != null) {
                     throw new IllegalArgumentException("[KnightLib] Duplicate or empty bone name '" + name + "'");
                 }
@@ -164,7 +170,7 @@ public final class GeoParser {
     private static void warnUnsupported(JsonObject object, String... names) {
         for (final String name : names) {
             if (object.has(name) && WARNED.add(name)) {
-                KnightLib.LOGGER.warn("[KnightLib] Geometry feature '{}' is metadata-only and is not rendered", name);
+                LOGGER.warn("[KnightLib] Geometry feature '{}' is metadata only and is not rendered", name);
             }
 
         }
