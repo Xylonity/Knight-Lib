@@ -1,6 +1,9 @@
 package dev.xylonity.knightlib.api.animation;
 
 import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.api.animation.internal.KnightLibAnimationEvaluator;
+import dev.xylonity.knightlib.api.animation.internal.KnightLibAnimationSequence;
+import dev.xylonity.knightlib.api.animation.internal.AnimationMaskCodec;
 import dev.xylonity.knightlib.api.item.KnightLibAnimatedItem;
 import dev.xylonity.knightlib.api.util.KnightLibEasings;
 import dev.xylonity.knightlib.network.packets.AnimationSyncS2C;
@@ -14,6 +17,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -41,6 +46,9 @@ public final class KnightLibAnimationHandler {
     private static final int MAX_DURATION_TICKS = 20 * 60 * 60 * 24;
 
     private final Map<String, Controller> controllers = new LinkedHashMap<>();
+    private final Collection<Controller> controllerView = Collections.unmodifiableCollection(controllers.values());
+
+    private KnightLibAnimationEvaluator clientEvaluator;
 
     private final AnimationTarget target;
 
@@ -101,7 +109,16 @@ public final class KnightLibAnimationHandler {
     }
 
     public Collection<Controller> controllers() {
-        return Collections.unmodifiableCollection(controllers.values());
+        return controllerView;
+    }
+
+    @ApiStatus.Internal
+    public KnightLibAnimationEvaluator clientEvaluator() {
+        if (clientEvaluator == null) {
+            clientEvaluator = new KnightLibAnimationEvaluator();
+        }
+
+        return clientEvaluator;
     }
 
     Controller findController(String name) {
@@ -129,8 +146,7 @@ public final class KnightLibAnimationHandler {
     public void play(KnightLibAnim animation) {
         Objects.requireNonNull(animation, "animation");
         playAt(animation.controller(), animation.steps(), animation.transitionTicks(),
-                animation.transitionEasing(), animation.speed(), gameTime(),
-                animation.durationTicks(), animation.blendMode()
+                animation.transitionEasing(), animation.speed(), gameTime(), animation.durationTicks(), animation.blendMode(), animation.mask(), animation.weight()
         );
 
     }
@@ -145,13 +161,12 @@ public final class KnightLibAnimationHandler {
 
     void playAt(String controllerName, String animation, int transitionTicks, KnightLibEasings transitionEasing, float speed, long startedAt, int durationTicks) {
         playAt(controllerName, List.of(new KnightLibAnim.Step(animation, KnightLibAnim.PlaybackMode.ONCE)),
-                transitionTicks, transitionEasing, speed, startedAt, durationTicks,
-                KnightLibAnimationBlendMode.AUTHORED
+                transitionTicks, transitionEasing, speed, startedAt, durationTicks, KnightLibAnimationBlendMode.AUTHORED, KnightLibAnimationMask.ALL, 1f
         );
 
     }
 
-    private void playAt(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, KnightLibEasings transitionEasing, float speed, long startedAt, int durationTicks, KnightLibAnimationBlendMode blendMode) {
+    private void playAt(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, KnightLibEasings transitionEasing, float speed, long startedAt, int durationTicks, KnightLibAnimationBlendMode blendMode, KnightLibAnimationMask mask, float weight) {
         validateControllerName(controllerName);
         if (steps == null || steps.isEmpty() || !KnightLibAnim.isValidSequence(steps)) {
             throw new IllegalArgumentException("[KnightLib] animation sequence must contain 1.." + KnightLibAnim.MAX_STEPS + " valid steps");
@@ -168,7 +183,7 @@ public final class KnightLibAnimationHandler {
         Objects.requireNonNull(blendMode, "blendMode");
         final Controller controller = controller(controllerName);
 
-        controller.command(steps, transitionTicks, transitionEasing, speed, startedAt, durationTicks, blendMode);
+        controller.command(steps, transitionTicks, transitionEasing, speed, startedAt, durationTicks, blendMode, mask, weight);
 
         sync(controller);
     }
@@ -200,7 +215,10 @@ public final class KnightLibAnimationHandler {
             return;
         }
 
-        lastTickLevel = new WeakReference<>(level);
+        if (lastTickLevel.get() != level) {
+            lastTickLevel = new WeakReference<>(level);
+        }
+
         lastTickGameTime = now;
 
         if (level.isClientSide()) {
@@ -214,7 +232,7 @@ public final class KnightLibAnimationHandler {
             final Controller controller = iterator.next();
 
             // Duration is measured in animation ticks, hence the speed multiplier here
-            if (controller.animation() != null && controller.durationTicks() > 0 && (now - controller.commandGameTime()) * controller.speed() >= controller.durationTicks()) {
+            if (controller.animation() != null && controller.durationTicks() > 0 && controller.elapsedTicks(now) >= controller.durationTicks()) {
                 controller.command(List.of(), controller.transitionTicks(), controller.easing(), 1f, now, 0, controller.blendMode());
                 sync(controller);
             }
@@ -247,8 +265,14 @@ public final class KnightLibAnimationHandler {
 
         clientState.refresh(target.animationEntity(), target.blockEntity(), clientItemStack(), level());
 
-        for (final ClientControllerBinding binding : clientControllerBindings) {
-            binding.update(this);
+        try {
+            for (final ClientControllerBinding binding : clientControllerBindings) {
+                binding.update(this);
+            }
+
+        }
+        finally {
+            clientState.clearContext();
         }
 
     }
@@ -277,7 +301,8 @@ public final class KnightLibAnimationHandler {
         }
 
         // Speed is deliberately absent from matches, as it would be reset
-        current.retime(animation.speed());
+        current.retime(animation.speed(), gameTime());
+        current.weight = animation.weight();
     }
 
     private boolean matches(Controller controller, KnightLibAnim animation) {
@@ -286,6 +311,7 @@ public final class KnightLibAnimationHandler {
                 && controller.transitionTicks() == animation.transitionTicks()
                 && controller.easing() == animation.transitionEasing()
                 && controller.blendMode() == animation.blendMode()
+                && controller.mask().equals(animation.mask())
                 && controller.durationTicks() == animation.durationTicks();
     }
 
@@ -314,6 +340,10 @@ public final class KnightLibAnimationHandler {
             tag.putFloat("Speed", controller.speed());
             tag.putInt("Duration", controller.durationTicks());
             tag.putInt("BlendMode", controller.blendMode().id());
+            tag.putFloat("Weight", controller.weight());
+            AnimationMaskCodec.write(controller.mask(), tag);
+            tag.putDouble("PlaybackOrigin", controller.playbackOrigin());
+            tag.putDouble("PlaybackOffset", controller.playbackOffset());
 
             list.add(tag);
         }
@@ -326,6 +356,14 @@ public final class KnightLibAnimationHandler {
      * Restores controller state from entity/block-entity/item data or an update snapshot
      */
     public void load(CompoundTag ownerTag) {
+        load(ownerTag, true);
+    }
+
+    /**
+     * A snapshot resumes the playback without doing extra things
+     */
+    @ApiStatus.Internal
+    public void load(CompoundTag ownerTag, boolean snapshot) {
         final ListTag list = ownerTag.contains(KnightLibItemAnimations.TAG, Tag.TAG_LIST) ? ownerTag.getList(KnightLibItemAnimations.TAG, Tag.TAG_COMPOUND) : new ListTag();
         final Map<String, SavedController> restored = new LinkedHashMap<>();
 
@@ -350,14 +388,24 @@ public final class KnightLibAnimationHandler {
             final long startedAt = tag.getLong("StartedAt");
             final int duration = Math.min(Math.max(tag.getInt("Duration"), 0), MAX_DURATION_TICKS);
             final KnightLibAnimationBlendMode blendMode;
+            final KnightLibAnimationMask mask;
+            final float weight = tag.contains("Weight", Tag.TAG_ANY_NUMERIC) ? tag.getFloat("Weight") : 1f;
+            final double origin = tag.contains("PlaybackOrigin", Tag.TAG_ANY_NUMERIC) ? tag.getDouble("PlaybackOrigin") : startedAt;
+            final double offset = tag.getDouble("PlaybackOffset");
+            if (!Double.isFinite(origin) || !Double.isFinite(offset) || offset < 0.0) {
+                continue;
+            }
+
             try {
+                KnightLibAnim.validateWeight(weight);
+                mask = AnimationMaskCodec.read(tag);
                 blendMode = KnightLibAnimationBlendMode.byId(tag.getInt("BlendMode"));
             }
             catch (Exception exception) {
                 continue;
             }
 
-            restored.put(name, new SavedController(steps, transition, easing, speed, startedAt, duration, blendMode));
+            restored.put(name, new SavedController(steps, transition, easing, speed, startedAt, duration, blendMode, mask, weight, origin, offset));
         }
 
         for (final Controller controller : controllers.values()) {
@@ -370,8 +418,13 @@ public final class KnightLibAnimationHandler {
         for (final Map.Entry<String, SavedController> entry : restored.entrySet()) {
             final SavedController saved = entry.getValue();
             final Controller current = controller(entry.getKey());
-            if (!current.matches(saved.steps(), saved.transitionTicks(), saved.easing(), saved.speed(), saved.startedAt(), saved.durationTicks(), saved.blendMode())) {
-                current.command(saved.steps(), saved.transitionTicks(), saved.easing(), saved.speed(), saved.startedAt(), saved.durationTicks(), saved.blendMode());
+            if (!current.matches(saved.steps(), saved.transitionTicks(), saved.easing(), saved.speed(), saved.startedAt(), saved.durationTicks(), saved.blendMode())
+                    || !current.mask.equals(saved.mask()) || Float.compare(current.weight, saved.weight()) != 0
+                    || current.playbackOrigin != saved.origin() || current.playbackOffset != saved.offset()) {
+                current.command(saved.steps(), saved.transitionTicks(), saved.easing(), saved.speed(), saved.startedAt(), saved.durationTicks(), saved.blendMode(), saved.mask(), saved.weight());
+                current.playbackOrigin = saved.origin();
+                current.playbackOffset = saved.offset();
+                current.snapshot = snapshot;
             }
 
         }
@@ -414,6 +467,14 @@ public final class KnightLibAnimationHandler {
         }
 
         return KnightLibAnim.isValidSequence(steps) ? List.copyOf(steps) : null;
+    }
+
+    /**
+     * Most recently evaluated step, or null before evaluation (available on client after rendering, and server after evaluating the pose)
+     */
+    public @Nullable KnightLibAnimationPlayback getPlayback(String controllerName) {
+        final Controller controller = controllers.get(controllerName);
+        return controller == null ? null : controller.playback();
     }
 
     public String getActiveAnimation(String controllerName) {
@@ -459,6 +520,15 @@ public final class KnightLibAnimationHandler {
     }
 
     public void applyRemote(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, int easingId, float speed, long commandGameTime, KnightLibAnimationBlendMode blendMode) {
+        applyRemote(controllerName, steps, transitionTicks, easingId, speed, commandGameTime, blendMode, false);
+    }
+
+    public void applyRemote(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, int easingId, float speed, long commandGameTime, KnightLibAnimationBlendMode blendMode, boolean snapshot) {
+        applyRemote(controllerName, steps, transitionTicks, easingId, speed, commandGameTime, blendMode, snapshot, KnightLibAnimationMask.ALL, 1f);
+    }
+
+    @org.jetbrains.annotations.ApiStatus.Internal
+    public void applyRemote(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, int easingId, float speed, long commandGameTime, KnightLibAnimationBlendMode blendMode, boolean snapshot, KnightLibAnimationMask mask, float weight) {
         validateControllerName(controllerName);
         validateTransition(transitionTicks);
         if (steps == null || !KnightLibAnim.isValidSequence(steps) || !Float.isFinite(speed) || speed <= 0f || speed > 100f || commandGameTime < 0L || blendMode == null) {
@@ -466,7 +536,9 @@ public final class KnightLibAnimationHandler {
         }
 
         final KnightLibEasings easing = KnightLibEasings.byId(easingId);
-        controller(controllerName).command(steps, transitionTicks, easing, speed, commandGameTime, 0, blendMode);
+        final Controller controller = controller(controllerName);
+        controller.command(steps, transitionTicks, easing, speed, commandGameTime, 0, blendMode, mask, weight);
+        controller.snapshot = snapshot;
     }
 
     private Level level() {
@@ -557,7 +629,7 @@ public final class KnightLibAnimationHandler {
                     continue;
                 }
 
-                KnightLib.NET.sendTo(player, AnimationSyncS2C.TYPE.base(), handler.buildSyncMessage(controller));
+                KnightLib.NET.sendTo(player, AnimationSyncS2C.TYPE.base(), handler.buildSyncMessage(controller, true));
             }
 
         }
@@ -767,7 +839,11 @@ public final class KnightLibAnimationHandler {
             float speed,
             long startedAt,
             int durationTicks,
-            KnightLibAnimationBlendMode blendMode
+            KnightLibAnimationBlendMode blendMode,
+            KnightLibAnimationMask mask,
+            float weight,
+            double origin,
+            double offset
     ) {
         ;;
     }
@@ -954,6 +1030,10 @@ public final class KnightLibAnimationHandler {
     }
 
     private AnimationSyncS2C buildSyncMessage(Controller controller) {
+        return buildSyncMessage(controller, false);
+    }
+
+    private AnimationSyncS2C buildSyncMessage(Controller controller, boolean snapshot) {
         final Entity entity = target.entity();
         final BlockEntity blockEntity = target.blockEntity();
         if (entity == null && blockEntity == null) {
@@ -970,7 +1050,8 @@ public final class KnightLibAnimationHandler {
                 controller.easing().id(),
                 controller.speed(),
                 controller.commandGameTime(),
-                controller.blendMode()
+                controller.blendMode(),
+                snapshot, controller.mask(), controller.weight()
         );
 
     }
@@ -987,10 +1068,16 @@ public final class KnightLibAnimationHandler {
         private int durationTicks;
         private KnightLibAnimationBlendMode blendMode = KnightLibAnimationBlendMode.AUTHORED;
         private long sequence;
+        private double playbackOrigin;
+        private double playbackOffset;
+        private boolean snapshot;
+        private KnightLibAnimationMask mask = KnightLibAnimationMask.ALL;
+        private float weight = 1f;
+        private KnightLibAnimationSequence.Playback evaluatedPlayback;
+        private double evaluatedElapsed;
+        private double evaluatedAt;
 
-        /**
-         * Client render clock, managed by KnightLib's animator. Do not touch.
-         */
+        @Deprecated
         public Object clientState;
 
         private Controller(String name) {
@@ -998,18 +1085,56 @@ public final class KnightLibAnimationHandler {
         }
 
         void command(List<KnightLibAnim.Step> steps, int transitionTicks, KnightLibEasings easing, float speed, long gameTime, int durationTicks, KnightLibAnimationBlendMode blendMode) {
+            command(steps, transitionTicks, easing, speed, gameTime, durationTicks, blendMode, KnightLibAnimationMask.ALL, 1f);
+        }
+
+        void command(List<KnightLibAnim.Step> steps, int transitionTicks, KnightLibEasings easing, float speed, long gameTime, int durationTicks, KnightLibAnimationBlendMode blendMode, KnightLibAnimationMask mask, float weight) {
+            Objects.requireNonNull(mask, "mask");
+            KnightLibAnim.validateWeight(weight);
+            this.mask = mask;
+            this.weight = weight;
+            this.evaluatedPlayback = null;
             this.steps = List.copyOf(steps);
             this.transitionTicks = Math.max(0, transitionTicks);
             this.easing = easing == null ? KnightLibAnimatable.DEFAULT_TRANSITION_EASING : easing;
             this.speed = speed <= 0f ? 1f : speed;
             this.commandGameTime = gameTime;
+            this.playbackOrigin = gameTime;
+            this.playbackOffset = 0.0;
+            this.snapshot = false;
             this.durationTicks = Math.max(0, durationTicks);
             this.blendMode = Objects.requireNonNull(blendMode, "blendMode");
             this.sequence++;
         }
 
-        void retime(float speed) {
-            this.speed = !Float.isFinite(speed) || speed <= 0f ? 1f : speed;
+        void retime(float speed, double gameTime) {
+            final float resolved = !Float.isFinite(speed) || speed <= 0f ? 1f : speed;
+            if (Float.compare(this.speed, resolved) != 0) {
+                playbackOffset = elapsedTicks(gameTime);
+                playbackOrigin = gameTime;
+                this.speed = resolved;
+            }
+
+        }
+
+        // Elapsed animation ticks
+        public double elapsedTicks(double gameTime) {
+            return Math.max(0, playbackOffset + (gameTime - playbackOrigin) * speed);
+        }
+
+        @ApiStatus.Internal
+        public double playbackOrigin() {
+            return playbackOrigin;
+        }
+
+        @ApiStatus.Internal
+        public double playbackOffset() {
+            return playbackOffset;
+        }
+
+        @ApiStatus.Internal
+        public boolean isSnapshot() {
+            return snapshot;
         }
 
         boolean matches(List<KnightLibAnim.Step> steps, int transitionTicks, KnightLibEasings easing, float speed, long gameTime, int durationTicks, KnightLibAnimationBlendMode blendMode) {
@@ -1020,6 +1145,31 @@ public final class KnightLibAnimationHandler {
                     && this.commandGameTime == gameTime
                     && this.durationTicks == durationTicks
                     && this.blendMode == blendMode;
+        }
+
+        public KnightLibAnimationMask mask() {
+            return mask;
+        }
+
+        public float weight() {
+            return weight;
+        }
+
+        @ApiStatus.Internal
+        public void updatePlayback(KnightLibAnimationSequence.Playback playback, double elapsed, double now) {
+            evaluatedPlayback = playback;
+            evaluatedElapsed = elapsed;
+            evaluatedAt = now;
+        }
+
+        public @Nullable KnightLibAnimationPlayback playback() {
+            final KnightLibAnimationSequence.Playback playback = evaluatedPlayback;
+            if (playback == null || playback.animation() == null) {
+                return null;
+            }
+
+            return new KnightLibAnimationPlayback(playback.step().animation(), playback.stepIndex(), playback.step().mode(),
+                    evaluatedElapsed, playback.sampleTick(), playback.animation().lengthTicks(), playback.finished(), evaluatedAt);
         }
 
         public String name() {

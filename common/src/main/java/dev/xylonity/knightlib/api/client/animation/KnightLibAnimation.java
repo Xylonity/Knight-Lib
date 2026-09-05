@@ -7,10 +7,7 @@ import dev.xylonity.knightlib.api.util.KnightLibEasings;
 import net.minecraft.util.Mth;
 import org.joml.Vector3f;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Parsed keyframe data ready for the animator to sample.
@@ -50,7 +47,9 @@ public final class KnightLibAnimation {
         this.lengthTicks = Math.max(lengthTicks, 0.01f);
         this.loopMode = Objects.requireNonNull(loopMode, "loopMode");
         this.bones = Map.copyOf(Objects.requireNonNull(bones, "bones"));
-        this.events = List.copyOf(Objects.requireNonNull(events, "events"));
+        final ArrayList<KeyframeEvent> orderedEvents = new ArrayList<>(Objects.requireNonNull(events, "events"));
+        orderedEvents.sort(java.util.Comparator.comparingDouble(KeyframeEvent::tick));
+        this.events = List.copyOf(orderedEvents);
         this.overridePreviousAnimation = overridePreviousAnimation;
     }
 
@@ -66,8 +65,12 @@ public final class KnightLibAnimation {
      * Wraps an elapsed tick into this animation without losing precision for open-ended loops
      */
     public float wrapLoopTick(float tick) {
-        final float wrapped = tick % lengthTicks;
-        return wrapped < 0f ? wrapped + lengthTicks : wrapped;
+        return wrapLoopTick((double) tick);
+    }
+
+    public float wrapLoopTick(double tick) {
+        final double wrapped = tick % lengthTicks;
+        return (float) (wrapped < 0.0 ? wrapped + lengthTicks : wrapped);
     }
 
     public LoopMode loopMode() {
@@ -102,24 +105,48 @@ public final class KnightLibAnimation {
      * Samples a keyframe list at the given tick into the destination
      */
     public static boolean sample(List<Keyframe> frames, float tick, Vector3f destination, MolangContext context) {
+        return sample(frames, tick, destination, context, new SampleScratch());
+    }
+
+    /**
+     * Reusable scratch belongs to one evaluator
+     */
+    public static final class SampleScratch {
+        private final Vector3f start = new Vector3f();
+        private final Vector3f end = new Vector3f();
+        private final Vector3f before = new Vector3f();
+        private final Vector3f after = new Vector3f();
+    }
+
+    public static boolean sample(List<Keyframe> frames, float tick, Vector3f destination, MolangContext context, SampleScratch scratch) {
         if (frames == null || frames.isEmpty()) {
             return false;
         }
 
         final Keyframe first = frames.get(0);
         if (tick <= first.tick()) {
-            return resolveFinite(first.post(), context, destination);
+            return resolveFinite(tick < first.tick() ? first.target() : first.post(), context, destination, scratch.start);
         }
 
         final Keyframe last = frames.get(frames.size() - 1);
         if (tick >= last.tick()) {
-            return resolveFinite(last.post(), context, destination);
+            return resolveFinite(last.post(), context, destination, scratch.start);
         }
 
-        int index = 0;
-        while (index < frames.size() - 1 && frames.get(index + 1).tick() <= tick) {
-            index++;
+        int low = 0;
+        int high = frames.size() - 1;
+        while (low + 1 < high) {
+            final int middle = (low + high) >>> 1;
+            if (frames.get(middle).tick() <= tick) {
+                low = middle;
+            }
+            else {
+                high = middle;
+            }
+
         }
+
+        final int index = low;
 
         final Keyframe from = frames.get(index);
         final Keyframe to = frames.get(index + 1);
@@ -127,16 +154,16 @@ public final class KnightLibAnimation {
         final float alpha = span <= 0f ? 1f : (tick - from.tick()) / span;
 
         // Bedrock's discontinuous keyframes leave from.post and arrive at to.pre
-        final Vector3f start = from.post().resolve(context, new Vector3f());
-        final Vector3f end = to.target().resolve(context, new Vector3f());
+        final Vector3f start = from.post().resolve(context, scratch.start);
+        final Vector3f end = to.target().resolve(context, scratch.end);
         if (!finite(start) || !finite(end)) {
             return false;
         }
 
         if (to.lerp() == Lerp.CATMULLROM) {
             // Duplicates the nearest endpoint when the spline has no outer neighbour
-            final Vector3f p0 = frames.get(Math.max(0, index - 1)).post().resolve(context, new Vector3f());
-            final Vector3f p3 = frames.get(Math.min(frames.size() - 1, index + 2)).post().resolve(context, new Vector3f());
+            final Vector3f p0 = frames.get(Math.max(0, index - 1)).post().resolve(context, scratch.before);
+            final Vector3f p3 = frames.get(Math.min(frames.size() - 1, index + 2)).target().resolve(context, scratch.after);
             if (!finite(p0) || !finite(p3)) {
                 return false;
             }
@@ -169,8 +196,8 @@ public final class KnightLibAnimation {
         return true;
     }
 
-    private static boolean resolveFinite(KeyframeValue value, MolangContext context, Vector3f destination) {
-        final Vector3f resolved = value.resolve(context, new Vector3f());
+    private static boolean resolveFinite(KeyframeValue value, MolangContext context, Vector3f destination, Vector3f scratch) {
+        final Vector3f resolved = value.resolve(context, scratch);
 
         // A bad molang result should skip this channel and not contaminate every matrix below it
         if (!finite(resolved)) {
@@ -267,7 +294,21 @@ public final class KnightLibAnimation {
         }
 
         private static List<Keyframe> immutableTrack(List<Keyframe> track) {
-            return track == null ? null : List.copyOf(track);
+            if (track == null) {
+                return null;
+            }
+
+            final List<Keyframe> immutable = List.copyOf(track);
+            float previous = -1f;
+            for (final Keyframe frame : immutable) {
+                if (frame.tick() < previous) {
+                    throw new IllegalArgumentException("[KnightLib] Keyframes must be sorted by time");
+                }
+
+                previous = frame.tick();
+            }
+
+            return immutable;
         }
 
         private static List<List<Keyframe>> immutableTracks(List<List<Keyframe>> tracks) {
@@ -275,7 +316,7 @@ public final class KnightLibAnimation {
                 return List.of();
             }
 
-            return tracks.stream().map(List::copyOf).toList();
+            return tracks.stream().map(Channels::immutableTrack).toList();
         }
 
     }
