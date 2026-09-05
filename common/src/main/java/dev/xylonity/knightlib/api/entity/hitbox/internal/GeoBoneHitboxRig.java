@@ -3,19 +3,17 @@ package dev.xylonity.knightlib.api.entity.hitbox.internal;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.api.animation.KnightLibAnim.Step;
 import dev.xylonity.knightlib.api.animation.KnightLibAnimatable;
 import dev.xylonity.knightlib.api.animation.KnightLibAnimationHandler;
 import dev.xylonity.knightlib.api.animation.internal.GeoAnimationParser;
-import dev.xylonity.knightlib.api.animation.internal.KnightLibAnimationSequence;
+import dev.xylonity.knightlib.api.animation.internal.AnimationPose;
+import dev.xylonity.knightlib.api.animation.internal.AnimationLookup;
+import dev.xylonity.knightlib.api.animation.internal.KnightLibAnimationEvaluator;
 import dev.xylonity.knightlib.api.client.animation.KnightLibAnimation;
 import dev.xylonity.knightlib.api.client.animation.molang.MolangContext;
 import dev.xylonity.knightlib.api.entity.hitbox.BoneHitboxPoseProvider;
 import dev.xylonity.knightlib.api.entity.hitbox.BoneHitboxRig;
-import dev.xylonity.knightlib.api.util.KnightLibEasings;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -24,10 +22,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,44 +31,33 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Server only copy of the geo bone tree and animation evaluator. This basically mirrors {@code KnightLibAnimator}.
- *
- * TODO: refactor common logic
- *
- * Based off GeckoLib implementation
- * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/loading/object/BakedModelFactory.java
- * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/loading/json/typeadapter/BakedAnimationsAdapter.java
- * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimationProcessor.java
+ * Geo skeleton and hitbox handler for the pose evaluator
  */
 public final class GeoBoneHitboxRig implements BoneHitboxRig {
 
     private static final Map<AssetKey, Definition> DEFINITIONS = new ConcurrentHashMap<>();
-    private static final Set<String> WARNED_ANIMATIONS = ConcurrentHashMap.newKeySet();
 
     private final Definition definition;
     private final Pose rest;
-    private final Pose working;
     private final Pose composed;
-    private final Map<String, ServerClock> clocks = new HashMap<>();
+
+    private final KnightLibAnimationEvaluator evaluator = new KnightLibAnimationEvaluator();
+
     private final Matrix4f[] worldMatrices;
     private final boolean[] worldVisibility;
     private final MolangContext molang = new MolangContext();
-    private final Map<KnightLibAnimation, String> animationNames = new IdentityHashMap<>();
-    private final List<ActivePlayback> activePlaybacks = new ArrayList<>();
+    private boolean animatedPose;
 
     public GeoBoneHitboxRig(ResourceLocation geometry, @Nullable ResourceLocation animations) {
         final AssetKey key = new AssetKey(Objects.requireNonNull(geometry, "geometry"), animations);
         this.definition = DEFINITIONS.computeIfAbsent(key, GeoBoneHitboxRig::loadDefinition);
         this.rest = Pose.rest(definition.bones);
-        this.working = new Pose(definition.bones.size());
+        evaluator.bindSkeleton(definition.bones.stream().map(Bone::name).toList());
         this.composed = new Pose(definition.bones.size());
         this.worldMatrices = new Matrix4f[definition.bones.size()];
         this.worldVisibility = new boolean[definition.bones.size()];
         for (int i = 0; i < worldMatrices.length; i++) {
             worldMatrices[i] = new Matrix4f();
-        }
-        for (final Map.Entry<String, KnightLibAnimation> entry : definition.animations.entrySet()) {
-            animationNames.put(entry.getValue(), entry.getKey());
         }
 
     }
@@ -105,12 +89,12 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
             throw new IllegalArgumentException("[KnightLib] modelScale must be finite and positive");
         }
 
-        activePlaybacks.clear();
         if (owner instanceof final KnightLibAnimatable animatable) {
             animate(animatable.getAnimationHandler(), owner, time);
         }
         else {
             composed.copyFrom(rest);
+            animatedPose = false;
         }
 
         emitWorldPose(rootPosition, bodyYaw, boneNames, modelScale, transforms);
@@ -118,214 +102,29 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
 
     @Override
     public boolean isAnimationWithin(String animationName, float minTick, float maxTick) {
-        for (final ActivePlayback playback : activePlaybacks) {
-            final String fullName = animationNames.get(playback.animation());
-            if (fullName == null || !nameMatches(fullName, animationName)) {
-                continue;
-            }
-            if (playback.tick() >= minTick && playback.tick() < maxTick) {
-                return true;
-            }
-
-        }
-
-        return false;
-    }
-
-    private static boolean nameMatches(String fullName, String requested) {
-        if (fullName.equals(requested)) {
-            return true;
-        }
-
-        final int last = fullName.lastIndexOf('.');
-        return last >= 0 && fullName.substring(last + 1).equals(requested);
+        return animatedPose && evaluator.isAnimationWithin(animationName, minTick, maxTick);
     }
 
     private void animate(KnightLibAnimationHandler handler, LivingEntity owner, double now) {
+        animatedPose = true;
         molang.setEntity(owner);
         molang.setNow(now);
 
-        for (final KnightLibAnimationHandler.Controller controller : handler.controllers()) {
-            final ServerClock clock = clocks.computeIfAbsent(controller.name(), ignored -> new ServerClock());
-            if (controller.sequence() != clock.sequence) {
-                final double commandTime = controller.commandGameTime();
-                clock.blendFrom = captureAt(clock, commandTime, controller.steps());
-                clock.blendStart = commandTime;
-                clock.blendTicks = controller.transitionTicks();
-                clock.blendEasing = controller.easing();
-                clock.steps = controller.steps();
-                clock.start = commandTime;
-                clock.speed = controller.speed();
-                clock.finished = false;
-                clock.sequence = controller.sequence();
-            }
-
-            if (!clock.steps.isEmpty() && !clock.finished) {
-                final double elapsed = Math.max(0.0, (now - clock.start) * clock.speed);
-                final KnightLibAnimationSequence.Playback playback = KnightLibAnimationSequence.sample(clock.steps, this::resolveAnimation, elapsed);
-                if (playback.finished()) {
-                    final double end = clock.start + playback.endTick() / clock.speed;
-                    clock.blendFrom = captureAt(clock, end, List.of());
-                    clock.blendStart = end;
-                    if (clock.blendEasing == null) {
-                        clock.blendEasing = KnightLibEasings.EASE_IN_OUT_QUAD;
-                    }
-
-                    clock.steps = List.of();
-                    clock.finished = true;
-                }
-                else if (playback.animation() != null) {
-                    activePlaybacks.add(new ActivePlayback(playback.animation(), playback.sampleTick()));
-                }
-
-            }
-
-        }
+        final AnimationPose pose = evaluator.evaluate(handler.controllers(), this::resolveAnimation, now, molang, false);
 
         composed.copyFrom(rest);
-        for (final KnightLibAnimationHandler.Controller controller : handler.controllers()) {
-            final ServerClock clock = clocks.get(controller.name());
-            working.copyFrom(rest);
 
-            evaluate(clock, working, now);
-
-            final BitSet touched = touchedBones(clock);
-            composeDelta(composed, working, rest, touched);
-        }
-
-    }
-
-    private Snapshot captureAt(ServerClock clock, double time, List<Step> incomingSteps) {
-        final BitSet touched = touchedBones(clock);
-        for (final Step step : incomingSteps) {
-            addAnimationBones(touched, step.animation());
-        }
-
-        working.copyFrom(rest);
-
-        evaluate(clock, working, time);
-
-        return new Snapshot(working.copyValues(), touched);
-    }
-
-    private void evaluate(@Nullable GeoBoneHitboxRig.ServerClock clock, Pose target, double now) {
-        if (clock == null) {
-            return;
-        }
-
-        molang.setNow(now);
-        molang.setControllerSpeed(clock.speed);
-
-        if (!clock.steps.isEmpty()) {
-            final double elapsed = Math.max(0.0, (now - clock.start) * clock.speed);
-            final KnightLibAnimationSequence.Playback playback = KnightLibAnimationSequence.sample(clock.steps, this::resolveAnimation, elapsed);
-            final KnightLibAnimation animation = playback.animation();
-            if (animation != null) {
-                final float tick = playback.sampleTick();
-                molang.setAnimTime(Math.max(tick, 0f) / 20f);
-                molang.setTotalAnimTime((float) Math.max(playback.rawTick(), 0.0) / 20f);
-                applyChannels(animation, tick, target);
-            }
-
-        }
-
-        if (clock.blendFrom != null) {
-            final double elapsed = now - clock.blendStart;
-            if (clock.blendTicks <= 0 || elapsed >= clock.blendTicks) {
-                clock.blendFrom = null;
-            }
-            else {
-                final float alpha = (float) (elapsed / clock.blendTicks);
-                final float eased = clock.blendEasing == null ? alpha : clock.blendEasing.apply(alpha);
-                blendFrom(target, clock.blendFrom, Mth.clamp(eased, 0f, 1f));
-            }
-
-        }
-
-    }
-
-    private void applyChannels(KnightLibAnimation animation, float tick, Pose target) {
-        final Vector3f sampled = new Vector3f();
-        final Vector3f contribution = new Vector3f();
-        for (final Map.Entry<String, KnightLibAnimation.Channels> entry : animation.allChannels().entrySet()) {
-            final Integer index = definition.indices.get(entry.getKey());
-            if (index == null) {
-                continue;
-            }
-
-            final float[] bone = target.values[index];
-            final KnightLibAnimation.Channels channels = entry.getValue();
-            if (sampleAdditive(channels.position(), channels.additionalPositions(), tick, sampled, contribution, false)) {
-                bone[0] += -sampled.x();
-                bone[1] += sampled.y();
-                bone[2] += sampled.z();
-            }
-            if (sampleAdditive(channels.rotation(), channels.additionalRotations(), tick, sampled, contribution, false)) {
-                bone[3] += -sampled.x();
-                bone[4] += -sampled.y();
-                bone[5] += sampled.z();
-            }
-            if (sampleAdditive(channels.scale(), channels.additionalScales(), tick, sampled, contribution, true)) {
-                bone[6] *= sampled.x();
-                bone[7] *= sampled.y();
-                bone[8] *= sampled.z();
-            }
-
-        }
-
-    }
-
-    private boolean sampleAdditive(List<KnightLibAnimation.Keyframe> primary, List<List<KnightLibAnimation.Keyframe>> additional, float tick, Vector3f result, Vector3f contribution, boolean scale) {
-        boolean sampled = KnightLibAnimation.sample(primary, tick, result, molang);
-        if (!sampled) {
-            result.set(scale ? 1f : 0f);
-        }
-        for (final List<KnightLibAnimation.Keyframe> track : additional) {
-            if (!KnightLibAnimation.sample(track, tick, contribution, molang)) {
-                continue;
-            }
-
-            sampled = true;
-            if (scale) {
-                result.add(contribution.x() - 1f, contribution.y() - 1f, contribution.z() - 1f);
-            }
-            else {
-                result.add(contribution);
-            }
-
-        }
-
-        return sampled;
-    }
-
-    private BitSet touchedBones(@Nullable GeoBoneHitboxRig.ServerClock clock) {
-        final BitSet touched = new BitSet(definition.bones.size());
-        if (clock == null) {
-            return touched;
-        }
-        if (clock.blendFrom != null) {
-            touched.or(clock.blendFrom.touched);
-        }
-
-        for (final Step step : clock.steps) {
-            addAnimationBones(touched, step.animation());
-        }
-
-        return touched;
-    }
-
-    private void addAnimationBones(BitSet output, @Nullable String animationName) {
-        final KnightLibAnimation animation = resolveAnimation(animationName);
-        if (animation == null) {
-            return;
-        }
-
-        for (final String name : animation.boneNames()) {
-            final Integer index = definition.indices.get(name);
-            if (index != null) {
-                output.set(index);
-            }
-
+        for (int i = 0; i < pose.boneCount(); i++) {
+            final float[] target = composed.values[i];
+            target[0] -= pose.value(i, 0);
+            target[1] += pose.value(i, 1);
+            target[2] += pose.value(i, 2);
+            target[3] -= pose.value(i, 3);
+            target[4] -= pose.value(i, 4);
+            target[5] += pose.value(i, 5);
+            target[6] *= pose.value(i, 6);
+            target[7] *= pose.value(i, 7);
+            target[8] *= pose.value(i, 8);
         }
 
     }
@@ -335,30 +134,7 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
             return null;
         }
 
-        final KnightLibAnimation animation = definition.animations.get(name);
-        if (animation != null) {
-            return animation;
-        }
-
-        KnightLibAnimation match = null;
-        for (final Map.Entry<String, KnightLibAnimation> entry : definition.animations.entrySet()) {
-            final String key = entry.getKey();
-            final int last = key.lastIndexOf('.');
-            if (last >= 0 && key.substring(last + 1).equals(name)) {
-                if (match != null) {
-                    return null;
-                }
-
-                match = entry.getValue();
-            }
-
-        }
-
-        if (match == null && WARNED_ANIMATIONS.add(name)) {
-            KnightLib.LOGGER.warn("[KnightLib] Unknown hitbox animation '{}'", name);
-        }
-
-        return match;
+        return definition.animations.get(name);
     }
 
     private void emitWorldPose(Vec3 rootPosition, float bodyYaw, Set<String> requested, float modelScale, BoneHitboxPoseProvider.BoneTransformSink transforms) {
@@ -405,45 +181,6 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
 
     }
 
-    private static void composeDelta(Pose destination, Pose layer, Pose rest, BitSet touched) {
-        for (int i = touched.nextSetBit(0); i >= 0; i = touched.nextSetBit(i + 1)) {
-            final float[] result = destination.values[i];
-            final float[] value = layer.values[i];
-            final float[] base = rest.values[i];
-            result[0] += value[0] - base[0];
-            result[1] += value[1] - base[1];
-            result[2] += value[2] - base[2];
-            result[3] += value[3] - base[3];
-            result[4] += value[4] - base[4];
-            result[5] += value[5] - base[5];
-            result[6] *= scaleRatio(value[6], base[6]);
-            result[7] *= scaleRatio(value[7], base[7]);
-            result[8] *= scaleRatio(value[8], base[8]);
-        }
-
-    }
-
-    private static void blendFrom(Pose target, Snapshot snapshot, float currentWeight) {
-        for (int i = snapshot.touched.nextSetBit(0); i >= 0; i = snapshot.touched.nextSetBit(i + 1)) {
-            final float[] value = target.values[i];
-            final float[] from = snapshot.values[i];
-            value[0] = Mth.lerp(currentWeight, from[0], value[0]);
-            value[1] = Mth.lerp(currentWeight, from[1], value[1]);
-            value[2] = Mth.lerp(currentWeight, from[2], value[2]);
-            value[3] = Mth.rotLerp(currentWeight, from[3], value[3]);
-            value[4] = Mth.rotLerp(currentWeight, from[4], value[4]);
-            value[5] = Mth.rotLerp(currentWeight, from[5], value[5]);
-            value[6] = Mth.lerp(currentWeight, from[6], value[6]);
-            value[7] = Mth.lerp(currentWeight, from[7], value[7]);
-            value[8] = Mth.lerp(currentWeight, from[8], value[8]);
-        }
-
-    }
-
-    private static float scaleRatio(float value, float rest) {
-        return Math.abs(rest) < 1.0E-6f ? 1f : value / rest;
-    }
-
     private static boolean finitePositive(float value) {
         return Float.isFinite(value) && value > 1.0E-6f;
     }
@@ -460,7 +197,7 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
 
     private static Definition loadDefinition(AssetKey key) {
         final JsonObject geometry = PackagedAssetReader.readJson(key.geometry);
-        final Map<String, KnightLibAnimation> animations = key.animations == null ? Map.of() : GeoAnimationParser.parse(PackagedAssetReader.readJson(key.animations));
+        final Map<String, KnightLibAnimation> animations = key.animations == null ? Map.of() : AnimationLookup.withAliases(GeoAnimationParser.parse(PackagedAssetReader.readJson(key.animations)));
         return parseDefinition(geometry, animations);
     }
 
@@ -480,8 +217,8 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
                 final Vector3f rotation = parseVector(object, "rotation").mul(-1f, -1f, 1f);
                 final boolean visible = !(object.has("neverRender") && object.get("neverRender").getAsBoolean());
                 final float defaultInflate = object.has("inflate") ? object.get("inflate").getAsFloat() : 0f;
-                if (name.isBlank() || raw.containsKey(name)) {
-                    throw new IllegalArgumentException("[KnightLib] Duplicate or empty bone name '" + name + "'");
+                if (name.isBlank() || name.equals("__root") || raw.containsKey(name)) {
+                    throw new IllegalArgumentException("[KnightLib] Duplicate, reserved or empty bone name '" + name + "'");
                 }
                 if (!Float.isFinite(defaultInflate)) {
                     throw new IllegalArgumentException("[KnightLib] Bone inflate must be finite");
@@ -633,13 +370,6 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
         ;;
     }
 
-    private record ActivePlayback(
-            KnightLibAnimation animation,
-            float tick
-    ) {
-        ;;
-    }
-
     private record Definition(
             List<Bone> bones,
             Map<String, Integer> indices,
@@ -709,38 +439,7 @@ public final class GeoBoneHitboxRig implements BoneHitboxRig {
 
         }
 
-        float[][] copyValues() {
-            final float[][] copy = new float[values.length][9];
-            for (int i = 0; i < values.length; i++) {
-                System.arraycopy(values[i], 0, copy[i], 0, 9);
-            }
 
-            return copy;
-        }
-
-    }
-
-    private record Snapshot(
-            float[][] values,
-            BitSet touched
-    ) {
-
-        Snapshot {
-            touched = (BitSet) touched.clone();
-        }
-
-    }
-
-    private static final class ServerClock {
-        long sequence = -1L;
-        List<Step> steps = List.of();
-        double start;
-        float speed = 1f;
-        boolean finished;
-        Snapshot blendFrom;
-        double blendStart;
-        int blendTicks;
-        KnightLibEasings blendEasing;
     }
 
 }
