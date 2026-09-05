@@ -3,8 +3,11 @@ package dev.xylonity.knightlib.client.animation.model;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.xylonity.knightlib.client.animation.KnightLibPose;
+import dev.xylonity.knightlib.api.animation.internal.AnimationPose;
+import dev.xylonity.knightlib.api.animation.internal.KnightLibAnimationEvaluator;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
@@ -20,6 +23,32 @@ import java.util.function.Consumer;
  * <p>The two built-in implementations are {@link GeoModel} and {@link VanillaModel}.</p>
  */
 public abstract class KnightLibModel {
+
+    private KnightLibAnimationEvaluator ambientEvaluator;
+
+    @ApiStatus.Internal
+    public final KnightLibAnimationEvaluator ambientEvaluator() {
+        if (ambientEvaluator == null) {
+            ambientEvaluator = new KnightLibAnimationEvaluator();
+        }
+
+        return ambientEvaluator;
+    }
+
+    /**
+     * Applies authored deltas through the coordinate conversion
+     */
+    @ApiStatus.Internal
+    public void applyAnimationPose(AnimationPose pose) {
+        resetPose();
+        for (int i = 0; i < pose.boneCount(); i++) {
+            final String bone = pose.boneName(i);
+            applyPosition(bone, pose.value(i, 0), pose.value(i, 1), pose.value(i, 2));
+            applyRotation(bone, pose.value(i, 3), pose.value(i, 4), pose.value(i, 5));
+            applyScale(bone, pose.value(i, 6), pose.value(i, 7), pose.value(i, 8));
+        }
+
+    }
 
     public abstract Set<String> boneNames();
 
@@ -106,6 +135,10 @@ public abstract class KnightLibModel {
      */
     public void renderLiving(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a) {
         render(poseStack, consumer, packedLight, packedOverlay, r, g, b, a);
+    }
+
+    public void renderLivingBones(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a, Set<String> boneNames) {
+        renderBones(poseStack, consumer, packedLight, packedOverlay, r, g, b, a, boneNames);
     }
 
     /**

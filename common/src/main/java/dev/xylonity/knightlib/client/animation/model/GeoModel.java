@@ -33,6 +33,10 @@ public final class GeoModel extends KnightLibModel {
         bones.put(ROOT, root);
 
         for (final GeoModelDefinition.BoneDefinition boneDefinition : definition.bones()) {
+            if (ROOT.equals(boneDefinition.name()) || bones.containsKey(boneDefinition.name())) {
+                throw new IllegalArgumentException("[KnightLib] Reserved or duplicate bone name: " + boneDefinition.name());
+            }
+
             final GeoBone bone = new GeoBone(
                     boneDefinition.name(),
                     boneDefinition.offsetX(), boneDefinition.offsetY(), boneDefinition.offsetZ(),
@@ -280,6 +284,20 @@ public final class GeoModel extends KnightLibModel {
     @Override
     public void visitBones(PoseStack poseStack, Set<String> names, BoneVisitor visitor) {
         root.visit(poseStack, names, visitor);
+    }
+
+    @Override
+    public void renderLivingBones(PoseStack poseStack, VertexConsumer consumer, int packedLight, int packedOverlay, float r, float g, float b, float a, Set<String> boneNames) {
+        poseStack.pushPose();
+        try {
+            poseStack.translate(0f, 1.501f, 0f);
+            poseStack.scale(-1f, -1f, 1f);
+            renderBones(poseStack, consumer, packedLight, packedOverlay, r, g, b, a, boneNames);
+        }
+        finally {
+            poseStack.popPose();
+        }
+
     }
 
     @Override
