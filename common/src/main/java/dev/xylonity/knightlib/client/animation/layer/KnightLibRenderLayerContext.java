@@ -9,6 +9,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 import java.util.Objects;
 import java.util.Set;
@@ -59,8 +61,7 @@ public final class KnightLibRenderLayerContext<T> {
     }
 
     /**
-     * Mutable vanilla pose stack for this pass. Every layer is isolated internally, so transforms applied
-     * while rendering cannot affect the next layer.
+     * Mutable vanilla pose stack for this pass. The layer's pushed frame isolates stack transforms from the next layer
      */
     public PoseStack poseStack() {
         return poseStack;
@@ -197,6 +198,80 @@ public final class KnightLibRenderLayerContext<T> {
         }
         else {
             model.visitBones(poseStack, boneNames, visitor);
+        }
+
+    }
+
+    /**
+     * Draws something at the current pivot of a bone, following its animated position, rotation, scale mutations.
+     */
+    public boolean withBone(String boneName, Consumer<PoseStack> draw) {
+        return withAnchor(boneName, false, draw);
+    }
+
+    /**
+     * Draws something at a locator, including its offset and rotation relative to its animated bone.
+     */
+    public boolean withLocator(String locatorName, Consumer<PoseStack> draw) {
+        return withAnchor(locatorName, true, draw);
+    }
+
+    private boolean withAnchor(String name, boolean locator, Consumer<PoseStack> draw) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(draw, "draw");
+        if (locator ? !model.hasLocator(name) : !model.hasBone(name)) {
+            return false;
+        }
+
+        final AnchorTransform transform = new AnchorTransform();
+        final PoseStack origin = new PoseStack();
+        final Set<String> names = Set.of(name);
+        if (locator) {
+            if (livingModelFrame) {
+                model.visitLivingLocators(origin, names, transform);
+            }
+            else {
+                model.visitLocators(origin, names, transform);
+            }
+
+        }
+        else if (livingModelFrame) {
+            model.visitLivingBones(origin, names, transform);
+        }
+        else {
+            model.visitBones(origin, names, transform);
+        }
+
+        if (transform.pose == null) {
+            return false;
+        }
+
+        poseStack.pushPose();
+
+        try {
+            poseStack.mulPoseMatrix(transform.pose);
+            poseStack.last().normal().mul(transform.normal);
+            draw.accept(poseStack);
+        }
+        finally {
+            poseStack.popPose();
+        }
+
+        return true;
+    }
+
+    private static final class AnchorTransform implements KnightLibModel.BoneVisitor {
+
+        private Matrix4f pose;
+        private Matrix3f normal;
+
+        @Override
+        public void visit(String name, Matrix4f pose, Matrix3f normal) {
+            if (this.pose == null) {
+                this.pose = new Matrix4f(pose);
+                this.normal = new Matrix3f(normal);
+            }
+
         }
 
     }

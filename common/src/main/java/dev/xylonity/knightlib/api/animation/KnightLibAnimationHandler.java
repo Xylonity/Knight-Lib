@@ -28,8 +28,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
- * Owns the live animation state for one entity, blockentity or itemstack. Controllers are computed in insertion order because
- * later controllers layer over the pose produced by earlier ones.
+ * Owns the live animation state for one entity, blockentity or itemstack. Controllers are computed in insertion order.
  *
  * Based off Citadel implementation
  * https://github.com/AlexModGuy/Citadel/blob/1.20/src/main/java/com/github/alexthe666/citadel/animation/AnimationHandler.java
@@ -89,7 +88,8 @@ public final class KnightLibAnimationHandler {
         if (controllers.size() >= MAX_CONTROLLERS) {
             final Iterator<Map.Entry<String, Controller>> iterator = controllers.entrySet().iterator();
             while (iterator.hasNext()) {
-                if (iterator.next().getValue().animation() == null) {
+                final Controller controller = iterator.next().getValue();
+                if (!controller.reserved && controller.animation() == null) {
                     iterator.remove();
                     break;
                 }
@@ -236,7 +236,7 @@ public final class KnightLibAnimationHandler {
                 controller.command(List.of(), controller.transitionTicks(), controller.easing(), 1f, now, 0, controller.blendMode());
                 sync(controller);
             }
-            else if (target.shouldDiscardStoppedController(controller, now)) {
+            else if (!controller.reserved && target.shouldDiscardStoppedController(controller, now)) {
                 iterator.remove();
                 removedStoppedItemController = true;
             }
@@ -250,6 +250,7 @@ public final class KnightLibAnimationHandler {
         if (!clientControllersRegistered) {
             final List<ClientControllerBinding> controllers = new ArrayList<>();
             target.registerAnimationControllers(controllers);
+            reserveClientControllerOrder(controllers);
             clientControllerBindings = List.copyOf(controllers);
             clientControllersRegistered = true;
         }
@@ -275,6 +276,42 @@ public final class KnightLibAnimationHandler {
             clientState.clearContext();
         }
 
+    }
+
+    private void reserveClientControllerOrder(List<ClientControllerBinding> bindings) {
+        if (bindings.isEmpty()) {
+            return;
+        }
+
+        final Map<String, Controller> ordered = new LinkedHashMap<>();
+        for (final ClientControllerBinding binding : bindings) {
+            final Controller existing = controllers.get(binding.name());
+            ordered.put(binding.name(), existing == null ? new Controller(binding.name()) : existing);
+        }
+
+        final Set<String> reserved = Set.copyOf(ordered.keySet());
+        controllers.forEach(ordered::putIfAbsent);
+
+        // Inactive commands remain as such
+        final Iterator<Controller> iterator = ordered.values().iterator();
+        while (ordered.size() > MAX_CONTROLLERS && iterator.hasNext()) {
+            final Controller controller = iterator.next();
+            if (!reserved.contains(controller.name()) && controller.animation() == null) {
+                iterator.remove();
+            }
+
+        }
+
+        if (ordered.size() > MAX_CONTROLLERS) {
+            throw new IllegalStateException("[KnightLib] Declared and active controllers cannot exceed " + MAX_CONTROLLERS);
+        }
+
+        for (final String name : reserved) {
+            ordered.get(name).reserved = true;
+        }
+
+        controllers.clear();
+        controllers.putAll(ordered);
     }
 
     private ItemStack clientItemStack() {
@@ -850,6 +887,8 @@ public final class KnightLibAnimationHandler {
 
     private interface ClientControllerBinding {
 
+        String name();
+
         void update(KnightLibAnimationHandler handler);
 
     }
@@ -879,6 +918,11 @@ public final class KnightLibAnimationHandler {
             this.name = name;
             this.trigger = trigger;
             this.animation = animation.controller(name);
+        }
+
+        @Override
+        public String name() {
+            return name;
         }
 
         @Override
@@ -924,6 +968,11 @@ public final class KnightLibAnimationHandler {
             this.name = name;
             this.trigger = trigger;
             this.animation = animation.controller(name);
+        }
+
+        @Override
+        public String name() {
+            return name;
         }
 
         @Override
@@ -1059,6 +1108,7 @@ public final class KnightLibAnimationHandler {
     public static final class Controller {
 
         private final String name;
+        private boolean reserved;
 
         private List<KnightLibAnim.Step> steps = List.of();
         private long commandGameTime;
