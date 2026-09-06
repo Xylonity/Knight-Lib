@@ -10,6 +10,8 @@ import java.util.function.Predicate;
  *
  * <p>An {@code Item} is a singleton, so selectors receive a {@link KnightLibAnimationState} describing the particular stack being evaluated.</p>
  *
+ * Controller priority is based on the insertion order.
+ *
  * Based off GeckoLib implementation
  * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimatableManager.java
  * https://github.com/bernie-g/geckolib/blob/1.20.1/Forge/src/main/java/software/bernie/geckolib/animatable/SingletonGeoAnimatable.java

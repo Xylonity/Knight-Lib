@@ -17,12 +17,12 @@ public abstract class KnightLibRenderLayer<T> {
     }
 
     /**
-     * Draws this pass using the backed state exposed by {@code context}
+     * Draws this pass using the evaluated pose exposed by {@code context}, without modifying model state.
      */
     public abstract void render(KnightLibRenderLayerContext<T> context);
 
     /**
-     * Internal render that runs a layer without allowing its pose-stack changes to leak into later layers
+     * Runs a layer in a pushed posestack frame, restored even if rendering throws, and does not snapshot model transforms
      */
     public final void renderIsolated(KnightLibRenderLayerContext<T> context) {
         Objects.requireNonNull(context, "context");

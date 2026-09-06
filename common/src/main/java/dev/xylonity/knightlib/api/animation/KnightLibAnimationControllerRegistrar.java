@@ -10,6 +10,8 @@ import java.util.function.Supplier;
  * Collects the client sided controllers declared by an animatable. Registration happens once per instance and the selectors
  * are evaluated once per tick.
  *
+ * Controller priority is based on the insertion order.
+ *
  * Mirror's GeckoLib's predicate API implementation
  * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimatableManager.java
  */
