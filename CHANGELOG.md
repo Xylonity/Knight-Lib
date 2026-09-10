@@ -1,3 +1,6 @@
+# 2.0.1
+- Entity drops internal api now resolves entity matching in a different order, preventing mods like JER from showing incorrect drops
+
 # 2.0.0
 - Added a brand-new animation system, as an extension of the vanilla rendering system, compatible with bedrock's convention
 - Added 4 new conventional client-sided events

@@ -9,6 +9,7 @@
     "EntityAnimationMixin",
     "ItemStackAnimationMixin",
     "LevelBlockEntityAnimationMixin",
+    "LootTableResourcesMixin",
     "ProjectileUtilMixin",
     "RecipeManagerMixin",
     "SmithingMenuMixin"
