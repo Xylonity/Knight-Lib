@@ -3,8 +3,6 @@ package dev.xylonity.knightlib.common.event;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.api.event.impl.server.*;
-import dev.xylonity.knightlib.api.loot.EntityLootEntry;
-import dev.xylonity.knightlib.api.loot.KnightLibLoot;
 import dev.xylonity.knightlib.common.event.impl.EntityAttributeRegistrationEventFabric;
 import dev.xylonity.knightlib.common.event.impl.SpawnPlacementRegistrationEventFabric;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -126,13 +124,6 @@ public final class KnightLibFabricServerEvents {
 
             for (LootPool.Builder pool : event.getPendingPools()) {
                 tableBuilder.withPool(pool);
-            }
-
-            if (id.location().getPath().startsWith("entities/")) {
-                for (EntityLootEntry entityLootEntry : KnightLibLoot.getEntityEntries()) {
-                    tableBuilder.withPool(KnightLibLoot.buildPool(entityLootEntry));
-                }
-
             }
 
         });

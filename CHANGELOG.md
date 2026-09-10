@@ -1,3 +1,6 @@
+# 1.6.2
+- Entity drops internal api now resolves entity matching in a different order, preventing mods like JER from showing incorrect drops
+
 # 1.6.1
 - Bossbar links are now cleared on world reload
 

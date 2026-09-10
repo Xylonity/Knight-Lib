@@ -19,6 +19,7 @@ public final class NeoForgeConfigScreens {
                     IConfigScreenFactory.class,
                     () -> (container, modListScreen) -> ConfigScreenCreator.createScreen(modId, modListScreen)
             );
+
         }
         catch (Throwable ignored) {
             ;;

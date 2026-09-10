@@ -4,8 +4,6 @@ import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
 import dev.xylonity.knightlib.api.event.impl.server.*;
-import dev.xylonity.knightlib.api.loot.EntityLootEntry;
-import dev.xylonity.knightlib.api.loot.KnightLibLoot;
 import dev.xylonity.knightlib.common.event.impl.EntityAttributeRegistrationEventNeoForge;
 import dev.xylonity.knightlib.common.event.impl.SpawnPlacementRegistrationEventNeoForge;
 import dev.xylonity.knightlib.datagen.KnightLibLootModifierGenerator;
@@ -138,13 +136,6 @@ public class KnightLibNeoForgeServerEvents {
 
             for (LootPool.Builder pool : lootTableModifyEvent.getPendingPools()) {
                 event.getTable().addPool(pool.build());
-            }
-
-            if (event.getName().getPath().startsWith("entities/")) {
-                for (EntityLootEntry entityLootEntry : KnightLibLoot.getEntityEntries()) {
-                    event.getTable().addPool(KnightLibLoot.buildPool(entityLootEntry).build());
-                }
-
             }
 
         }

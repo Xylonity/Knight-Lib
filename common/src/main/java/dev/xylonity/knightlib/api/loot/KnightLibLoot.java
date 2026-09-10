@@ -51,8 +51,8 @@ public final class KnightLibLoot {
 
     /**
      * Builds a {@link LootPool.Builder} for a given entity loot entry.
-     * The pool includes an entity-tag condition and a random-chance condition,
-     * and is safe to inject into any {@code entities/*} loot table.
+     * The pool includes an entity-tag condition and a random-chance condition, and is injected only into the default
+     * loottables of entities in the tag.
      */
     public static LootPool.Builder buildPool(EntityLootEntry entry) {
 
