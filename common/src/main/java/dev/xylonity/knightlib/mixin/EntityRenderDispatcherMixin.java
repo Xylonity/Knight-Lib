@@ -47,6 +47,7 @@ public abstract class EntityRenderDispatcherMixin {
         if (entity instanceof BoneHitboxHolder hitboxHolder) {
             final BoneHitboxManager manager = hitboxHolder.getBoneHitboxManager();
             if (manager != null && manager.isActive()) {
+                manager.updateClientPose(partialTicks);
                 for (final BoneHitbox hitbox : manager.getAll()) {
                     if (!hitbox.isEnabled()) {
                         continue;
@@ -113,13 +114,9 @@ public abstract class EntityRenderDispatcherMixin {
             nz /= length;
         }
 
-        Vector3f normalTransform = normal.transform(new Vector3f(nx, ny, nz));
-        buffer.addVertex(pose, a[0], a[1], a[2])
-                .setColor(red, green, blue, alpha)
-                .setNormal(normalTransform.x(), normalTransform.y(), normalTransform.z());
-        buffer.addVertex(pose, b[0], b[1], b[2])
-                .setColor(red, green, blue, alpha)
-                .setNormal(normalTransform.x(), normalTransform.y(), normalTransform.z());
+        final Vector3f transformedNormal = normal.transform(nx, ny, nz, new Vector3f());
+        buffer.addVertex(pose, a[0], a[1], a[2]).setColor(red, green, blue, alpha).setNormal(transformedNormal.x(), transformedNormal.y(), transformedNormal.z());
+        buffer.addVertex(pose, b[0], b[1], b[2]).setColor(red, green, blue, alpha).setNormal(transformedNormal.x(), transformedNormal.y(), transformedNormal.z());
     }
 
 }

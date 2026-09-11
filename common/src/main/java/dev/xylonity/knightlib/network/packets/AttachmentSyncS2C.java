@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.network.packets;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.client.entity.data.internal.AttachmentsClient;
+import dev.xylonity.knightlib.network.ClientPacketDispatcher;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
 import dev.xylonity.knightlib.network.PacketType;
@@ -28,7 +28,7 @@ public record AttachmentSyncS2C(
                     ID,
                     AttachmentSyncS2C.class,
                     PacketCodec.of(AttachmentSyncS2C::encode, AttachmentSyncS2C::decode),
-                    message -> AttachmentsClient.handle(message)
+                    ClientPacketDispatcher::dispatch
             );
 
     public static void encode(AttachmentSyncS2C packet, FriendlyByteBuf buf) {

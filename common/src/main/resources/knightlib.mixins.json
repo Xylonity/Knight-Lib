@@ -5,7 +5,12 @@
   "refmap": "${mod_id}.refmap.json",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "BlockEntityAnimationMixin",
+    "EntityAnimationMixin",
+    "ItemStackAnimationMixin",
+    "LevelBlockEntityAnimationMixin",
     "LootTableResourcesMixin",
+    "ProjectileUtilMixin",
     "RecipeManagerMixin",
     "SmithingMenuMixin"
   ],
@@ -15,6 +20,8 @@
     "EntityRenderDispatcherMixin",
     "GameRendererAccessor",
     "GameRendererMixin",
+    "ModelPartAccessor",
+    "MultiPlayerGameModeMixin",
     "PostChainAccessor",
     "PostPassAccessor"
   ],
@@ -24,4 +31,3 @@
     "defaultRequire": 1
   }
 }
-

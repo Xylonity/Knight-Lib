@@ -35,15 +35,14 @@
         "knightlib.mixins.json",
         "knightlib.fabric.mixins.json"
     ],
+    "accessWidener": "knightlib.accesswidener",
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",
         "minecraft": "~${minecraft_version}",
-        "java": ">=${java_version}",
-        "geckolib": "*"
+        "java": ">=${java_version}"
     },
     "suggests": {
         "another-mod": "*"
     }
 }
-  

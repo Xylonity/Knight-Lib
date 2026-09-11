@@ -1,0 +1,286 @@
+package dev.xylonity.knightlib.client.animation.layer;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.xylonity.knightlib.api.util.KnightLibColor;
+import dev.xylonity.knightlib.client.animation.model.KnightLibModel;
+import dev.xylonity.knightlib.client.animation.renderer.KnightLibItemRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.item.ItemDisplayContext;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Consumer;
+
+/**
+ * Render state context supplied to every {@link KnightLibRenderLayer}.
+ */
+public final class KnightLibRenderLayerContext<T> {
+
+    private final T target;
+    private final KnightLibModel model;
+    private final PoseStack poseStack;
+    private final MultiBufferSource buffers;
+    private final int packedLight;
+    private final int packedOverlay;
+    private final int renderColor;
+    private final float partialTick;
+    private final double renderTime;
+
+    @Nullable
+    private final ItemDisplayContext itemDisplayContext;
+    private final boolean livingModelFrame;
+
+    public KnightLibRenderLayerContext(T target, KnightLibModel model, PoseStack poseStack, MultiBufferSource buffers, int packedLight, int packedOverlay, int renderColor, float partialTick, double renderTime, @Nullable ItemDisplayContext itemDisplayContext, boolean livingModelFrame) {
+        this.target = Objects.requireNonNull(target, "target");
+        this.model = Objects.requireNonNull(model, "model");
+        this.poseStack = Objects.requireNonNull(poseStack, "poseStack");
+        this.buffers = Objects.requireNonNull(buffers, "buffers");
+        this.packedLight = packedLight;
+        this.packedOverlay = packedOverlay;
+        this.renderColor = renderColor;
+        this.partialTick = partialTick;
+        this.renderTime = renderTime;
+        this.itemDisplayContext = itemDisplayContext;
+        this.livingModelFrame = livingModelFrame;
+    }
+
+    public T target() {
+        return target;
+    }
+
+    /**
+     * The evaluated model and bone pose used by the base pass
+     */
+    public KnightLibModel model() {
+        return model;
+    }
+
+    /**
+     * Mutable vanilla pose stack for this pass. The layer's pushed frame isolates stack transforms from the next layer
+     */
+    public PoseStack poseStack() {
+        return poseStack;
+    }
+
+    public MultiBufferSource buffers() {
+        return buffers;
+    }
+
+    public VertexConsumer buffer(RenderType renderType) {
+        return buffers.getBuffer(Objects.requireNonNull(renderType, "renderType"));
+    }
+
+    public int packedLight() {
+        return packedLight;
+    }
+
+    public int packedOverlay() {
+        return packedOverlay;
+    }
+
+    /**
+     * Packed ARGB multiplier selected by the owning renderer for this complete render
+     */
+    public int renderColor() {
+        return renderColor;
+    }
+
+    public KnightLibColor color() {
+        return KnightLibColor.fromArgb(renderColor);
+    }
+
+    public float partialTick() {
+        return partialTick;
+    }
+
+    /**
+     * World render time in ticks, including {@link #partialTick()}
+     */
+    public double renderTime() {
+        return renderTime;
+    }
+
+    /**
+     * Non-null only when this pass belongs to a {@link KnightLibItemRenderer}
+     */
+    @Nullable
+    public ItemDisplayContext itemDisplayContext() {
+        return itemDisplayContext;
+    }
+
+    /**
+     * Combines a layer tint with the renderer-wide ARGB
+     */
+    public int multiplyColor(int tintArgb) {
+        return KnightLibColor.multiplyArgb(renderColor, tintArgb);
+    }
+
+    public KnightLibColor multiplyColor(@Nullable KnightLibColor tint) {
+        return color().multiply(tint == null ? KnightLibColor.fromArgb(KnightLibColor.WHITE_ARGB) : tint);
+    }
+
+    /**
+     * Re-renders the evaluated model with the renderer-wide ARGB and normal lighting
+     */
+    public void renderModel(RenderType renderType) {
+        renderModel(renderType, packedLight, packedOverlay, renderColor);
+    }
+
+    /**
+     * Re-renders the evaluated model with an exact packed ARGB and normal lighting
+     */
+    public void renderModel(RenderType renderType, int argb) {
+        renderModel(renderType, packedLight, packedOverlay, argb);
+    }
+
+    public void renderModel(RenderType renderType, int light, int overlay, int argb) {
+        renderModel(buffer(renderType), light, overlay, argb);
+    }
+
+    /**
+     * Re-renders the evaluated model through an already decorated consumer, useful for foil or atlas-sprite wrappers for example
+     */
+    public void renderModel(VertexConsumer consumer, int light, int overlay, int argb) {
+        Objects.requireNonNull(consumer, "consumer");
+        final KnightLibColor resolved = KnightLibColor.fromArgb(argb);
+        if (livingModelFrame) {
+            model.renderLiving(poseStack, consumer, light, overlay, resolved.red(), resolved.green(), resolved.blue(), resolved.alpha());
+        }
+        else {
+            model.render(poseStack, consumer, light, overlay, resolved.red(), resolved.green(), resolved.blue(), resolved.alpha());
+        }
+
+    }
+
+    /**
+     * Renders only the named bones through the supplied render type. Ancestor transforms are preserved but their cubes are not drawn unless selected.
+     */
+    public void renderBones(Set<String> boneNames, RenderType renderType, int light, int overlay, int argb) {
+        renderBones(boneNames, buffer(renderType), light, overlay, argb);
+    }
+
+    public void renderBones(Set<String> boneNames, VertexConsumer consumer, int light, int overlay, int argb) {
+        Objects.requireNonNull(boneNames, "boneNames");
+        Objects.requireNonNull(consumer, "consumer");
+        final KnightLibColor color = KnightLibColor.fromArgb(argb);
+        if (livingModelFrame) {
+            model.renderLivingBones(poseStack, consumer, light, overlay, color.red(), color.green(), color.blue(), color.alpha(), boneNames);
+        }
+        else {
+            model.renderBones(poseStack, consumer, light, overlay, color.red(), color.green(), color.blue(), color.alpha(), boneNames);
+        }
+
+    }
+
+    /**
+     * Visits all bones in the frame used by this layer
+     */
+    public void visitBones(KnightLibModel.BoneVisitor visitor) {
+        if (livingModelFrame) {
+            model.visitLivingBones(poseStack, Objects.requireNonNull(visitor, "visitor"));
+        }
+        else {
+            model.visitBones(poseStack, Objects.requireNonNull(visitor, "visitor"));
+        }
+
+    }
+
+    public void visitBones(Set<String> boneNames, KnightLibModel.BoneVisitor visitor) {
+        Objects.requireNonNull(boneNames, "boneNames");
+        Objects.requireNonNull(visitor, "visitor");
+        if (livingModelFrame) {
+            model.visitLivingBones(poseStack, boneNames, visitor);
+        }
+        else {
+            model.visitBones(poseStack, boneNames, visitor);
+        }
+
+    }
+
+    /**
+     * Draws something at the current pivot of a bone, following its animated position, rotation, scale mutations.
+     */
+    public boolean withBone(String boneName, Consumer<PoseStack> draw) {
+        return withAnchor(boneName, false, draw);
+    }
+
+    /**
+     * Draws something at a locator, including its offset and rotation relative to its animated bone.
+     */
+    public boolean withLocator(String locatorName, Consumer<PoseStack> draw) {
+        return withAnchor(locatorName, true, draw);
+    }
+
+    private boolean withAnchor(String name, boolean locator, Consumer<PoseStack> draw) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(draw, "draw");
+        if (locator ? !model.hasLocator(name) : !model.hasBone(name)) {
+            return false;
+        }
+
+        final AnchorTransform transform = new AnchorTransform();
+        final PoseStack origin = new PoseStack();
+        final Set<String> names = Set.of(name);
+        if (locator) {
+            if (livingModelFrame) {
+                model.visitLivingLocators(origin, names, transform);
+            }
+            else {
+                model.visitLocators(origin, names, transform);
+            }
+
+        }
+        else if (livingModelFrame) {
+            model.visitLivingBones(origin, names, transform);
+        }
+        else {
+            model.visitBones(origin, names, transform);
+        }
+
+        if (transform.pose == null) {
+            return false;
+        }
+
+        poseStack.pushPose();
+
+        try {
+            poseStack.mulPose(transform.pose);
+            poseStack.last().normal().mul(transform.normal);
+            draw.accept(poseStack);
+        }
+        finally {
+            poseStack.popPose();
+        }
+
+        return true;
+    }
+
+    private static final class AnchorTransform implements KnightLibModel.BoneVisitor {
+
+        private Matrix4f pose;
+        private Matrix3f normal;
+
+        @Override
+        public void visit(String name, Matrix4f pose, Matrix3f normal) {
+            if (this.pose == null) {
+                this.pose = new Matrix4f(pose);
+                this.normal = new Matrix3f(normal);
+            }
+
+        }
+
+    }
+
+    /**
+     * Iterates authored bone names in parent-first order when the model exposes a hierarchy
+     */
+    public void forEachBone(Consumer<String> visitor) {
+        model.forEachBone(Objects.requireNonNull(visitor, "visitor"));
+    }
+
+}

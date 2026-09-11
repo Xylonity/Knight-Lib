@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.common.blockentity;
 
+import dev.xylonity.knightlib.api.animation.*;
 import dev.xylonity.knightlib.api.interop.IGreatChaliceInteractable;
 import dev.xylonity.knightlib.api.interop.GreatChaliceState;
 import dev.xylonity.knightlib.registry.KnightLibBlockEntities;
@@ -16,20 +17,14 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.animatable.GeoBlockEntity;
-import software.bernie.geckolib.animatable.GeoAnimatable;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.AnimationState;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Random;
 
-public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEntity {
+public class GreatChaliceBlockEntity extends BlockEntity implements KnightLibAnimatable {
 
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final KnightLibAnimationHandler animations = KnightLibAnimationHandler.of(this);
+
+    private static final KnightLibAnim IDLE = KnightLibAnim.begin().thenLoop("idle");
 
     private int charges;
     private int prevCharges;
@@ -90,11 +85,9 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
         this.prevCharges = tag.getInt("PrevCharges");
         try {
             state = GreatChaliceState.valueOf(tag.getString("State").toUpperCase());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             state = GreatChaliceState.NORMAL;
         }
-
     }
 
     @Override
@@ -107,7 +100,9 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
     }
 
     public static <T extends BlockEntity> void tick(Level level, BlockPos pos, BlockState state, T F) {
-        if (!(F instanceof GreatChaliceBlockEntity chalice)) return;
+        if (!(F instanceof GreatChaliceBlockEntity chalice)) {
+            return;
+        }
 
         if (chalice.charges == IGreatChaliceInteractable.MAX_CHARGES && chalice.tickcount % 15 == 0) {
             chalice.spawnSpecialParticles();
@@ -196,17 +191,17 @@ public class GreatChaliceBlockEntity extends BlockEntity implements GeoBlockEnti
     }
 
     @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllerRegistrar) {
-        controllerRegistrar.add(new AnimationController<>(this, "controller", 2, this::predicate));
+    public void registerAnimationControllers(KnightLibAnimationControllerRegistrar controllers) {
+        controllers.add("main", this::mainController);
     }
 
-    private <T extends GeoAnimatable> PlayState predicate(AnimationState<T> event) {
-        return PlayState.CONTINUE;
+    public KnightLibAnim mainController(final KnightLibAnimationState state) {
+        return IDLE;
     }
 
     @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return this.cache;
+    public KnightLibAnimationHandler getAnimationHandler() {
+        return this.animations;
     }
 
 }

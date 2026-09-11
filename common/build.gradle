@@ -36,15 +36,25 @@ repositories {
 }
 
 dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+
     compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.5'
     // fabric and neoforge both bundle mixinextras, so it is safe to use it in common
     compileOnly group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
     annotationProcessor group: 'io.github.llamalad7', name: 'mixinextras-common', version: '0.3.5'
 
-    compileOnly("software.bernie.geckolib:geckolib-neoforge-1.21.1:4.9") { transitive = false }
     compileOnly("com.electronwill.night-config:toml:3.6.6")
     compileOnly("com.electronwill.night-config:core:3.6.6")
     compileOnly("mezz.jei:jei-1.21.1-common-api:${jei_version}")
+}
+
+sourceSets.test {
+    compileClasspath += sourceSets.main.compileClasspath
+    runtimeClasspath += sourceSets.main.compileClasspath
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
 }
 
 configurations {

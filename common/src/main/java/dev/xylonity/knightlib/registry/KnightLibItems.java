@@ -18,10 +18,4 @@ public class KnightLibItems {
     public static final ResourceEntry<Item> FILLED_GRAIL = ITEMS.register("filled_grail", () -> new FilledGrailItem(new Item.Properties()));
     public static final ResourceEntry<Item> HOMUNCULUS = ITEMS.register("homunculus", () -> new HomunculusItem(new Item.Properties()));
 
-    public static final ResourceEntry<Item> GREAT_CHALICE = ITEMS.register("great_chalice", KnightLib.PLATFORM.createItem("great_chalice", new Item.Properties(), ItemType.GREAT_CHALICE));
-
-    public enum ItemType {
-        GREAT_CHALICE
-    }
-
 }

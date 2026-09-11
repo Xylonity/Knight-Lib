@@ -29,7 +29,7 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix3f;
 import org.joml.Vector3f;
-import software.bernie.geckolib.renderer.GeoBlockRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 
 public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatChaliceRecipe> {
     public static final ResourceLocation UID = KnightLib.of("great_chalice_interaction");
@@ -116,8 +116,7 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
 
         GreatChaliceBlockEntity be = getOrCreateBlockEntity();
 
-        @SuppressWarnings("unchecked")
-        GeoBlockRenderer<GreatChaliceBlockEntity> renderer = (GeoBlockRenderer<GreatChaliceBlockEntity>) Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(be);
+        BlockEntityRenderer<GreatChaliceBlockEntity> renderer = Minecraft.getInstance().getBlockEntityRenderDispatcher().getRenderer(be);
 
         if (renderer == null) return;
 
@@ -146,7 +145,7 @@ public final class GreatChaliceRecipeCategory implements IRecipeCategory<GreatCh
 
             renderer.render(be, partialTicks, pose, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
         } catch (Exception e) {
-            renderer.render(be, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false), pose, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
+            renderer.render(be, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(true), pose, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
         }
 
         pose.popPose();

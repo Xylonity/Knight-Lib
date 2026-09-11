@@ -35,8 +35,6 @@ dependencies {
         officialMojangMappings()
         parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
     }
-    modImplementation "software.bernie.geckolib:geckolib-fabric-${minecraft_version}:4.7.6"
-
     compileOnly "com.google.code.findbugs:jsr305:3.0.2"
 
     shadow("com.electronwill.night-config:toml:3.6.6")
@@ -44,7 +42,7 @@ dependencies {
     modImplementation "com.terraformersmc:modmenu:11.0.4"
 
     compileOnly "mezz.jei:jei-1.21.1-fabric-api:${jei_version}"
-    modImplementation "mezz.jei:jei-1.21.1-fabric:${jei_version}"
+    modCompileOnly "mezz.jei:jei-1.21.1-fabric:${jei_version}"
 
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"

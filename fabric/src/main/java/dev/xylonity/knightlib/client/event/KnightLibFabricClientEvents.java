@@ -4,6 +4,10 @@ import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
+import dev.xylonity.knightlib.api.item.KnightLibRenderedArmorItem;
+import dev.xylonity.knightlib.api.item.KnightLibRenderedItem;
+import dev.xylonity.knightlib.client.animation.KnightLibAnimationAssets;
+import dev.xylonity.knightlib.client.armor.KnightLibFabricArmorRenderer;
 import dev.xylonity.knightlib.client.event.impl.*;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -13,6 +17,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.ArmorRenderer;
+import net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
@@ -21,17 +27,24 @@ import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
 import java.util.function.BiConsumer;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 public final class KnightLibFabricClientEvents {
+
+    private static final Map<Item, BlockEntityWithoutLevelRenderer> ITEM_RENDERERS = new IdentityHashMap<>();
 
     private static Level lastLevel = null;
 
@@ -49,6 +62,9 @@ public final class KnightLibFabricClientEvents {
     }
 
     public static void dispatchRegistrationEvents() {
+        registerPacketHandlers();
+        registerArmorModels();
+        registerArmorRenderers();
         registerRenderers();
         registerBlockEntityRenderers();
         registerParticles();
@@ -57,6 +73,53 @@ public final class KnightLibFabricClientEvents {
         registerRenderLayers();
         registerKeyMappings();
         registerBossBars();
+        registerItemRenderers();
+    }
+
+    private static void registerPacketHandlers() {
+        KnightLibEvents.CLIENT.dispatch(new ClientPacketHandlerRegistrationEvent());
+    }
+
+    private static void registerItemRenderers() {
+        for (final Item item : BuiltInRegistries.ITEM) {
+            if (!(item instanceof KnightLibRenderedItem renderedItem)) {
+                continue;
+            }
+
+            BuiltinItemRendererRegistry.INSTANCE.register(item,
+                    (stack, displayContext, poseStack, buffers, packedLight, packedOverlay) ->
+                            ITEM_RENDERERS
+                                    .computeIfAbsent(item, ignored -> createItemRenderer(item, renderedItem))
+                                    .renderByItem(stack, displayContext, poseStack, buffers, packedLight, packedOverlay)
+            );
+
+        }
+
+    }
+
+    private static BlockEntityWithoutLevelRenderer createItemRenderer(Item item, KnightLibRenderedItem renderedItem) {
+        final Object renderFactory = renderedItem.rendererFactory().get();
+        if (renderFactory instanceof BlockEntityWithoutLevelRenderer itemRenderer) {
+            return itemRenderer;
+        }
+
+        final String type = renderFactory == null ? "null" : renderFactory.getClass().getName();
+        throw new IllegalStateException("[KnightLib] Renderer factory for " + BuiltInRegistries.ITEM.getKey(item) + " returned " + type + " instead of a BEWLR");
+    }
+
+    private static void registerArmorModels() {
+        ArmorModelRegistrationEventFabric event = new ArmorModelRegistrationEventFabric();
+        KnightLibEvents.CLIENT.dispatch(event);
+    }
+
+    private static void registerArmorRenderers() {
+        for (final Item item : BuiltInRegistries.ITEM) {
+            if (item instanceof final KnightLibRenderedArmorItem renderedArmorItem) {
+                ArmorRenderer.register(new KnightLibFabricArmorRenderer(item, renderedArmorItem), item);
+            }
+
+        }
+
     }
 
     private static void registerRenderers() {
@@ -263,6 +326,7 @@ public final class KnightLibFabricClientEvents {
                     @Override
                     public void onResourceManagerReload(@NotNull ResourceManager resourceManager) {
                         Minecraft minecraft = Minecraft.getInstance();
+                        KnightLibAnimationAssets.reload(resourceManager);
                         KnightLibEvents.CLIENT.dispatch(new ClientResourcesReloadedEvent(minecraft, resourceManager));
                     }
 

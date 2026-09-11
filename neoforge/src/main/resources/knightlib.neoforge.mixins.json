@@ -7,7 +7,9 @@
     "EntityPersistentDataMixin"
   ],
   "client": [
-    "CameraMixin"
+    "CameraMixin",
+    "KnightLibArmorTextureClientMixin",
+    "KnightLibItemRendererClientMixin"
   ],
   "server": [],
   "injectors": {

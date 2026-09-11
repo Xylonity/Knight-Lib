@@ -27,7 +27,7 @@ public class KnightLibNeoForge {
         ConfigComposer.registerConfig(KnightLib.MOD_ID, KnightLibConfig.class);
 
         modEventBus.addListener(KnightLibNetworkNeoForge::onRegisterPayloads);
-        KnightLibPackets.registerAll();
+        KnightLibPackets.register();
 
         // Entity biome spawn modifiers hook
         KnightLibSpawnBiomeModifier.BIOME_MODIFIER_SERIALIZERS.register(modEventBus);

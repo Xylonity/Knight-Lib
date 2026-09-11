@@ -1,7 +1,7 @@
 package dev.xylonity.knightlib.network.packets;
 
 import dev.xylonity.knightlib.KnightLib;
-import dev.xylonity.knightlib.api.camera.shake.CameraShakeManager;
+import dev.xylonity.knightlib.network.ClientPacketDispatcher;
 import dev.xylonity.knightlib.api.camera.shake.ShakeSettings;
 import dev.xylonity.knightlib.network.ClientboundPacketType;
 import dev.xylonity.knightlib.network.PacketCodec;
@@ -24,7 +24,7 @@ public record CameraShakeS2C(
                     ID,
                     CameraShakeS2C.class,
                     PacketCodec.of(CameraShakeS2C::encode, CameraShakeS2C::decode),
-                    message -> CameraShakeManager.shake(message.spec(), message.replace())
+                    ClientPacketDispatcher::dispatch
             );
 
     public static void encode(CameraShakeS2C packet, FriendlyByteBuf buf) {

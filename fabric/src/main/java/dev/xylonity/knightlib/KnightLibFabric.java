@@ -21,7 +21,7 @@ public class KnightLibFabric implements ModInitializer {
 
         ConfigComposer.registerConfig(KnightLib.MOD_ID, KnightLibConfig.class);
 
-        KnightLibPackets.registerAll();
+        KnightLibPackets.register();
 
         // Internal event registrar
         KnightLibEvents.SERVER.register(KnightLibServerEvents.class);

@@ -1,10 +1,8 @@
 package dev.xylonity.knightlib.platform;
 
+import dev.xylonity.knightlib.api.armor.KnightLibArmorMaterial;
 import dev.xylonity.knightlib.api.registrar.ResourceRegistry;
-import dev.xylonity.knightlib.common.block.GreatChaliceBlock;
-import dev.xylonity.knightlib.common.item.blockitem.GreatChaliceBlockItem;
-import dev.xylonity.knightlib.registry.KnightLibBlocks;
-import dev.xylonity.knightlib.registry.KnightLibItems;
+import dev.xylonity.knightlib.common.item.armor.GenericArmorItem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
@@ -17,6 +15,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.EntityType;
@@ -26,12 +25,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,19 +66,8 @@ public class KnightLibFabricPlatform implements KnightLibPlatform {
     }
 
     @Override
-    public <T extends Block> Supplier<T> createBlock(String id, BlockBehaviour.Properties properties, KnightLibBlocks.BlockType blockType) {
-        return switch (blockType) {
-            default -> // CHALICE
-                    () -> (T) new GreatChaliceBlock(properties);
-        };
-    }
-
-    @Override
-    public <T extends Item> Supplier<T> createItem(String id, Item.Properties properties, KnightLibItems.ItemType itemType) {
-        return switch (itemType) {
-            default -> // CHALICE
-                    () -> (T) new GreatChaliceBlockItem(KnightLibBlocks.GREAT_CHALICE.get(), properties, id);
-        };
+    public ArmorItem createArmorItem(KnightLibArmorMaterial material, ArmorItem.Type type, Item.Properties properties, ResourceLocation modelId) {
+        return new GenericArmorItem(material.get(), type, properties, modelId);
     }
 
     @Override

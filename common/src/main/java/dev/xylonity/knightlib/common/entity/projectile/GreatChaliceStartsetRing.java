@@ -3,9 +3,8 @@ package dev.xylonity.knightlib.common.entity.projectile;
 import dev.xylonity.knightlib.common.entity.AbstractProjectile;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
-import software.bernie.geckolib.animatable.GeoEntity;
 
-public class GreatChaliceStartsetRing extends AbstractProjectile implements GeoEntity {
+public class GreatChaliceStartsetRing extends AbstractProjectile {
 
     public GreatChaliceStartsetRing(EntityType<? extends AbstractProjectile> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);

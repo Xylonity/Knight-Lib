@@ -1,0 +1,1270 @@
+package dev.xylonity.knightlib.api.animation;
+
+import dev.xylonity.knightlib.KnightLib;
+import dev.xylonity.knightlib.api.animation.internal.KnightLibAnimationEvaluator;
+import dev.xylonity.knightlib.api.animation.internal.KnightLibAnimationSequence;
+import dev.xylonity.knightlib.api.animation.internal.AnimationMaskCodec;
+import dev.xylonity.knightlib.api.item.KnightLibAnimatedItem;
+import dev.xylonity.knightlib.api.util.KnightLibEasings;
+import dev.xylonity.knightlib.network.packets.AnimationSyncS2C;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+/**
+ * Owns the live animation state for one entity, blockentity or itemstack. Controllers are computed in insertion order.
+ *
+ * Based off Citadel implementation
+ * https://github.com/AlexModGuy/Citadel/blob/1.20/src/main/java/com/github/alexthe666/citadel/animation/AnimationHandler.java
+ * Based off GeckoLib implementation
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimatableManager.java
+ * https://github.com/bernie-g/geckolib/blob/1.20.1/core/src/main/java/software/bernie/geckolib/core/animation/AnimationController.java
+ */
+public final class KnightLibAnimationHandler {
+
+    public static final String MAIN_CONTROLLER = "main";
+
+    private static final int MAX_CONTROLLERS = 64;
+    private static final int MAX_TRANSITION_TICKS = 1200;
+    private static final int MAX_DURATION_TICKS = 20 * 60 * 60 * 24;
+
+    private final Map<String, Controller> controllers = new LinkedHashMap<>();
+    private final Collection<Controller> controllerView = Collections.unmodifiableCollection(controllers.values());
+
+    private KnightLibAnimationEvaluator clientEvaluator;
+
+    private final AnimationTarget target;
+
+    private List<ClientControllerBinding> clientControllerBindings = List.of();
+    private KnightLibAnimationState clientState;
+    private boolean clientControllersRegistered;
+
+    private WeakReference<Level> lastTickLevel = new WeakReference<>(null);
+    private long lastTickGameTime = Long.MIN_VALUE;
+
+    private KnightLibAnimationHandler(AnimationTarget target) {
+        this.target = Objects.requireNonNull(target, "target");
+    }
+
+    public static <T extends Entity & KnightLibAnimatable> KnightLibAnimationHandler of(T entity) {
+        return new KnightLibAnimationHandler(new EntityTarget<>(Objects.requireNonNull(entity, "entity")));
+    }
+
+    public static <T extends BlockEntity & KnightLibAnimatable> KnightLibAnimationHandler of(T blockEntity) {
+        return new KnightLibAnimationHandler(new BlockEntityTarget<>(Objects.requireNonNull(blockEntity, "blockEntity")));
+    }
+
+    static KnightLibAnimationHandler of(KnightLibAnimatedItem item, ItemStack stack, Level level) {
+        return new KnightLibAnimationHandler(new ItemStackTarget(Objects.requireNonNull(item, "item"), Objects.requireNonNull(stack, "stack"), level));
+    }
+
+    void updateItemContext(ItemStack stack, Level level, Entity holder) {
+        target.updateItemContext(stack, level, holder);
+    }
+
+    public Controller controller(String name) {
+        validateControllerName(name);
+        final Controller existing = controllers.get(name);
+        if (existing != null) {
+            return existing;
+        }
+
+        if (controllers.size() >= MAX_CONTROLLERS) {
+            final Iterator<Map.Entry<String, Controller>> iterator = controllers.entrySet().iterator();
+            while (iterator.hasNext()) {
+                final Controller controller = iterator.next().getValue();
+                if (!controller.reserved && controller.animation() == null) {
+                    iterator.remove();
+                    break;
+                }
+
+            }
+
+        }
+
+        if (controllers.size() >= MAX_CONTROLLERS) {
+            throw new IllegalStateException("[KnightLib] An animatable cannot have more than " + MAX_CONTROLLERS + " active controllers");
+        }
+
+        final Controller created = new Controller(name);
+        controllers.put(name, created);
+
+        return created;
+    }
+
+    public Collection<Controller> controllers() {
+        return controllerView;
+    }
+
+    @ApiStatus.Internal
+    public KnightLibAnimationEvaluator clientEvaluator() {
+        if (clientEvaluator == null) {
+            clientEvaluator = new KnightLibAnimationEvaluator();
+        }
+
+        return clientEvaluator;
+    }
+
+    Controller findController(String name) {
+        return controllers.get(name);
+    }
+
+    /**
+     * Entity this handler animates, or null for a block-entity/item handler
+     */
+    public Entity entity() {
+        return target.entity();
+    }
+
+    /**
+     * Block entity this handler animates, or null for an entity/item handler
+     */
+    public BlockEntity blockEntity() {
+        return target.blockEntity();
+    }
+
+    public KnightLibAnimatable owner() {
+        return target.owner();
+    }
+
+    public void play(KnightLibAnim animation) {
+        Objects.requireNonNull(animation, "animation");
+        playAt(animation.controller(), animation.steps(), animation.transitionTicks(),
+                animation.transitionEasing(), animation.speed(), gameTime(), animation.durationTicks(), animation.blendMode(), animation.mask(), animation.weight()
+        );
+
+    }
+
+    public void play(String controllerName, String animation, int transitionTicks, KnightLibEasings transitionEasing, float speed) {
+        play(controllerName, animation, transitionTicks, transitionEasing, speed, 0);
+    }
+
+    public void play(String controllerName, String animation, int transitionTicks, KnightLibEasings transitionEasing, float speed, int durationTicks) {
+        playAt(controllerName, animation, transitionTicks, transitionEasing, speed, gameTime(), durationTicks);
+    }
+
+    void playAt(String controllerName, String animation, int transitionTicks, KnightLibEasings transitionEasing, float speed, long startedAt, int durationTicks) {
+        playAt(controllerName, List.of(new KnightLibAnim.Step(animation, KnightLibAnim.PlaybackMode.ONCE)),
+                transitionTicks, transitionEasing, speed, startedAt, durationTicks, KnightLibAnimationBlendMode.AUTHORED, KnightLibAnimationMask.ALL, 1f
+        );
+
+    }
+
+    private void playAt(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, KnightLibEasings transitionEasing, float speed, long startedAt, int durationTicks, KnightLibAnimationBlendMode blendMode, KnightLibAnimationMask mask, float weight) {
+        validateControllerName(controllerName);
+        if (steps == null || steps.isEmpty() || !KnightLibAnim.isValidSequence(steps)) {
+            throw new IllegalArgumentException("[KnightLib] animation sequence must contain 1.." + KnightLibAnim.MAX_STEPS + " valid steps");
+        }
+
+        validateTransition(transitionTicks);
+        if (!Float.isFinite(speed) || speed <= 0f || speed > 100f) {
+            throw new IllegalArgumentException("[KnightLib] speed must be finite and in (0, 100]");
+        }
+        if (durationTicks < 0 || durationTicks > MAX_DURATION_TICKS) {
+            throw new IllegalArgumentException("[KnightLib] durationTicks must be in [0, " + MAX_DURATION_TICKS + "]");
+        }
+
+        Objects.requireNonNull(blendMode, "blendMode");
+        final Controller controller = controller(controllerName);
+
+        controller.command(steps, transitionTicks, transitionEasing, speed, startedAt, durationTicks, blendMode, mask, weight);
+
+        sync(controller);
+    }
+
+    public void stop(String controllerName, int transitionTicks) {
+        validateControllerName(controllerName);
+        validateTransition(transitionTicks);
+        final Controller controller = controllers.get(controllerName);
+        if (controller == null || controller.animation() == null) {
+            return;
+        }
+
+        controller.command(List.of(), transitionTicks,
+                KnightLibAnimatable.DEFAULT_TRANSITION_EASING, 1f, gameTime(), 0,
+                controller.blendMode()
+        );
+
+        sync(controller);
+    }
+
+    public void tick() {
+        final Level level = level();
+        if (level == null) {
+            return;
+        }
+
+        final long now = level.getGameTime();
+        if (lastTickLevel.get() == level && lastTickGameTime == now) {
+            return;
+        }
+
+        if (lastTickLevel.get() != level) {
+            lastTickLevel = new WeakReference<>(level);
+        }
+
+        lastTickGameTime = now;
+
+        if (level.isClientSide()) {
+            updateClientControllers();
+            return;
+        }
+
+        boolean removedStoppedItemController = false;
+        final Iterator<Controller> iterator = controllers.values().iterator();
+        while (iterator.hasNext()) {
+            final Controller controller = iterator.next();
+
+            // Duration is measured in animation ticks, hence the speed multiplier here
+            if (controller.animation() != null && controller.durationTicks() > 0 && controller.elapsedTicks(now) >= controller.durationTicks()) {
+                controller.command(List.of(), controller.transitionTicks(), controller.easing(), 1f, now, 0, controller.blendMode());
+                sync(controller);
+            }
+            else if (!controller.reserved && target.shouldDiscardStoppedController(controller, now)) {
+                iterator.remove();
+                removedStoppedItemController = true;
+            }
+
+        }
+
+        target.afterServerTick(this, removedStoppedItemController);
+    }
+
+    private void updateClientControllers() {
+        if (!clientControllersRegistered) {
+            final List<ClientControllerBinding> controllers = new ArrayList<>();
+            target.registerAnimationControllers(controllers);
+            reserveClientControllerOrder(controllers);
+            clientControllerBindings = List.copyOf(controllers);
+            clientControllersRegistered = true;
+        }
+
+        if (clientControllerBindings.isEmpty()) {
+            return;
+        }
+
+        // One instance per handler
+        if (clientState == null) {
+            clientState = new KnightLibAnimationState(this);
+        }
+
+        clientState.refresh(target.animationEntity(), target.blockEntity(), clientItemStack(), level());
+
+        try {
+            for (final ClientControllerBinding binding : clientControllerBindings) {
+                binding.update(this);
+            }
+
+        }
+        finally {
+            clientState.clearContext();
+        }
+
+    }
+
+    private void reserveClientControllerOrder(List<ClientControllerBinding> bindings) {
+        if (bindings.isEmpty()) {
+            return;
+        }
+
+        final Map<String, Controller> ordered = new LinkedHashMap<>();
+        for (final ClientControllerBinding binding : bindings) {
+            final Controller existing = controllers.get(binding.name());
+            ordered.put(binding.name(), existing == null ? new Controller(binding.name()) : existing);
+        }
+
+        final Set<String> reserved = Set.copyOf(ordered.keySet());
+        controllers.forEach(ordered::putIfAbsent);
+
+        // Inactive commands remain as such
+        final Iterator<Controller> iterator = ordered.values().iterator();
+        while (ordered.size() > MAX_CONTROLLERS && iterator.hasNext()) {
+            final Controller controller = iterator.next();
+            if (!reserved.contains(controller.name()) && controller.animation() == null) {
+                iterator.remove();
+            }
+
+        }
+
+        if (ordered.size() > MAX_CONTROLLERS) {
+            throw new IllegalStateException("[KnightLib] Declared and active controllers cannot exceed " + MAX_CONTROLLERS);
+        }
+
+        for (final String name : reserved) {
+            ordered.get(name).reserved = true;
+        }
+
+        controllers.clear();
+        controllers.putAll(ordered);
+    }
+
+    private ItemStack clientItemStack() {
+        return target instanceof ItemStackTarget ? target.itemStack() : null;
+    }
+
+    /**
+     * Applies what a controller returned
+     */
+    private void applySelection(String name, int stopTransitionTicks, KnightLibAnim selected) {
+        final Controller current = controllers.get(name);
+        if (selected == null) {
+            if (current != null && current.animation() != null) {
+                stop(name, stopTransitionTicks);
+            }
+
+            return;
+        }
+
+        final KnightLibAnim animation = selected.controller(name);
+        if (!matches(current, animation)) {
+            play(animation);
+            return;
+        }
+
+        // Speed is deliberately absent from matches, as it would be reset
+        current.retime(animation.speed(), gameTime());
+        current.weight = animation.weight();
+    }
+
+    private boolean matches(Controller controller, KnightLibAnim animation) {
+        return controller != null
+                && controller.steps().equals(animation.steps())
+                && controller.transitionTicks() == animation.transitionTicks()
+                && controller.easing() == animation.transitionEasing()
+                && controller.blendMode() == animation.blendMode()
+                && controller.mask().equals(animation.mask())
+                && controller.durationTicks() == animation.durationTicks();
+    }
+
+    /**
+     * Writes controller state without any client-only data
+     */
+    public void save(CompoundTag ownerTag) {
+        final ListTag list = new ListTag();
+        for (final Controller controller : controllers.values()) {
+            final CompoundTag tag = new CompoundTag();
+            tag.putString("Controller", controller.name());
+            tag.putString("Animation", controller.animation() == null ? "" : controller.animation());
+
+            final ListTag steps = new ListTag();
+            for (final KnightLibAnim.Step step : controller.steps()) {
+                final CompoundTag stepTag = new CompoundTag();
+                stepTag.putString("Animation", step.animation());
+                stepTag.putInt("Mode", step.mode().id());
+                steps.add(stepTag);
+            }
+
+            tag.put("Steps", steps);
+            tag.putLong("StartedAt", controller.commandGameTime());
+            tag.putInt("Transition", controller.transitionTicks());
+            tag.putInt("Easing", controller.easing().id());
+            tag.putFloat("Speed", controller.speed());
+            tag.putInt("Duration", controller.durationTicks());
+            tag.putInt("BlendMode", controller.blendMode().id());
+            tag.putFloat("Weight", controller.weight());
+            AnimationMaskCodec.write(controller.mask(), tag);
+            tag.putDouble("PlaybackOrigin", controller.playbackOrigin());
+            tag.putDouble("PlaybackOffset", controller.playbackOffset());
+
+            list.add(tag);
+        }
+
+
+        ownerTag.put(KnightLibItemAnimations.TAG, list);
+    }
+
+    /**
+     * Restores controller state from entity/block-entity/item data or an update snapshot
+     */
+    public void load(CompoundTag ownerTag) {
+        load(ownerTag, true);
+    }
+
+    /**
+     * A snapshot resumes the playback without doing extra things
+     */
+    @ApiStatus.Internal
+    public void load(CompoundTag ownerTag, boolean snapshot) {
+        final ListTag list = ownerTag.contains(KnightLibItemAnimations.TAG, Tag.TAG_LIST) ? ownerTag.getList(KnightLibItemAnimations.TAG, Tag.TAG_COMPOUND) : new ListTag();
+        final Map<String, SavedController> restored = new LinkedHashMap<>();
+
+        // Tags may come from an older save or a modified stack
+        final int count = Math.min(list.size(), 64);
+        for (int i = 0; i < count; i++) {
+            final CompoundTag tag = list.getCompound(i);
+            final String name = tag.getString("Controller");
+            final String savedAnimation = tag.getString("Animation");
+            final float speed = tag.getFloat("Speed");
+            if (name.isBlank() || name.length() > 64 || !Float.isFinite(speed) || speed <= 0f || speed > 100f || restored.containsKey(name)) {
+                continue;
+            }
+
+            final List<KnightLibAnim.Step> steps = readSteps(tag, savedAnimation);
+            if (steps == null) {
+                continue;
+            }
+
+            final int transition = Math.min(Math.max(tag.getInt("Transition"), 0), MAX_TRANSITION_TICKS);
+            final KnightLibEasings easing = KnightLibEasings.byId(tag.getInt("Easing"));
+            final long startedAt = tag.getLong("StartedAt");
+            final int duration = Math.min(Math.max(tag.getInt("Duration"), 0), MAX_DURATION_TICKS);
+            final KnightLibAnimationBlendMode blendMode;
+            final KnightLibAnimationMask mask;
+            final float weight = tag.contains("Weight", Tag.TAG_ANY_NUMERIC) ? tag.getFloat("Weight") : 1f;
+            final double origin = tag.contains("PlaybackOrigin", Tag.TAG_ANY_NUMERIC) ? tag.getDouble("PlaybackOrigin") : startedAt;
+            final double offset = tag.getDouble("PlaybackOffset");
+            if (!Double.isFinite(origin) || !Double.isFinite(offset) || offset < 0.0) {
+                continue;
+            }
+
+            try {
+                KnightLibAnim.validateWeight(weight);
+                mask = AnimationMaskCodec.read(tag);
+                blendMode = KnightLibAnimationBlendMode.byId(tag.getInt("BlendMode"));
+            }
+            catch (Exception exception) {
+                continue;
+            }
+
+            restored.put(name, new SavedController(steps, transition, easing, speed, startedAt, duration, blendMode, mask, weight, origin, offset));
+        }
+
+        for (final Controller controller : controllers.values()) {
+            if (controller.animation() != null && !restored.containsKey(controller.name())) {
+                controller.command(List.of(), KnightLibAnimatable.DEFAULT_TRANSITION_TICKS, KnightLibAnimatable.DEFAULT_TRANSITION_EASING, 1f, gameTime(), 0, controller.blendMode());
+            }
+
+        }
+
+        for (final Map.Entry<String, SavedController> entry : restored.entrySet()) {
+            final SavedController saved = entry.getValue();
+            final Controller current = controller(entry.getKey());
+            if (!current.matches(saved.steps(), saved.transitionTicks(), saved.easing(), saved.speed(), saved.startedAt(), saved.durationTicks(), saved.blendMode())
+                    || !current.mask.equals(saved.mask()) || Float.compare(current.weight, saved.weight()) != 0
+                    || current.playbackOrigin != saved.origin() || current.playbackOffset != saved.offset()) {
+                current.command(saved.steps(), saved.transitionTicks(), saved.easing(), saved.speed(), saved.startedAt(), saved.durationTicks(), saved.blendMode(), saved.mask(), saved.weight());
+                current.playbackOrigin = saved.origin();
+                current.playbackOffset = saved.offset();
+                current.snapshot = snapshot;
+            }
+
+        }
+
+    }
+
+    private static List<KnightLibAnim.Step> readSteps(CompoundTag tag, String legacyAnimation) {
+        if (!tag.contains("Steps", Tag.TAG_LIST)) {
+            // Old knightlib saves only stored the first animation name
+            if (legacyAnimation.isEmpty()) {
+                return List.of();
+            }
+
+            try {
+                return List.of(new KnightLibAnim.Step(legacyAnimation, KnightLibAnim.PlaybackMode.ONCE));
+            }
+            catch (Exception exception) {
+                return null;
+            }
+
+        }
+
+        final ListTag savedSteps = tag.getList("Steps", Tag.TAG_COMPOUND);
+        if (savedSteps.size() > KnightLibAnim.MAX_STEPS) {
+            return null;
+        }
+
+        final List<KnightLibAnim.Step> steps = new ArrayList<>(savedSteps.size());
+        try {
+            for (int i = 0; i < savedSteps.size(); i++) {
+                final CompoundTag stepTag = savedSteps.getCompound(i);
+                steps.add(new KnightLibAnim.Step(
+                        stepTag.getString("Animation"),
+                        KnightLibAnim.PlaybackMode.byId(stepTag.getInt("Mode"))));
+            }
+
+        }
+        catch (Exception exception) {
+            return null;
+        }
+
+        return KnightLibAnim.isValidSequence(steps) ? List.copyOf(steps) : null;
+    }
+
+    /**
+     * Most recently evaluated step, or null before evaluation (available on client after rendering, and server after evaluating the pose)
+     */
+    public @Nullable KnightLibAnimationPlayback getPlayback(String controllerName) {
+        final Controller controller = controllers.get(controllerName);
+        return controller == null ? null : controller.playback();
+    }
+
+    public String getActiveAnimation(String controllerName) {
+        final Controller controller = controllers.get(controllerName);
+        return controller == null ? null : controller.animation();
+    }
+
+    public boolean isAnimationActive(String animation) {
+        if (animation == null) {
+            return false;
+        }
+
+        for (final Controller controller : controllers.values()) {
+            for (final KnightLibAnim.Step step : controller.steps()) {
+                if (animation.equals(step.animation())) {
+                    return true;
+                }
+
+            }
+
+        }
+
+        return false;
+    }
+
+    public Entity animationEntity() {
+        return target.animationEntity();
+    }
+
+    public void dispatchKeyframe(KnightLibKeyframeEvent event) {
+        target.dispatchKeyframe(event);
+    }
+
+    public void dispatchFinished(String controller, String animation) {
+        target.dispatchFinished(controller, animation);
+    }
+
+    /**
+     * Applies an animation received from the server. Internal, called by KnightLib's packet handler.
+     */
+    public void applyRemote(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, int easingId, float speed, long commandGameTime) {
+        applyRemote(controllerName, steps, transitionTicks, easingId, speed, commandGameTime, KnightLibAnimationBlendMode.AUTHORED);
+    }
+
+    public void applyRemote(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, int easingId, float speed, long commandGameTime, KnightLibAnimationBlendMode blendMode) {
+        applyRemote(controllerName, steps, transitionTicks, easingId, speed, commandGameTime, blendMode, false);
+    }
+
+    public void applyRemote(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, int easingId, float speed, long commandGameTime, KnightLibAnimationBlendMode blendMode, boolean snapshot) {
+        applyRemote(controllerName, steps, transitionTicks, easingId, speed, commandGameTime, blendMode, snapshot, KnightLibAnimationMask.ALL, 1f);
+    }
+
+    @org.jetbrains.annotations.ApiStatus.Internal
+    public void applyRemote(String controllerName, List<KnightLibAnim.Step> steps, int transitionTicks, int easingId, float speed, long commandGameTime, KnightLibAnimationBlendMode blendMode, boolean snapshot, KnightLibAnimationMask mask, float weight) {
+        validateControllerName(controllerName);
+        validateTransition(transitionTicks);
+        if (steps == null || !KnightLibAnim.isValidSequence(steps) || !Float.isFinite(speed) || speed <= 0f || speed > 100f || commandGameTime < 0L || blendMode == null) {
+            throw new IllegalArgumentException("[KnightLib] Invalid remote animation command");
+        }
+
+        final KnightLibEasings easing = KnightLibEasings.byId(easingId);
+        final Controller controller = controller(controllerName);
+        controller.command(steps, transitionTicks, easing, speed, commandGameTime, 0, blendMode, mask, weight);
+        controller.snapshot = snapshot;
+    }
+
+    private Level level() {
+        return target.level();
+    }
+
+    private long gameTime() {
+        final Level level = level();
+        return level == null ? 0L : level.getGameTime();
+    }
+
+    private static void validateControllerName(String name) {
+        if (name == null || name.isBlank() || name.length() > 64) {
+            throw new IllegalArgumentException("[KnightLib] controllerName must contain 1..64 characters");
+        }
+
+    }
+
+    private static void validateTransition(int ticks) {
+        if (ticks < 0 || ticks > MAX_TRANSITION_TICKS) {
+            throw new IllegalArgumentException("[KnightLib] transitionTicks must be in [0, " + MAX_TRANSITION_TICKS + "]");
+        }
+
+    }
+
+    private void sync(Controller controller) {
+        target.sync(this, controller);
+    }
+
+    private sealed interface AnimationTarget permits EntityTarget, BlockEntityTarget, ItemStackTarget {
+
+        Level level();
+
+        default Entity entity() {
+            return null;
+        }
+
+        default BlockEntity blockEntity() {
+            return null;
+        }
+
+        default KnightLibAnimatable owner() {
+            throw new IllegalStateException("[KnightLib] Item-stack handlers do not have a KnightLibAnimatable owner");
+        }
+
+        default Entity animationEntity() {
+            return null;
+        }
+
+        default ItemStack itemStack() {
+            throw new IllegalStateException("[KnightLib] Only an item handler has an ItemStack");
+        }
+
+        default void updateItemContext(ItemStack stack, Level level, Entity holder) {
+            throw new IllegalStateException("Only an item handler has item context");
+        }
+
+        default void registerAnimationControllers(List<ClientControllerBinding> bindings) {
+            owner().registerAnimationControllers(new ClientRegistrar(bindings));
+        }
+
+        default void dispatchKeyframe(KnightLibKeyframeEvent event) {
+            owner().onAnimationKeyframe(event);
+        }
+
+        default void dispatchFinished(String controller, String animation) {
+            owner().onAnimationFinished(controller, animation);
+        }
+
+        default boolean shouldDiscardStoppedController(Controller controller, long now) {
+            return false;
+        }
+
+        default void afterServerTick(KnightLibAnimationHandler handler, boolean discardedController) {
+            ;;
+        }
+
+        void sync(KnightLibAnimationHandler handler, Controller controller);
+
+        default void syncAllTo(KnightLibAnimationHandler handler, ServerPlayer player) {
+            final Level level = level();
+            if (level == null || level.isClientSide()) {
+                return;
+            }
+
+            for (final Controller controller : handler.controllers.values()) {
+                if (controller.animation() == null) {
+                    continue;
+                }
+
+                KnightLib.NET.sendTo(player, AnimationSyncS2C.TYPE.base(), handler.buildSyncMessage(controller, true));
+            }
+
+        }
+
+    }
+
+    private record EntityTarget<T extends Entity & KnightLibAnimatable>(
+            T entity
+    ) implements AnimationTarget {
+
+        private EntityTarget {
+            Objects.requireNonNull(entity, "entity");
+        }
+
+        @Override
+        public Level level() {
+            return entity.level();
+        }
+
+        @Override
+        public KnightLibAnimatable owner() {
+            return entity;
+        }
+
+        @Override
+        public Entity animationEntity() {
+            return entity;
+        }
+
+        @Override
+        public void sync(KnightLibAnimationHandler handler, Controller controller) {
+            final Level level = level();
+            if (level == null || level.isClientSide()) {
+                return;
+            }
+
+            final AnimationSyncS2C message = handler.buildSyncMessage(controller);
+            KnightLib.NET.sendToTracking(entity, AnimationSyncS2C.TYPE.base(), message);
+
+            if (entity instanceof ServerPlayer player) {
+                KnightLib.NET.sendTo(player, AnimationSyncS2C.TYPE.base(), message);
+            }
+
+        }
+
+    }
+
+    private record BlockEntityTarget<T extends BlockEntity & KnightLibAnimatable>(
+            T blockEntity
+    ) implements AnimationTarget {
+
+        private BlockEntityTarget {
+            Objects.requireNonNull(blockEntity, "blockEntity");
+        }
+
+        @Override
+        public Level level() {
+            return blockEntity.getLevel();
+        }
+
+        @Override
+        public KnightLibAnimatable owner() {
+            return blockEntity;
+        }
+
+        @Override
+        public void sync(KnightLibAnimationHandler handler, Controller controller) {
+            final Level level = level();
+            if (level == null || level.isClientSide()) {
+                return;
+            }
+
+            blockEntity.setChanged();
+            KnightLib.NET.sendToTracking(level, blockEntity.getBlockPos(), AnimationSyncS2C.TYPE.base(), handler.buildSyncMessage(controller));
+        }
+
+    }
+
+    private static final class ItemStackTarget implements AnimationTarget {
+
+        private final KnightLibAnimatedItem item;
+        private WeakReference<ItemStack> stack;
+        private WeakReference<Level> level;
+        private WeakReference<Entity> holder = new WeakReference<>(null);
+
+        private ItemStackTarget(KnightLibAnimatedItem item, ItemStack stack, Level level) {
+            this.item = Objects.requireNonNull(item, "item");
+            this.stack = new WeakReference<>(validateStack(stack));
+            this.level = new WeakReference<>(level);
+        }
+
+        @Override
+        public Level level() {
+            return level.get();
+        }
+
+        @Override
+        public Entity animationEntity() {
+            return holder.get();
+        }
+
+        @Override
+        public ItemStack itemStack() {
+            return stack.get();
+        }
+
+        @Override
+        public void updateItemContext(ItemStack stack, Level level, Entity holder) {
+            this.stack = new WeakReference<>(validateStack(stack));
+            if (level != null) {
+                this.level = new WeakReference<>(level);
+            }
+            if (holder != null) {
+                this.holder = new WeakReference<>(holder);
+            }
+
+        }
+
+        @Override
+        public void registerAnimationControllers(List<ClientControllerBinding> bindings) {
+            item.registerAnimationControllers(new ItemClientRegistrar(bindings));
+        }
+
+        @Override
+        public void dispatchKeyframe(KnightLibKeyframeEvent event) {
+            final ItemStack stack = itemStack();
+            if (stack != null) {
+                item.onAnimationKeyframe(stack, event);
+            }
+
+        }
+
+        @Override
+        public void dispatchFinished(String controller, String animation) {
+            final ItemStack stack = itemStack();
+            if (stack != null) {
+                item.onAnimationFinished(stack, controller, animation);
+            }
+
+        }
+
+        @Override
+        public boolean shouldDiscardStoppedController(Controller controller, long now) {
+            return controller.animation() == null && now - controller.commandGameTime() >= controller.transitionTicks();
+        }
+
+        @Override
+        public void afterServerTick(KnightLibAnimationHandler handler, boolean discardedController) {
+            if (discardedController || handler.controllers.isEmpty()) {
+                persist(handler);
+            }
+
+        }
+
+        @Override
+        public void sync(KnightLibAnimationHandler handler, Controller controller) {
+            final Level level = level();
+            if (level == null || !level.isClientSide()) {
+                persist(handler);
+            }
+
+        }
+
+        @Override
+        public void syncAllTo(KnightLibAnimationHandler handler, ServerPlayer player) {
+            ;;
+        }
+
+        private ItemStack validateStack(ItemStack stack) {
+            Objects.requireNonNull(stack, "stack");
+            if (item instanceof Item vanillaItem && stack.getItem() != vanillaItem) {
+                throw new IllegalArgumentException("[KnightLib] The ItemStack no longer belongs to this handler");
+            }
+
+            return stack;
+        }
+
+        private void persist(KnightLibAnimationHandler handler) {
+            final ItemStack stack = itemStack();
+            if (stack == null) {
+                return;
+            }
+
+            if (!handler.controllers.isEmpty()) {
+                final CompoundTag ownerTag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+                handler.save(ownerTag);
+                CustomData.set(DataComponents.CUSTOM_DATA, stack, ownerTag);
+                return;
+            }
+
+            final CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+            if (customData == null) {
+                return;
+            }
+
+            final CompoundTag ownerTag = customData.copyTag();
+            ownerTag.remove(KnightLibItemAnimations.TAG);
+            CustomData.set(DataComponents.CUSTOM_DATA, stack, ownerTag);
+
+        }
+
+    }
+
+    private record SavedController(
+            List<KnightLibAnim.Step> steps,
+            int transitionTicks,
+            KnightLibEasings easing,
+            float speed,
+            long startedAt,
+            int durationTicks,
+            KnightLibAnimationBlendMode blendMode,
+            KnightLibAnimationMask mask,
+            float weight,
+            double origin,
+            double offset
+    ) {
+        ;;
+    }
+
+    private interface ClientControllerBinding {
+
+        String name();
+
+        void update(KnightLibAnimationHandler handler);
+
+    }
+
+    private record SelectedControllerBinding(
+            String name,
+            int stopTransitionTicks,
+            Function<KnightLibAnimationState, KnightLibAnim> selector
+    ) implements ClientControllerBinding {
+
+        @Override
+        public void update(KnightLibAnimationHandler handler) {
+            handler.clientState.controller(name);
+            handler.applySelection(name, stopTransitionTicks, selector.apply(handler.clientState));
+        }
+
+    }
+
+    private static final class TriggerControllerBinding implements ClientControllerBinding {
+
+        private final String name;
+        private final Predicate<KnightLibAnimationState> trigger;
+        private final KnightLibAnim animation;
+        private boolean previous;
+
+        private TriggerControllerBinding(String name, Predicate<KnightLibAnimationState> trigger, KnightLibAnim animation) {
+            this.name = name;
+            this.trigger = trigger;
+            this.animation = animation.controller(name);
+        }
+
+        @Override
+        public String name() {
+            return name;
+        }
+
+        @Override
+        public void update(KnightLibAnimationHandler handler) {
+            handler.clientState.controller(name);
+            final boolean active = trigger.test(handler.clientState);
+
+            if (active && !previous) {
+                handler.play(animation);
+            }
+
+            previous = active;
+        }
+
+    }
+
+    private record SelectedItemControllerBinding(
+            String name,
+            int stopTransitionTicks,
+            Function<KnightLibAnimationState, KnightLibAnim> selector
+    ) implements ClientControllerBinding {
+
+        @Override
+        public void update(KnightLibAnimationHandler handler) {
+            if (handler.clientState.stack() == null) {
+                return;
+            }
+
+            handler.clientState.controller(name);
+            handler.applySelection(name, stopTransitionTicks, selector.apply(handler.clientState));
+        }
+
+    }
+
+    private static final class TriggerItemControllerBinding implements ClientControllerBinding {
+
+        private final String name;
+        private final Predicate<KnightLibAnimationState> trigger;
+        private final KnightLibAnim animation;
+        private boolean previous;
+
+        private TriggerItemControllerBinding(String name, Predicate<KnightLibAnimationState> trigger, KnightLibAnim animation) {
+            this.name = name;
+            this.trigger = trigger;
+            this.animation = animation.controller(name);
+        }
+
+        @Override
+        public String name() {
+            return name;
+        }
+
+        @Override
+        public void update(KnightLibAnimationHandler handler) {
+            if (handler.clientState.stack() == null) {
+                return;
+            }
+
+            handler.clientState.controller(name);
+            final boolean active = trigger.test(handler.clientState);
+            if (active && !previous) {
+                handler.play(animation);
+            }
+
+            previous = active;
+        }
+
+    }
+
+    private static final class ClientRegistrar implements KnightLibAnimationControllerRegistrar {
+
+        private final List<ClientControllerBinding> bindings;
+        private final Set<String> names = new HashSet<>();
+
+        private ClientRegistrar(List<ClientControllerBinding> bindings) {
+            this.bindings = bindings;
+        }
+
+        @Override
+        public void add(String controllerName, int stopTransitionTicks, Supplier<KnightLibAnim> selector) {
+            Objects.requireNonNull(selector, "selector");
+            add(controllerName, stopTransitionTicks, state -> selector.get());
+        }
+
+        @Override
+        public void add(String controllerName, int stopTransitionTicks, Function<KnightLibAnimationState, KnightLibAnim> selector) {
+            claim(controllerName);
+            validateTransition(stopTransitionTicks);
+            bindings.add(new SelectedControllerBinding(controllerName, stopTransitionTicks, Objects.requireNonNull(selector, "selector")));
+        }
+
+        @Override
+        public void addTrigger(String controllerName, BooleanSupplier trigger, KnightLibAnim animation) {
+            Objects.requireNonNull(trigger, "trigger");
+            addTrigger(controllerName, state -> trigger.getAsBoolean(), animation);
+        }
+
+        @Override
+        public void addTrigger(String controllerName, Predicate<KnightLibAnimationState> trigger, KnightLibAnim animation) {
+            claim(controllerName);
+            bindings.add(new TriggerControllerBinding(controllerName, Objects.requireNonNull(trigger, "trigger"), Objects.requireNonNull(animation, "animation")));
+        }
+
+        private void claim(String controllerName) {
+            validateControllerName(controllerName);
+            if (!names.add(controllerName)) {
+                throw new IllegalArgumentException("[KnightLib] Controller registered twice: " + controllerName);
+            }
+            if (names.size() > MAX_CONTROLLERS) {
+                throw new IllegalStateException("[KnightLib] An animatable cannot register more than " + MAX_CONTROLLERS + " controllers");
+            }
+
+        }
+
+    }
+
+    private static final class ItemClientRegistrar implements KnightLibItemAnimationControllerRegistrar {
+
+        private final List<ClientControllerBinding> bindings;
+        private final Set<String> names = new HashSet<>();
+
+        private ItemClientRegistrar(List<ClientControllerBinding> bindings) {
+            this.bindings = bindings;
+        }
+
+        @Override
+        public void add(String controllerName, int stopTransitionTicks, Function<KnightLibAnimationState, KnightLibAnim> selector) {
+            claim(controllerName);
+            validateTransition(stopTransitionTicks);
+            bindings.add(new SelectedItemControllerBinding(controllerName, stopTransitionTicks, Objects.requireNonNull(selector, "selector")));
+        }
+
+        @Override
+        public void addTrigger(String controllerName, Predicate<KnightLibAnimationState> trigger, KnightLibAnim animation) {
+            claim(controllerName);
+            bindings.add(new TriggerItemControllerBinding(controllerName, Objects.requireNonNull(trigger, "trigger"), Objects.requireNonNull(animation, "animation")));
+        }
+
+        private void claim(String controllerName) {
+            validateControllerName(controllerName);
+            if (!names.add(controllerName)) {
+                throw new IllegalArgumentException("[KnightLib] Controller registered twice: " + controllerName);
+            }
+            if (names.size() > MAX_CONTROLLERS) {
+                throw new IllegalStateException("[KnightLib] An item stack cannot register more than " + MAX_CONTROLLERS + " controllers");
+            }
+
+        }
+
+    }
+
+    public void syncAllTo(ServerPlayer player) {
+        target.syncAllTo(this, player);
+    }
+
+    private AnimationSyncS2C buildSyncMessage(Controller controller) {
+        return buildSyncMessage(controller, false);
+    }
+
+    private AnimationSyncS2C buildSyncMessage(Controller controller, boolean snapshot) {
+        final Entity entity = target.entity();
+        final BlockEntity blockEntity = target.blockEntity();
+        if (entity == null && blockEntity == null) {
+            throw new IllegalStateException("[KnightLib] Item-stack animation targets cannot build tracking packets");
+        }
+
+        return new AnimationSyncS2C(
+                entity != null,
+                entity != null ? entity.getId() : 0,
+                blockEntity != null ? blockEntity.getBlockPos() : BlockPos.ZERO,
+                controller.name(),
+                controller.steps(),
+                controller.transitionTicks(),
+                controller.easing().id(),
+                controller.speed(),
+                controller.commandGameTime(),
+                controller.blendMode(),
+                snapshot, controller.mask(), controller.weight()
+        );
+
+    }
+
+    public static final class Controller {
+
+        private final String name;
+        private boolean reserved;
+
+        private List<KnightLibAnim.Step> steps = List.of();
+        private long commandGameTime;
+        private int transitionTicks = KnightLibAnimatable.DEFAULT_TRANSITION_TICKS;
+        private KnightLibEasings easing = KnightLibAnimatable.DEFAULT_TRANSITION_EASING;
+        private float speed = 1f;
+        private int durationTicks;
+        private KnightLibAnimationBlendMode blendMode = KnightLibAnimationBlendMode.AUTHORED;
+        private long sequence;
+        private double playbackOrigin;
+        private double playbackOffset;
+        private boolean snapshot;
+        private KnightLibAnimationMask mask = KnightLibAnimationMask.ALL;
+        private float weight = 1f;
+        private KnightLibAnimationSequence.Playback evaluatedPlayback;
+        private double evaluatedElapsed;
+        private double evaluatedAt;
+
+        @Deprecated
+        public Object clientState;
+
+        private Controller(String name) {
+            this.name = name;
+        }
+
+        void command(List<KnightLibAnim.Step> steps, int transitionTicks, KnightLibEasings easing, float speed, long gameTime, int durationTicks, KnightLibAnimationBlendMode blendMode) {
+            command(steps, transitionTicks, easing, speed, gameTime, durationTicks, blendMode, KnightLibAnimationMask.ALL, 1f);
+        }
+
+        void command(List<KnightLibAnim.Step> steps, int transitionTicks, KnightLibEasings easing, float speed, long gameTime, int durationTicks, KnightLibAnimationBlendMode blendMode, KnightLibAnimationMask mask, float weight) {
+            Objects.requireNonNull(mask, "mask");
+            KnightLibAnim.validateWeight(weight);
+            this.mask = mask;
+            this.weight = weight;
+            this.evaluatedPlayback = null;
+            this.steps = List.copyOf(steps);
+            this.transitionTicks = Math.max(0, transitionTicks);
+            this.easing = easing == null ? KnightLibAnimatable.DEFAULT_TRANSITION_EASING : easing;
+            this.speed = speed <= 0f ? 1f : speed;
+            this.commandGameTime = gameTime;
+            this.playbackOrigin = gameTime;
+            this.playbackOffset = 0.0;
+            this.snapshot = false;
+            this.durationTicks = Math.max(0, durationTicks);
+            this.blendMode = Objects.requireNonNull(blendMode, "blendMode");
+            this.sequence++;
+        }
+
+        void retime(float speed, double gameTime) {
+            final float resolved = !Float.isFinite(speed) || speed <= 0f ? 1f : speed;
+            if (Float.compare(this.speed, resolved) != 0) {
+                playbackOffset = elapsedTicks(gameTime);
+                playbackOrigin = gameTime;
+                this.speed = resolved;
+            }
+
+        }
+
+        // Elapsed animation ticks
+        public double elapsedTicks(double gameTime) {
+            return Math.max(0, playbackOffset + (gameTime - playbackOrigin) * speed);
+        }
+
+        @ApiStatus.Internal
+        public double playbackOrigin() {
+            return playbackOrigin;
+        }
+
+        @ApiStatus.Internal
+        public double playbackOffset() {
+            return playbackOffset;
+        }
+
+        @ApiStatus.Internal
+        public boolean isSnapshot() {
+            return snapshot;
+        }
+
+        boolean matches(List<KnightLibAnim.Step> steps, int transitionTicks, KnightLibEasings easing, float speed, long gameTime, int durationTicks, KnightLibAnimationBlendMode blendMode) {
+            return this.steps.equals(steps)
+                    && this.transitionTicks == transitionTicks
+                    && this.easing == easing
+                    && Float.compare(this.speed, speed) == 0
+                    && this.commandGameTime == gameTime
+                    && this.durationTicks == durationTicks
+                    && this.blendMode == blendMode;
+        }
+
+        public KnightLibAnimationMask mask() {
+            return mask;
+        }
+
+        public float weight() {
+            return weight;
+        }
+
+        @ApiStatus.Internal
+        public void updatePlayback(KnightLibAnimationSequence.Playback playback, double elapsed, double now) {
+            evaluatedPlayback = playback;
+            evaluatedElapsed = elapsed;
+            evaluatedAt = now;
+        }
+
+        public @Nullable KnightLibAnimationPlayback playback() {
+            final KnightLibAnimationSequence.Playback playback = evaluatedPlayback;
+            if (playback == null || playback.animation() == null) {
+                return null;
+            }
+
+            return new KnightLibAnimationPlayback(playback.step().animation(), playback.stepIndex(), playback.step().mode(),
+                    evaluatedElapsed, playback.sampleTick(), playback.animation().lengthTicks(), playback.finished(), evaluatedAt);
+        }
+
+        public String name() {
+            return name;
+        }
+
+        public String animation() {
+            return steps.isEmpty() ? null : steps.get(0).animation();
+        }
+
+        public List<KnightLibAnim.Step> steps() {
+            return steps;
+        }
+
+        public long commandGameTime() {
+            return commandGameTime;
+        }
+
+        public int transitionTicks() {
+            return transitionTicks;
+        }
+
+        public KnightLibEasings easing() {
+            return easing;
+        }
+
+        public float speed() {
+            return speed;
+        }
+
+        public long sequence() {
+            return sequence;
+        }
+
+        public int durationTicks() {
+            return durationTicks;
+        }
+
+        public KnightLibAnimationBlendMode blendMode() {
+            return blendMode;
+        }
+
+    }
+
+}

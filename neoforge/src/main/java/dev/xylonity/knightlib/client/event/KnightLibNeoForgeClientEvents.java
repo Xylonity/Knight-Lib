@@ -5,24 +5,21 @@ import dev.xylonity.knightlib.api.bossbar.BossBarContext;
 import dev.xylonity.knightlib.api.event.KnightLibEvents;
 import dev.xylonity.knightlib.api.event.impl.client.*;
 import dev.xylonity.knightlib.api.event.impl.interop.TickPhase;
+import dev.xylonity.knightlib.client.animation.KnightLibAnimationAssets;
+import dev.xylonity.knightlib.client.armor.KnightLibNeoForgeArmorRenderers;
 import dev.xylonity.knightlib.client.event.impl.*;
-import dev.xylonity.knightlib.client.item.renderer.GenericBlockItemRenderer;
 import dev.xylonity.knightlib.client.screen.bossbar.BossBarApi;
 import dev.xylonity.knightlib.client.screen.bossbar.BossBarLinks;
-import dev.xylonity.knightlib.common.item.blockitem.GenericBlockItem;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderManager;
 import dev.xylonity.knightlib.client.shader.post.interop.PostShaderRenderStage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -33,6 +30,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
@@ -42,8 +40,6 @@ import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
@@ -62,6 +58,8 @@ public class KnightLibNeoForgeClientEvents {
         @SubscribeEvent
         public static void clientSetup(FMLClientSetupEvent event) {
             event.enqueueWork(() -> {
+                KnightLibEvents.CLIENT.dispatch(new ClientPacketHandlerRegistrationEvent());
+
                 final EntityRendererRegistrationEventNeoForge rendererEvent = new EntityRendererRegistrationEventNeoForge();
                 KnightLibEvents.CLIENT.dispatch(rendererEvent);
 
@@ -73,8 +71,15 @@ public class KnightLibNeoForgeClientEvents {
 
                 final RenderLayerRegistrationEventNeoForge renderLayerEvent = new RenderLayerRegistrationEventNeoForge();
                 KnightLibEvents.CLIENT.dispatch(renderLayerEvent);
+
+                KnightLibNeoForgeArmorRenderers.bootstrap();
             });
 
+        }
+
+        @SubscribeEvent
+        public static void registerArmorModels(EntityRenderersEvent.RegisterLayerDefinitions event) {
+            KnightLibEvents.CLIENT.dispatch(new ArmorModelRegistrationEventNeoForge(event));
         }
 
         @SubscribeEvent
@@ -128,7 +133,8 @@ public class KnightLibNeoForgeClientEvents {
 
                 @Override
                 protected void apply(@NotNull Void prepared, @NotNull ResourceManager resourceManager, @NotNull ProfilerFiller profiler) {
-                    Minecraft minecraft = Minecraft.getInstance();
+                    final Minecraft minecraft = Minecraft.getInstance();
+                    KnightLibAnimationAssets.reload(resourceManager);
                     KnightLibEvents.CLIENT.dispatch(new ClientResourcesReloadedEvent(minecraft, resourceManager));
                 }
 
