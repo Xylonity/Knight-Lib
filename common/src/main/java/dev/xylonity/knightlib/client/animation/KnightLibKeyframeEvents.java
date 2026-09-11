@@ -1,14 +1,12 @@
 package dev.xylonity.knightlib.client.animation;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.xylonity.knightlib.api.animation.internal.AnimationNotification;
 import dev.xylonity.knightlib.api.animation.KnightLibAnimationHandler;
 import dev.xylonity.knightlib.api.animation.KnightLibKeyframeEvent;
 import dev.xylonity.knightlib.client.animation.model.KnightLibModel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -113,12 +111,11 @@ public final class KnightLibKeyframeEvents {
     private static Vec3 worldPosition(Matrix4f pose) {
         final Minecraft minecraft = Minecraft.getInstance();
         final Vec3 camera = minecraft != null && minecraft.gameRenderer != null ? minecraft.gameRenderer.getMainCamera().getPosition() : Vec3.ZERO;
-        return worldPosition(pose, new Matrix3f().rotation(minecraft.getEntityRenderDispatcher().cameraOrientation()), camera);
+        return worldPosition(pose, camera);
     }
 
-    static Vec3 worldPosition(Matrix4f pose, Matrix3f inverseViewRotation, Vec3 camera) {
+    static Vec3 worldPosition(Matrix4f pose, Vec3 camera) {
         final Vector3f position = pose.getTranslation(new Vector3f());
-        inverseViewRotation.transform(position);
         return new Vec3(position.x() + camera.x, position.y() + camera.y, position.z() + camera.z);
     }
 

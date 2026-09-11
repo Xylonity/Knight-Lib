@@ -1,3 +1,6 @@
+# 2.0.1
+- Fixed particle keyframe worldspace transform using the inverse view rotation matrix incorrectly
+
 # 2.0.0
 - Added a brand-new animation system, as an extension of the vanilla rendering system, compatible with bedrock's convention
 - Added 4 new conventional client-sided events
