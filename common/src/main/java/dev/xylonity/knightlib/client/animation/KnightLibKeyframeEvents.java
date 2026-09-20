@@ -6,6 +6,9 @@ import dev.xylonity.knightlib.api.animation.KnightLibAnimationHandler;
 import dev.xylonity.knightlib.api.animation.KnightLibKeyframeEvent;
 import dev.xylonity.knightlib.client.animation.model.KnightLibModel;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -27,7 +30,7 @@ public final class KnightLibKeyframeEvents {
     /**
      * Adds positions to events that reference a geometry locator. A bone with the same name as a locator is also accepted.
      */
-    public static void dispatch(KnightLibAnimationHandler handler, KnightLibAnimator.DeferredEvents events, KnightLibModel model, PoseStack poseStack, boolean livingModelFrame) {
+    public static void dispatch(KnightLibAnimationHandler handler, KnightLibAnimator.DeferredEvents events, KnightLibModel model, PoseStack poseStack, boolean livingModelFrame, RenderOrigin origin) {
         if (events.isEmpty()) {
             return;
         }
@@ -57,19 +60,19 @@ public final class KnightLibKeyframeEvents {
         final Map<String, Vec3> positions = new HashMap<>();
         if (!locators.isEmpty()) {
             if (livingModelFrame) {
-                model.visitLivingLocators(poseStack, locators, (name, pose, normal) -> positions.put(name, worldPosition(pose)));
+                model.visitLivingLocators(poseStack, locators, (name, pose, normal) -> positions.put(name, worldPosition(pose, origin)));
             }
             else {
-                model.visitLocators(poseStack, locators, (name, pose, normal) -> positions.put(name, worldPosition(pose)));
+                model.visitLocators(poseStack, locators, (name, pose, normal) -> positions.put(name, worldPosition(pose, origin)));
             }
 
         }
         if (!fallbackBones.isEmpty()) {
             if (livingModelFrame) {
-                model.visitLivingBones(poseStack, fallbackBones, (name, pose, normal) -> positions.put(name, worldPosition(pose)));
+                model.visitLivingBones(poseStack, fallbackBones, (name, pose, normal) -> positions.put(name, worldPosition(pose, origin)));
             }
             else {
-                model.visitBones(poseStack, fallbackBones, (name, pose, normal) -> positions.put(name, worldPosition(pose)));
+                model.visitBones(poseStack, fallbackBones, (name, pose, normal) -> positions.put(name, worldPosition(pose, origin)));
             }
 
         }
@@ -108,7 +111,11 @@ public final class KnightLibKeyframeEvents {
 
     }
 
-    private static Vec3 worldPosition(Matrix4f pose) {
+    private static Vec3 worldPosition(Matrix4f pose, RenderOrigin origin) {
+        if (origin != null) {
+            return origin.worldPosition(pose);
+        }
+
         final Minecraft minecraft = Minecraft.getInstance();
         final Vec3 camera = minecraft != null && minecraft.gameRenderer != null ? minecraft.gameRenderer.getMainCamera().getPosition() : Vec3.ZERO;
         return worldPosition(pose, camera);
@@ -117,6 +124,46 @@ public final class KnightLibKeyframeEvents {
     static Vec3 worldPosition(Matrix4f pose, Vec3 camera) {
         final Vector3f position = pose.getTranslation(new Vector3f());
         return new Vec3(position.x() + camera.x, position.y() + camera.y, position.z() + camera.z);
+    }
+
+    /**
+     * World position the renderer's entry pose maps to + that pose's inverse
+     */
+    public record RenderOrigin(
+            Vec3 position,
+            Matrix4f inverseEntryPose
+    ) {
+
+        public static RenderOrigin capture(Vec3 position, PoseStack poseStack) {
+            return new RenderOrigin(position, new Matrix4f(poseStack.last().pose()).invert());
+        }
+
+        /**
+         * Matches the translation the entity render dispatcher applies before calling the renderer
+         */
+        public static RenderOrigin ofEntity(Entity entity, float partialTicks, Vec3 renderOffset, PoseStack poseStack) {
+            final double x = Mth.lerp(partialTicks, entity.xOld, entity.getX()) + renderOffset.x;
+            final double y = Mth.lerp(partialTicks, entity.yOld, entity.getY()) + renderOffset.y;
+            final double z = Mth.lerp(partialTicks, entity.zOld, entity.getZ()) + renderOffset.z;
+            return capture(new Vec3(x, y, z), poseStack);
+        }
+
+        /**
+         * Matches the translation the blockentity render dispatcher applies before calling the renderer
+         */
+        public static RenderOrigin ofBlock(BlockPos position, PoseStack poseStack) {
+            return capture(Vec3.atLowerCornerOf(position), poseStack);
+        }
+
+        Vec3 worldPosition(Matrix4f pose) {
+            final Vector3f local = inverseEntryPose.mul(pose, new Matrix4f()).getTranslation(new Vector3f());
+            if (!Float.isFinite(local.x()) || !Float.isFinite(local.y()) || !Float.isFinite(local.z())) {
+                return KnightLibKeyframeEvents.worldPosition(pose, (RenderOrigin) null);
+            }
+
+            return new Vec3(position.x + local.x(), position.y + local.y(), position.z + local.z());
+        }
+
     }
 
 }

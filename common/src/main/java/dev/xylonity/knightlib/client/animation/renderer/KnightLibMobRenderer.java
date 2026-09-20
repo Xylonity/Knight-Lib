@@ -180,6 +180,7 @@ public abstract class KnightLibMobRenderer<T extends Mob & KnightLibAnimatable> 
         final KnightLibRenderState previousState = activeRenderState;
         activeRenderState = previousState.withRenderColor(renderColor);
         try {
+            model.captureRenderOrigin(entity, partialTick, getRenderOffset(entity, partialTick), poseStack);
             beforeRender(entity, entityYaw, partialTick, poseStack, buffers, packedLight);
             super.render(entity, entityYaw, partialTick, poseStack, buffers, packedLight);
             model.dispatchPendingKeyframeEvents();

@@ -128,6 +128,7 @@ public abstract class KnightLibEntityRenderer<T extends Entity & KnightLibAnimat
 
     @Override
     public void render(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
+        final KnightLibKeyframeEvents.RenderOrigin renderOrigin = KnightLibKeyframeEvents.RenderOrigin.ofEntity(entity, partialTicks, getRenderOffset(entity, partialTicks), poseStack);
         final KnightLibModel model = modelCache.resolve(defineModel(entity));
         final KnightLibAnimationSource animations = defineAnimations(entity);
 
@@ -153,7 +154,7 @@ public abstract class KnightLibEntityRenderer<T extends Entity & KnightLibAnimat
         }
 
         model.setupRootTransform(poseStack, bodyYaw, true);
-        KnightLibKeyframeEvents.dispatch(entity.getAnimationHandler(), keyframeEvents, model, poseStack, false);
+        KnightLibKeyframeEvents.dispatch(entity.getAnimationHandler(), keyframeEvents, model, poseStack, false, renderOrigin);
 
         final int packedOverlay = entity instanceof LivingEntity living
                 ? LivingEntityRenderer.getOverlayCoords(living, 0f)

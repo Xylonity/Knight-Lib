@@ -15,6 +15,7 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -43,6 +44,7 @@ public final class KnightLibLivingModel<T extends LivingEntity & KnightLibAnimat
     private float partialTick;
     private T activeEntity;
     private KnightLibAnimator.DeferredEvents pendingKeyframeEvents;
+    private KnightLibKeyframeEvents.RenderOrigin renderOrigin;
     private boolean attachmentsPrepared;
 
     private Function<T, String> headBone = entity -> "head";
@@ -68,6 +70,13 @@ public final class KnightLibLivingModel<T extends LivingEntity & KnightLibAnimat
 
     public void configureRenderColor(RenderColorProvider<T> renderColorProvider) {
         this.renderColorProvider = Objects.requireNonNull(renderColorProvider, "renderColorProvider");
+    }
+
+    /**
+     * Captures the renderer's entry pose before the vanilla model transforms are applied
+     */
+    public void captureRenderOrigin(T entity, float partialTick, Vec3 renderOffset, PoseStack poseStack) {
+        renderOrigin = KnightLibKeyframeEvents.RenderOrigin.ofEntity(entity, partialTick, renderOffset, poseStack);
     }
 
     @Override
@@ -111,7 +120,7 @@ public final class KnightLibLivingModel<T extends LivingEntity & KnightLibAnimat
         final KnightLibAnimator.DeferredEvents events = pendingKeyframeEvents;
         pendingKeyframeEvents = null;
         if (activeEntity != null && events != null && !events.isEmpty()) {
-            KnightLibKeyframeEvents.dispatch(activeEntity.getAnimationHandler(), events, activeModel, poseStack, true);
+            KnightLibKeyframeEvents.dispatch(activeEntity.getAnimationHandler(), events, activeModel, poseStack, true, renderOrigin);
         }
 
     }

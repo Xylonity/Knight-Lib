@@ -1,3 +1,6 @@
+# 2.0.2
+- Fixed particle keyframe locators not working with shaderpacks
+
 # 2.0.1
 - Fixed particle keyframe worldspace transform using the inverse view rotation matrix incorrectly
 
