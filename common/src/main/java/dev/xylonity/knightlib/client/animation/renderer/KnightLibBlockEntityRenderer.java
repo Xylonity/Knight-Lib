@@ -136,6 +136,7 @@ public abstract class KnightLibBlockEntityRenderer<T extends BlockEntity & Knigh
 
     @Override
     public void render(T blockEntity, float partialTicks, PoseStack poseStack, MultiBufferSource buffers, int packedLight, int packedOverlay) {
+        final KnightLibKeyframeEvents.RenderOrigin renderOrigin = KnightLibKeyframeEvents.RenderOrigin.ofBlock(blockEntity.getBlockPos(), poseStack);
         final KnightLibModel model = modelCache.resolve(defineModel(blockEntity));
         final KnightLibAnimationSource animations = defineAnimations(blockEntity);
 
@@ -177,7 +178,7 @@ public abstract class KnightLibBlockEntityRenderer<T extends BlockEntity & Knigh
 
         model.setupRootTransform(poseStack, 0f, false);
         if (keyframeEvents != null) {
-            KnightLibKeyframeEvents.dispatch(blockEntity.getAnimationHandler(), keyframeEvents, model, poseStack, false);
+            KnightLibKeyframeEvents.dispatch(blockEntity.getAnimationHandler(), keyframeEvents, model, poseStack, false, renderOrigin);
         }
 
         final ResourceLocation baseTexture = getTextureLocation(blockEntity);

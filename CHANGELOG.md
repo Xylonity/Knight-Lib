@@ -1,3 +1,6 @@
+# 2.0.2
+- Fixed particle keyframe locators not working with shaderpacks
+
 # 2.0.1
 - Entity drops internal api now resolves entity matching in a different order, preventing mods like JER from showing incorrect drops
 
