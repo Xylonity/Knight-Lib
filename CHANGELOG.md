@@ -1,3 +1,6 @@
+# 2.0.3
+- Fixed mirrored box UVs assigning east/west textures to the wrong faces
+
 # 2.0.2
 - Fixed particle keyframe locators not working with shaderpacks
 
