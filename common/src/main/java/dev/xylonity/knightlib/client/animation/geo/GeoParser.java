@@ -253,10 +253,13 @@ public final class GeoParser {
             final float sy = (float) Math.floor(size.y());
             final float sz = (float) Math.floor(size.z());
 
+            final float eastU = mirror ? u + sz + sx : u;
+            final float westU = mirror ? u : u + sz + sx;
+
             faces.add(boxFace(v1, v2, v5, v3, normals[0], u + sz + sx, v + sz + sy, u + sz, v + sz + sy, u + sz, v + sz, u + sz + sx, v + sz, textureWidth, textureHeight, mirror));
-            faces.add(boxFace(v2, v7, v8, v5, normals[1], u + sz, v + sz + sy, u, v + sz + sy, u, v + sz, u + sz, v + sz, textureWidth, textureHeight, mirror));
+            faces.add(boxFace(v2, v7, v8, v5, normals[1], eastU + sz, v + sz + sy, eastU, v + sz + sy, eastU, v + sz, eastU + sz, v + sz, textureWidth, textureHeight, mirror));
             faces.add(boxFace(v7, v4, v6, v8, normals[2], u + sz + sx + sz + sx, v + sz + sy, u + sz + sx + sz, v + sz + sy, u + sz + sx + sz, v + sz, u + sz + sx + sz + sx, v + sz, textureWidth, textureHeight, mirror));
-            faces.add(boxFace(v4, v1, v3, v6, normals[3], u + sz + sx + sz, v + sz + sy, u + sz + sx, v + sz + sy, u + sz + sx, v + sz, u + sz + sx + sz, v + sz, textureWidth, textureHeight, mirror));
+            faces.add(boxFace(v4, v1, v3, v6, normals[3], westU + sz, v + sz + sy, westU, v + sz + sy, westU, v + sz, westU + sz, v + sz, textureWidth, textureHeight, mirror));
             faces.add(boxFace(v3, v5, v8, v6, normals[4], u + sz + sx, v + sz, u + sz, v + sz, u + sz, v, u + sz + sx, v, textureWidth, textureHeight, mirror));
             faces.add(boxFace(v4, v7, v2, v1, normals[5], u + sz + sx + sx, v, u + sz + sx, v, u + sz + sx, v + sz, u + sz + sx + sx, v + sz, textureWidth, textureHeight, mirror));
         }
