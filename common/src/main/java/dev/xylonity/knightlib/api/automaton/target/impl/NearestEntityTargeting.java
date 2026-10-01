@@ -1,6 +1,6 @@
 package dev.xylonity.knightlib.api.automaton.target.impl;
 
-import dev.xylonity.knightlib.api.automaton.target.Targeting;
+import dev.xylonity.knightlib.api.automaton.target.TargetSelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
@@ -16,7 +16,7 @@ import java.util.function.Predicate;
  *
  * @author Xylonity
  */
-public class NearestEntityTargeting<E extends LivingEntity, T extends LivingEntity> implements Targeting<E> {
+public class NearestEntityTargeting<E extends Mob, T extends LivingEntity> implements TargetSelector<E> {
 
     private final Class<T> candidateClass;
     private final double radius;
@@ -26,7 +26,7 @@ public class NearestEntityTargeting<E extends LivingEntity, T extends LivingEnti
     private int tickCounter;
 
     @Nullable
-    private T acquired;
+    private T selected;
 
     public NearestEntityTargeting(Class<T> candidateClass, double radius) {
         this(candidateClass, radius, 10, false, null);
@@ -51,63 +51,27 @@ public class NearestEntityTargeting<E extends LivingEntity, T extends LivingEnti
     @Override
     public void onStart(E entity) {
         tickCounter = 0;
-        acquired = null;
+        selected = null;
     }
 
-    @Override
-    public void tick(E entity) {
-        if (entity.level().isClientSide()) {
-            return;
-        }
-
-        if (tickCounter++ % retargetInterval != 0) {
-            return;
-        }
-
-        final T current = currentOfType(entity);
-
-        // Something else retargeted the host, so this instance no longer owns the target
-        if (current != acquired) {
-            acquired = null;
-        }
-
-        // Keeps the current target if it still qualifies
-        if (current != null && conditions.test(entity, current)) {
-            return;
-        }
-
-        final T nearest = entity.level().getNearestEntity(candidateClass, conditions, entity, entity.getX(), entity.getY(), entity.getZ(), entity.getBoundingBox().inflate(radius));
-        if (nearest != null) {
-            setTarget(entity, nearest);
-            acquired = nearest;
-        }
-        else if (acquired != null) {
-            setTarget(entity, null);
-            acquired = null;
-        }
-
-    }
-
-    protected void setTarget(E entity, @Nullable LivingEntity target) {
-        if (entity instanceof Mob mob) {
-            mob.setTarget(target);
-        }
-
-    }
-
-    @SuppressWarnings("unchecked")
     @Nullable
-    protected T currentOfType(E entity) {
-        if (!(entity instanceof Mob mob)) {
-            return null;
+    @Override
+    public LivingEntity select(E entity, @Nullable LivingEntity current) {
+        if (tickCounter++ % retargetInterval == 0) {
+            // Keeps the current target if it still qualifies
+            if (candidateClass.isInstance(current) && conditions.test(entity, current)) {
+                selected = candidateClass.cast(current);
+            }
+            else {
+                selected = entity.level().getNearestEntity(candidateClass, conditions, entity, entity.getX(), entity.getY(), entity.getZ(), entity.getBoundingBox().inflate(radius));
+            }
+
+        }
+        else if (selected != null && !selected.isAlive()) {
+            selected = null;
         }
 
-        final LivingEntity target = mob.getTarget();
-        if (target == null) {
-            return null;
-        }
-
-        return candidateClass.isInstance(target) ? (T) target : null;
+        return selected;
     }
 
 }

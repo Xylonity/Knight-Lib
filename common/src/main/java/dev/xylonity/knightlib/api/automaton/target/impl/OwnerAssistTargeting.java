@@ -1,8 +1,9 @@
 package dev.xylonity.knightlib.api.automaton.target.impl;
 
-import dev.xylonity.knightlib.api.automaton.target.Targeting;
+import dev.xylonity.knightlib.api.automaton.target.TargetSelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 
 import javax.annotation.Nullable;
 import java.util.function.Function;
@@ -16,12 +17,17 @@ import java.util.function.Function;
  *
  * @author Xylonity
  */
-public class OwnerAssistTargeting<E extends LivingEntity> implements Targeting<E> {
+public class OwnerAssistTargeting<E extends Mob> implements TargetSelector<E> {
+
+    private static final TargetingConditions CONDITIONS = TargetingConditions.forCombat().ignoreLineOfSight().ignoreInvisibilityTesting();
 
     private final Function<E, LivingEntity> ownerResolver;
     private final int retargetInterval;
 
     private int tickCounter;
+
+    @Nullable
+    private LivingEntity assisted;
 
     public OwnerAssistTargeting(Function<E, LivingEntity> ownerResolver) {
         this(ownerResolver, 5);
@@ -35,54 +41,46 @@ public class OwnerAssistTargeting<E extends LivingEntity> implements Targeting<E
     @Override
     public void onStart(E entity) {
         tickCounter = 0;
+        assisted = null;
     }
 
+    @Nullable
     @Override
-    public void tick(E entity) {
-        if (entity.level().isClientSide()) {
-            return;
-        }
-
-        if (tickCounter++ % retargetInterval != 0) {
-            return;
-        }
-
-        final LivingEntity owner = ownerResolver.apply(entity);
-        if (owner == null || !owner.isAlive()) {
-            return;
-        }
-
-        LivingEntity candidate = null;
-
-        // The owner is already attacking something, so the host joins in
-        if (owner instanceof Mob ownerMob) {
-            final LivingEntity ownerTarget = ownerMob.getTarget();
-            if (ownerTarget != null && ownerTarget.isAlive() && ownerTarget != entity) {
-                candidate = ownerTarget;
+    public LivingEntity select(E entity, @Nullable LivingEntity current) {
+        if (tickCounter++ % retargetInterval == 0) {
+            final LivingEntity candidate = findCandidate(entity);
+            if (candidate != null) {
+                assisted = candidate;
             }
 
+        }
+
+        if (assisted != null && !CONDITIONS.test(entity, assisted)) {
+            assisted = null;
+        }
+
+        return assisted;
+    }
+
+    @Nullable
+    private LivingEntity findCandidate(E entity) {
+        final LivingEntity owner = ownerResolver.apply(entity);
+        if (owner == null || !owner.isAlive()) {
+            return null;
+        }
+
+        // The owner is already attacking something, so the host joins in
+        if (owner instanceof Mob ownerMob && isValidCandidate(entity, owner, ownerMob.getTarget())) {
+            return ownerMob.getTarget();
         }
 
         // Otherwise the host retaliates against whoever last hit the owner
-        if (candidate == null) {
-            final LivingEntity hurtBy = owner.getLastHurtByMob();
-            if (hurtBy != null && hurtBy.isAlive() && hurtBy != entity && hurtBy != owner) {
-                candidate = hurtBy;
-            }
-
-        }
-
-        if (candidate != null) {
-            setTarget(entity, candidate);
-        }
-
+        final LivingEntity hurtBy = owner.getLastHurtByMob();
+        return isValidCandidate(entity, owner, hurtBy) ? hurtBy : null;
     }
 
-    protected void setTarget(E entity, @Nullable LivingEntity target) {
-        if (entity instanceof Mob mob) {
-            mob.setTarget(target);
-        }
-
+    private boolean isValidCandidate(E entity, LivingEntity owner, @Nullable LivingEntity candidate) {
+        return candidate != null && candidate != owner && CONDITIONS.test(entity, candidate);
     }
 
 }

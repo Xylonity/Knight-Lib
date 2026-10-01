@@ -13,8 +13,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.level.Level;
-import dev.xylonity.knightlib.api.animation.KnightLibAnimatable;
-import dev.xylonity.knightlib.api.animation.KnightLibAnimationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
