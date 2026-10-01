@@ -1,3 +1,7 @@
+# 2.0.4
+- Internal automaton no longer searches for creative/spectator players
+- Fixed internal automaton forced exits freezing behaviors
+
 # 2.0.3
 - Fixed mirrored box UVs assigning east/west textures to the wrong faces
 

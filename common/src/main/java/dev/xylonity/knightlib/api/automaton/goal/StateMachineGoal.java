@@ -5,6 +5,7 @@ import dev.xylonity.knightlib.api.automaton.StateEnum;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
+import java.util.function.Supplier;
 
 /**
  * Bridges an {@link Automaton} into vanilla's {@link Goal} system.
@@ -15,9 +16,13 @@ import java.util.EnumSet;
 public class StateMachineGoal<E, S extends Enum<S> & StateEnum> extends Goal {
 
     private final E entity;
-    private final Automaton<E, S> automaton;
+    private final Supplier<Automaton<E, S>> automaton;
 
     public StateMachineGoal(E entity, Automaton<E, S> automaton) {
+        this(entity, () -> automaton);
+    }
+
+    public StateMachineGoal(E entity, Supplier<Automaton<E, S>> automaton) {
         this.entity = entity;
         this.automaton = automaton;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
@@ -30,17 +35,17 @@ public class StateMachineGoal<E, S extends Enum<S> & StateEnum> extends Goal {
 
     @Override
     public void start() {
-        automaton.start(entity);
+        automaton.get().start(entity);
     }
 
     @Override
     public void stop() {
-        automaton.stop(entity);
+        automaton.get().stop(entity);
     }
 
     @Override
     public void tick() {
-        automaton.tick(entity);
+        automaton.get().tick(entity);
     }
 
     @Override

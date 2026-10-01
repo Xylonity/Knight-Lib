@@ -129,8 +129,7 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
 
         // Forces exit check during the current behavior
         final Integer forcedExit = currentBehavior.shouldForceExit(entity, context);
-        if (forcedExit != null) {
-            transitionTo(entity, forcedExit, false);
+        if (forcedExit != null && transitionTo(entity, forcedExit, false)) {
             return;
         }
 
@@ -144,6 +143,10 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
 
         }
 
+        if (processTransitionQueue(entity)) {
+            return;
+        }
+
         if (firstTick) {
             currentBehavior.onFirstTick(entity, context);
             firstTick = false;
@@ -154,11 +157,10 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         currentBehavior.onTickEnd(entity, context);
 
         // Direct transition requested by the behavior tick
-        if (nextStateId != null && nextStateId != currentStateId) {
+        if (nextStateId != null) {
             transitionTo(entity, nextStateId, false);
         }
 
-        processTransitionQueue(entity);
     }
 
     /**
@@ -213,19 +215,24 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
     }
 
     /**
-     * Enqueues a transition request with a given priority.
+     * Enqueues a transition request with a given priority
      */
     public void requestTransition(E entity, S targetState, TransitionPriority priority) {
-        transitionQueue.add(new StateTransition(targetState.id(), true, priority));
+        if (targetState.id() != currentStateId) {
+            transitionQueue.add(new StateTransition(targetState.id(), true, priority));
+        }
+
     }
 
     /**
      * Sorts and processes the queued transitions by priority (highest first).
      * The first transition that successfully applied wins, and the rest are discarded for this tick
+     *
+     * @return {@code true} if a transition was applied
      */
-    private void processTransitionQueue(E entity) {
+    private boolean processTransitionQueue(E entity) {
         if (transitionQueue.isEmpty()) {
-            return;
+            return false;
         }
 
         final List<StateTransition> sorted = new ArrayList<>(transitionQueue);
@@ -234,11 +241,12 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
 
         for (final StateTransition transition : sorted) {
             if (attemptTransition(entity, transition)) {
-                break;
+                return true;
             }
 
         }
 
+        return false;
     }
 
     /**
@@ -249,27 +257,34 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
             return false;
         }
 
-        transitionTo(entity, transition.targetState, transition.isInterrupt);
-
-        return true;
+        return transitionTo(entity, transition.targetState, transition.isInterrupt);
     }
 
     /**
      * Performs an internal state transition and runs lifecycle hooks
+     *
+     * @return {@code true} if the transition was applied
      */
-    private void transitionTo(E entity, int targetStateId, boolean isInterrupt) {
+    private boolean transitionTo(E entity, int targetStateId, boolean isInterrupt) {
+        if (targetStateId == currentStateId) {
+            return false;
+        }
+
         final Behavior<E, S> targetBehavior = behaviors.get(targetStateId);
         if (targetBehavior == null) {
-            return;
+            return false;
         }
 
         if (isTransitionBlocked(currentStateId, targetStateId)) {
-            return;
+            return false;
         }
 
+        // canStart sees the state it would come from as the previous one, restored if the transition is rejected
+        final int lastPreviousState = context.previousState();
         context.setPreviousState(currentStateId);
         if (!targetBehavior.canStart(entity, context)) {
-            return;
+            context.setPreviousState(lastPreviousState);
+            return false;
         }
 
         // Exits the current behavior
@@ -286,6 +301,8 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         ticksInState = 0;
         firstTick = true;
 
+        // Pending requests were made against the previous state (including any made from its onExit)
+        transitionQueue.clear();
         context.clearTransient();
 
         context.setTicksInState(ticksInState);
@@ -295,6 +312,8 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         context.setInterrupted(false);
 
         currentBehavior.onEnter(entity, context);
+
+        return true;
     }
 
     /**

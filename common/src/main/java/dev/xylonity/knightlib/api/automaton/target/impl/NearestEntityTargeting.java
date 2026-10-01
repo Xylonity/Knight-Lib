@@ -3,10 +3,9 @@ package dev.xylonity.knightlib.api.automaton.target.impl;
 import dev.xylonity.knightlib.api.automaton.target.Targeting;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 
 import javax.annotation.Nullable;
-import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -22,10 +21,12 @@ public class NearestEntityTargeting<E extends LivingEntity, T extends LivingEnti
     private final Class<T> candidateClass;
     private final double radius;
     private final int retargetInterval;
-    private final boolean requireLineOfSight;
-    private final Predicate<T> filter;
+    private final TargetingConditions conditions;
 
     private int tickCounter;
+
+    @Nullable
+    private T acquired;
 
     public NearestEntityTargeting(Class<T> candidateClass, double radius) {
         this(candidateClass, radius, 10, false, null);
@@ -35,13 +36,22 @@ public class NearestEntityTargeting<E extends LivingEntity, T extends LivingEnti
         this.candidateClass = candidateClass;
         this.radius = radius;
         this.retargetInterval = Math.max(1, retargetInterval);
-        this.requireLineOfSight = requireLineOfSight;
-        this.filter = filter != null ? filter : t -> true;
+        this.conditions = TargetingConditions.forCombat().range(radius);
+
+        if (filter != null) {
+            this.conditions.selector(living -> filter.test(candidateClass.cast(living)));
+        }
+
+        if (!requireLineOfSight) {
+            this.conditions.ignoreLineOfSight();
+        }
+
     }
 
     @Override
     public void onStart(E entity) {
         tickCounter = 0;
+        acquired = null;
     }
 
     @Override
@@ -54,15 +64,26 @@ public class NearestEntityTargeting<E extends LivingEntity, T extends LivingEnti
             return;
         }
 
-        // Keeps the current target if it still qualifies
         final T current = currentOfType(entity);
-        if (current != null && current.isAlive() && entity.distanceTo(current) <= radius && isValidCandidate(entity, current)) {
+
+        // Something else retargeted the host, so this instance no longer owns the target
+        if (current != acquired) {
+            acquired = null;
+        }
+
+        // Keeps the current target if it still qualifies
+        if (current != null && conditions.test(entity, current)) {
             return;
         }
 
-        final T nearest = findNearest(entity);
+        final T nearest = entity.level().getNearestEntity(candidateClass, conditions, entity, entity.getX(), entity.getY(), entity.getZ(), entity.getBoundingBox().inflate(radius));
         if (nearest != null) {
             setTarget(entity, nearest);
+            acquired = nearest;
+        }
+        else if (acquired != null) {
+            setTarget(entity, null);
+            acquired = null;
         }
 
     }
@@ -87,41 +108,6 @@ public class NearestEntityTargeting<E extends LivingEntity, T extends LivingEnti
         }
 
         return candidateClass.isInstance(target) ? (T) target : null;
-    }
-
-    @Nullable
-    private T findNearest(E entity) {
-        final AABB box = entity.getBoundingBox().inflate(radius);
-        final List<T> candidates = entity.level().getEntitiesOfClass(candidateClass, box, t -> isValidCandidate(entity, t));
-
-        T nearest = null;
-        double nearestDistanceSquare = radius * radius;
-        for (final T candidate : candidates) {
-            final double distanceSquare = entity.distanceToSqr(candidate);
-            if (distanceSquare < nearestDistanceSquare) {
-                nearestDistanceSquare = distanceSquare;
-                nearest = candidate;
-            }
-
-        }
-
-        return nearest;
-    }
-
-    private boolean isValidCandidate(E entity, T candidate) {
-        if (candidate == entity || !candidate.isAlive()) {
-            return false;
-        }
-
-        if (!filter.test(candidate)) {
-            return false;
-        }
-
-        if (requireLineOfSight && entity instanceof Mob mob && !mob.getSensing().hasLineOfSight(candidate)) {
-            return false;
-        }
-
-        return true;
     }
 
 }
