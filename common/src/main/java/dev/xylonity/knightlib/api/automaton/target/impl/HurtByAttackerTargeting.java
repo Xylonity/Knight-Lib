@@ -23,6 +23,8 @@ public class HurtByAttackerTargeting<E extends LivingEntity> implements Targetin
 
     private final int retentionTicks;
 
+    @Nullable
+    private LivingEntity attacker;
     private int remainingTicks;
 
     public HurtByAttackerTargeting() {
@@ -35,20 +37,21 @@ public class HurtByAttackerTargeting<E extends LivingEntity> implements Targetin
 
     @Override
     public void onStart(E entity) {
+        attacker = null;
         remainingTicks = 0;
     }
 
     @Override
     public void tick(E entity) {
-        if (retentionTicks <= 0 || remainingTicks <= 0) {
+        if (attacker == null || --remainingTicks > 0) {
             return;
         }
 
-        remainingTicks--;
-        if (remainingTicks == 0) {
+        if (getTarget(entity) == attacker) {
             setTarget(entity, null);
         }
 
+        attacker = null;
     }
 
     @Override
@@ -58,12 +61,17 @@ public class HurtByAttackerTargeting<E extends LivingEntity> implements Targetin
         }
 
         final Entity sourceEntity = source.getEntity();
-        if (!(sourceEntity instanceof LivingEntity attacker) || attacker == entity) {
+        if (!(sourceEntity instanceof LivingEntity living) || living == entity) {
             return;
         }
 
-        setTarget(entity, attacker);
-        remainingTicks = retentionTicks;
+        setTarget(entity, living);
+
+        if (retentionTicks > 0) {
+            attacker = living;
+            remainingTicks = retentionTicks;
+        }
+
     }
 
     protected void setTarget(E entity, @Nullable LivingEntity target) {
@@ -71,6 +79,11 @@ public class HurtByAttackerTargeting<E extends LivingEntity> implements Targetin
             mob.setTarget(target);
         }
 
+    }
+
+    @Nullable
+    protected LivingEntity getTarget(E entity) {
+        return entity instanceof Mob mob ? mob.getTarget() : null;
     }
 
 }

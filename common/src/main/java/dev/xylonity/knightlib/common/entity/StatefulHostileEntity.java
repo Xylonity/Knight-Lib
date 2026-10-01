@@ -80,11 +80,15 @@ public abstract class StatefulHostileEntity<E extends StatefulHostileEntity<E, S
 
     @Override
     protected void registerGoals() {
-        this.automaton = buildAutomaton();
-        this.goalSelector.addGoal(1, new StateMachineGoal<>(selfEntity(), automaton));
+        this.goalSelector.addGoal(1, new StateMachineGoal<>(selfEntity(), this::getAutomaton));
     }
 
+    @Nullable
     public Automaton<E, S> getAutomaton() {
+        if (automaton == null && !level().isClientSide) {
+            automaton = buildAutomaton();
+        }
+
         return automaton;
     }
 
