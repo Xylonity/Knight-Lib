@@ -1,6 +1,5 @@
 package dev.xylonity.knightlib.api.automaton.behavior;
 
-import dev.xylonity.knightlib.api.automaton.StateEnum;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -10,7 +9,7 @@ import javax.annotation.Nullable;
  * Pluggable state-driven AI behavior for the Automaton system.
  *
  * <p>A {@code Behavior} drives an entity while its associated state is active.
- * It may request transitions to other states by returning a target state id from {@link #tick}.</p>
+ * It may request transitions to other states by returning a target state from {@link #tick}.</p>
  *
  * <h4>Lifecycle</h4>
  * <ol>
@@ -28,54 +27,54 @@ import javax.annotation.Nullable;
  * @author Xylonity
  */
 @FunctionalInterface
-public interface Behavior<E, S extends Enum<S> & StateEnum> {
+public interface Behavior<E, S extends Enum<S>> {
 
     @Nullable
-    Integer tick(E entity, BehaviorContext context);
+    S tick(E entity, BehaviorContext<S> context);
 
-    default boolean canStart(E entity, BehaviorContext context) {
+    default boolean canStart(E entity, BehaviorContext<S> context) {
         return true;
     }
 
-    default boolean canBeInterrupted(E entity, BehaviorContext context, int interruptingStateId) {
+    default boolean canBeInterrupted(E entity, BehaviorContext<S> context, S interruptingState) {
         return true;
     }
 
     @Nullable
-    default Integer shouldForceExit(E entity, BehaviorContext context) {
+    default S shouldForceExit(E entity, BehaviorContext<S> context) {
         return null;
     }
 
-    default void onEnter(E entity, BehaviorContext context) {
+    default void onEnter(E entity, BehaviorContext<S> context) {
         ;;
     }
 
-    default void onFirstTick(E entity, BehaviorContext context) {
+    default void onFirstTick(E entity, BehaviorContext<S> context) {
         ;;
     }
 
-    default void onTickEnd(E entity, BehaviorContext context) {
+    default void onTickEnd(E entity, BehaviorContext<S> context) {
         ;;
     }
 
-    default void onExit(E entity, BehaviorContext context, boolean interrupted) {
+    default void onExit(E entity, BehaviorContext<S> context, boolean interrupted) {
         ;;
     }
 
-    default void onDeath(E entity, BehaviorContext context) {
+    default void onDeath(E entity, BehaviorContext<S> context) {
         ;;
     }
 
-    default void onEffectAdded(E entity, BehaviorContext context, @Nullable MobEffectInstance effectInstance) {
+    default void onEffectAdded(E entity, BehaviorContext<S> context, @Nullable MobEffectInstance effectInstance) {
         ;;
     }
 
-    default void onTargetChanged(E entity, BehaviorContext context, @Nullable LivingEntity previous, @Nullable LivingEntity current) {
+    default void onTargetChanged(E entity, BehaviorContext<S> context, @Nullable LivingEntity previous, @Nullable LivingEntity current) {
         ;;
     }
 
     @Nullable
-    default Integer onDamaged(E entity, BehaviorContext context, float amount) {
+    default S onDamaged(E entity, BehaviorContext<S> context, float amount) {
         return null;
     }
 

@@ -14,22 +14,23 @@ import javax.annotation.Nullable;
  * that would execute global logic, but I think that would be bloated for the purpose it serves.</p>
  *
  * <p>Global rules are evaluated in registration order. The first one that returns
- * a non-null state id wins and triggers an interrupted transition.</p>
+ * a non-null state wins and triggers an interrupted transition.</p>
  *
  * @param <E> the entity in this context
+ * @param <S> state enum type
  */
 @FunctionalInterface
-public interface GlobalRule<E> {
+public interface GlobalRule<E, S extends Enum<S>> {
 
     /**
      * Evaluated every tick before the active behavior runs
      *
      * @param entity the entity
      * @param context current behavior context
-     * @param currentStateId the active state id
-     * @return target state id to interrupt into, or {@code null} to do nothing
+     * @param currentState the active state
+     * @return target state to interrupt into, or {@code null} to do nothing
      */
     @Nullable
-    Integer evaluate(E entity, BehaviorContext context, int currentStateId);
+    S evaluate(E entity, BehaviorContext<S> context, S currentState);
 
 }

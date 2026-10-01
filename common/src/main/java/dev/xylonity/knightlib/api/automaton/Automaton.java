@@ -3,10 +3,6 @@ package dev.xylonity.knightlib.api.automaton;
 import dev.xylonity.knightlib.api.automaton.behavior.Behavior;
 import dev.xylonity.knightlib.api.automaton.behavior.BehaviorContext;
 import dev.xylonity.knightlib.api.automaton.target.Targeting;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,8 +13,8 @@ import java.util.*;
 /**
  * Generic finite-state machine (state automaton) for entity AI.
  *
- * <p>Maps state ids (from {@link StateEnum}) to {@link Behavior} instances. Each tick the active
- * behavior is updated and may request a transition by returning a target state id. Transitions
+ * <p>Maps states to {@link Behavior} instances. Each tick the active
+ * behavior is updated and may request a transition by returning a target state. Transitions
  * can also be requested asynchronously via a priority queue ({@link #requestTransition}).</p>
  *
  * <h4>Transition model</h4>
@@ -33,22 +29,21 @@ import java.util.*;
  * <p>Use {@link #builder(Enum)} to construct instances.</p>
  *
  * @param <E> entity type
- * @param <S> state enum type (must implement {@link StateEnum})
+ * @param <S> state enum type
  *
  * @author Xylonity
  */
-public class Automaton<E, S extends Enum<S> & StateEnum> {
+public class Automaton<E, S extends Enum<S>> {
 
-    private final Int2ObjectMap<Behavior<E, S>> behaviors;
-    private final Map<Integer, IntSet> blockedTransitions;
-    private final List<GlobalRule<E>> globalRules;
-    private final S[] stateValues;
-    private final BehaviorContext context = new BehaviorContext();
-    private final Queue<StateTransition> transitionQueue = new LinkedList<>();
+    private final Map<S, Behavior<E, S>> behaviors;
+    private final Map<S, Set<S>> blockedTransitions;
+    private final List<GlobalRule<E, S>> globalRules;
+    private final BehaviorContext<S> context = new BehaviorContext<>();
+    private final Queue<StateTransition<S>> transitionQueue = new LinkedList<>();
 
     private Behavior<E, S> currentBehavior;
 
-    private int currentStateId;
+    private S currentState;
     private int ticksInState;
     private boolean firstTick;
     private float lastDamageAmount;
@@ -61,13 +56,12 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         this.blockedTransitions = builder.blockedTransitions;
         this.globalRules = builder.globalRules;
         this.targeting = builder.targeting;
-        this.currentStateId = builder.initialState.id();
-        this.stateValues = builder.initialState.getDeclaringClass().getEnumConstants();
+        this.currentState = builder.initialState;
         this.ticksInState = 0;
         this.firstTick = true;
     }
 
-    public static <E, S extends Enum<S> & StateEnum> Builder<E, S> builder(S initialState) {
+    public static <E, S extends Enum<S>> Builder<E, S> builder(S initialState) {
         return new Builder<>(initialState);
     }
 
@@ -75,10 +69,10 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
      * Initializes the automaton in its initial state
      */
     public void start(E entity) {
-        currentBehavior = behaviors.get(currentStateId);
+        currentBehavior = behaviors.get(currentState);
         if (currentBehavior == null) {
             throw new IllegalStateException(
-                    String.format("[KnightLib] No behavior registered for initial state id %d. Registered: %s", currentStateId, behaviors.keySet())
+                    String.format("[KnightLib] No behavior registered for initial state %s. Registered: %s", currentState, behaviors.keySet())
             );
 
         }
@@ -128,16 +122,16 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         context.setTicksInState(ticksInState);
 
         // Forces exit check during the current behavior
-        final Integer forcedExit = currentBehavior.shouldForceExit(entity, context);
+        final S forcedExit = currentBehavior.shouldForceExit(entity, context);
         if (forcedExit != null && transitionTo(entity, forcedExit, false)) {
             return;
         }
 
         // Global rules (evaluated before the behavior tick)
-        for (GlobalRule<E> rule : globalRules) {
-            final Integer ruleTarget = rule.evaluate(entity, context, currentStateId);
-            if (ruleTarget != null && ruleTarget != currentStateId) {
-                transitionQueue.add(new StateTransition(ruleTarget, true, TransitionPriority.HIGH));
+        for (GlobalRule<E, S> rule : globalRules) {
+            final S ruleTarget = rule.evaluate(entity, context, currentState);
+            if (ruleTarget != null && ruleTarget != currentState) {
+                transitionQueue.add(new StateTransition<>(ruleTarget, true, TransitionPriority.HIGH));
                 break;
             }
 
@@ -152,13 +146,13 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
             firstTick = false;
         }
 
-        final Integer nextStateId = currentBehavior.tick(entity, context);
+        final S nextState = currentBehavior.tick(entity, context);
 
         currentBehavior.onTickEnd(entity, context);
 
         // Direct transition requested by the behavior tick
-        if (nextStateId != null) {
-            transitionTo(entity, nextStateId, false);
+        if (nextState != null) {
+            transitionTo(entity, nextState, false);
         }
 
     }
@@ -177,9 +171,9 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
             targeting.onDamaged(entity, source, amount);
         }
 
-        final Integer nextState = currentBehavior.onDamaged(entity, context, amount);
-        if (nextState != null && nextState != currentStateId) {
-            transitionQueue.add(new StateTransition(nextState, true, TransitionPriority.HIGH));
+        final S nextState = currentBehavior.onDamaged(entity, context, amount);
+        if (nextState != null && nextState != currentState) {
+            transitionQueue.add(new StateTransition<>(nextState, true, TransitionPriority.HIGH));
         }
 
     }
@@ -218,8 +212,8 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
      * Enqueues a transition request with a given priority
      */
     public void requestTransition(E entity, S targetState, TransitionPriority priority) {
-        if (targetState.id() != currentStateId) {
-            transitionQueue.add(new StateTransition(targetState.id(), true, priority));
+        if (targetState != currentState) {
+            transitionQueue.add(new StateTransition<>(targetState, true, priority));
         }
 
     }
@@ -235,11 +229,11 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
             return false;
         }
 
-        final List<StateTransition> sorted = new ArrayList<>(transitionQueue);
+        final List<StateTransition<S>> sorted = new ArrayList<>(transitionQueue);
         sorted.sort(Comparator.comparingInt(stateTransition -> -stateTransition.priority.value));
         transitionQueue.clear();
 
-        for (final StateTransition transition : sorted) {
+        for (final StateTransition<S> transition : sorted) {
             if (attemptTransition(entity, transition)) {
                 return true;
             }
@@ -252,7 +246,7 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
     /**
      * Attempts to apply a queued transition, respecting the interruption rules applied
      */
-    private boolean attemptTransition(E entity, StateTransition transition) {
+    private boolean attemptTransition(E entity, StateTransition<S> transition) {
         if (transition.isInterrupt && !currentBehavior.canBeInterrupted(entity, context, transition.targetState)) {
             return false;
         }
@@ -265,23 +259,23 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
      *
      * @return {@code true} if the transition was applied
      */
-    private boolean transitionTo(E entity, int targetStateId, boolean isInterrupt) {
-        if (targetStateId == currentStateId) {
+    private boolean transitionTo(E entity, S targetState, boolean isInterrupt) {
+        if (targetState == currentState) {
             return false;
         }
 
-        final Behavior<E, S> targetBehavior = behaviors.get(targetStateId);
+        final Behavior<E, S> targetBehavior = behaviors.get(targetState);
         if (targetBehavior == null) {
             return false;
         }
 
-        if (isTransitionBlocked(currentStateId, targetStateId)) {
+        if (isTransitionBlocked(currentState, targetState)) {
             return false;
         }
 
         // canStart sees the state it would come from as the previous one, restored if the transition is rejected
-        final int lastPreviousState = context.previousState();
-        context.setPreviousState(currentStateId);
+        final S lastPreviousState = context.previousState();
+        context.setPreviousState(currentState);
         if (!targetBehavior.canStart(entity, context)) {
             context.setPreviousState(lastPreviousState);
             return false;
@@ -291,10 +285,10 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         context.setInterrupted(isInterrupt);
         currentBehavior.onExit(entity, context, isInterrupt);
 
-        final int previousStateId = currentStateId;
+        final S previousState = currentState;
 
         // Switches state
-        currentStateId = targetStateId;
+        currentState = targetState;
         currentBehavior = targetBehavior;
 
         // Resets per-state bookkeeping
@@ -306,7 +300,7 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         context.clearTransient();
 
         context.setTicksInState(ticksInState);
-        context.setPreviousState(previousStateId);
+        context.setPreviousState(previousState);
 
         // The new state starts non-interrupted, as it applies to the exit transition
         context.setInterrupted(false);
@@ -319,45 +313,25 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
     /**
      * Returns {@code true} if this specific transition has been explicitly blocked
      */
-    private boolean isTransitionBlocked(int fromState, int toState) {
-        final IntSet blocked = blockedTransitions.get(fromState);
+    private boolean isTransitionBlocked(S fromState, S toState) {
+        final Set<S> blocked = blockedTransitions.get(fromState);
         return blocked != null && blocked.contains(toState);
     }
 
-    /**
-     * Resolves an integer state id back to the typed enum constant
-     */
-    @Nullable
-    public S resolveState(int stateId) {
-        for (S state : stateValues) {
-            if (state.id() == stateId) {
-                return state;
-            }
-
-        }
-
-        return null;
-    }
-
-    public int currentStateId() {
-        return currentStateId;
-    }
-
-    @Nullable
     public S currentState() {
-        return resolveState(currentStateId);
+        return currentState;
     }
 
     public int ticksInState() {
         return ticksInState;
     }
 
-    public BehaviorContext context() {
+    public BehaviorContext<S> context() {
         return context;
     }
 
     public boolean isInState(S state) {
-        return currentStateId == state.id();
+        return currentState == state;
     }
 
     public float getLastDamageAmount() {
@@ -367,8 +341,8 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
     /**
      * Represents a transition request (usually enqueued by events)
      */
-    private record StateTransition(
-            int targetState,
+    private record StateTransition<S>(
+            S targetState,
             boolean isInterrupt,
             TransitionPriority priority
     ) {
@@ -389,26 +363,28 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
 
     }
 
-    public static class Builder<E, S extends Enum<S> & StateEnum> {
+    public static class Builder<E, S extends Enum<S>> {
 
         private final S initialState;
 
-        private final Int2ObjectMap<Behavior<E, S>> behaviors = new Int2ObjectOpenHashMap<>();
-        private final Map<Integer, IntSet> blockedTransitions = new HashMap<>();
-        private final List<GlobalRule<E>> globalRules = new ArrayList<>();
+        private final Map<S, Behavior<E, S>> behaviors;
+        private final Map<S, Set<S>> blockedTransitions;
+        private final List<GlobalRule<E, S>> globalRules = new ArrayList<>();
 
         @Nullable
         private Targeting<? super E> targeting;
 
         private Builder(S initialState) {
             this.initialState = initialState;
+            this.behaviors = new EnumMap<>(initialState.getDeclaringClass());
+            this.blockedTransitions = new EnumMap<>(initialState.getDeclaringClass());
         }
 
         /**
          * Registers a behavior for a given state
          */
         public Builder<E, S> register(S state, Behavior<E, S> behavior) {
-            behaviors.put(state.id(), behavior);
+            behaviors.put(state, behavior);
             return this;
         }
 
@@ -416,7 +392,7 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
          * Blocks a single directed transition, silently ignoring any attempt to go from {@code state} to {@code targetState}
          */
         public Builder<E, S> blockTransition(S state, S targetState) {
-            blockedTransitions.computeIfAbsent(state.id(), integer -> new IntOpenHashSet()).add(targetState.id());
+            blockedTransitions.computeIfAbsent(state, s -> EnumSet.noneOf(s.getDeclaringClass())).add(targetState);
             return this;
         }
 
@@ -425,10 +401,8 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
          */
         @SafeVarargs
         public final Builder<E, S> blockTransitions(S from, S... blocked) {
-            final IntSet set = blockedTransitions.computeIfAbsent(from.id(), integer -> new IntOpenHashSet());
-            for (final S state : blocked) {
-                set.add(state.id());
-            }
+            final Set<S> set = blockedTransitions.computeIfAbsent(from, s -> EnumSet.noneOf(s.getDeclaringClass()));
+            set.addAll(Arrays.asList(blocked));
 
             return this;
         }
@@ -436,7 +410,7 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
         /**
          * Adds a global rule evaluated every tick before the active behavior
          */
-        public Builder<E, S> globalRule(GlobalRule<E> rule) {
+        public Builder<E, S> globalRule(GlobalRule<E, S> rule) {
             globalRules.add(rule);
             return this;
         }
@@ -455,9 +429,9 @@ public class Automaton<E, S extends Enum<S> & StateEnum> {
          * @throws IllegalStateException if the initial state has no registered behavior
          */
         public Automaton<E, S> build() {
-            if (!behaviors.containsKey(initialState.id())) {
+            if (!behaviors.containsKey(initialState)) {
                 throw new IllegalStateException(
-                        String.format("[KnightLib] Initial state '%s' (id=%d) has no registered behavior", initialState.name(), initialState.id())
+                        String.format("[KnightLib] Initial state '%s' has no registered behavior", initialState.name())
                 );
 
             }
