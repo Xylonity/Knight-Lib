@@ -1,7 +1,6 @@
 package dev.xylonity.knightlib.api.automaton.goal;
 
 import dev.xylonity.knightlib.api.automaton.Automaton;
-import dev.xylonity.knightlib.api.automaton.StateEnum;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
@@ -13,7 +12,7 @@ import java.util.function.Supplier;
  * @param <E> entity type
  * @param <S> state enum type
  */
-public class StateMachineGoal<E, S extends Enum<S> & StateEnum> extends Goal {
+public class StateMachineGoal<E, S extends Enum<S>> extends Goal {
 
     private final E entity;
     private final Supplier<Automaton<E, S>> automaton;

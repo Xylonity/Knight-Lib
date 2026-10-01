@@ -1,7 +1,6 @@
 package dev.xylonity.knightlib.common.entity;
 
 import dev.xylonity.knightlib.api.automaton.Automaton;
-import dev.xylonity.knightlib.api.automaton.StateEnum;
 import dev.xylonity.knightlib.api.automaton.goal.StateMachineGoal;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -19,11 +18,12 @@ import dev.xylonity.knightlib.api.animation.KnightLibAnimationHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class StatefulHostileEntity<E extends StatefulHostileEntity<E, S>, S extends Enum<S> & StateEnum> extends Monster {
+public abstract class StatefulHostileEntity<E extends StatefulHostileEntity<E, S>, S extends Enum<S>> extends Monster {
 
     private static final EntityDataAccessor<Integer> CURRENT_STATE = SynchedEntityData.defineId(StatefulHostileEntity.class, EntityDataSerializers.INT);
 
     private Automaton<E, S> automaton;
+    private S[] states;
 
     protected StatefulHostileEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
@@ -33,7 +33,7 @@ public abstract class StatefulHostileEntity<E extends StatefulHostileEntity<E, S
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.getEntityData().define(CURRENT_STATE, getDefaultState().id());
+        this.getEntityData().define(CURRENT_STATE, getDefaultState().ordinal());
     }
 
     @Override
@@ -41,7 +41,7 @@ public abstract class StatefulHostileEntity<E extends StatefulHostileEntity<E, S
         super.tick();
 
         if (!level().isClientSide && getAutomaton() != null) {
-            setCurrentState(getAutomaton().currentStateId());
+            setCurrentState(getAutomaton().currentState());
         }
 
         // Computes a correct smooth yaw rotation when looking at a target position
@@ -51,26 +51,17 @@ public abstract class StatefulHostileEntity<E extends StatefulHostileEntity<E, S
 
     }
 
-    public void setCurrentState(int stateId) {
-        this.getEntityData().set(CURRENT_STATE, stateId);
-    }
-
-    public int getCurrentStateId() {
-        return this.getEntityData().get(CURRENT_STATE);
+    public void setCurrentState(S state) {
+        this.getEntityData().set(CURRENT_STATE, state.ordinal());
     }
 
     public S getCurrentState() {
-        final int id = getCurrentStateId();
-        final S[] states = getStateValues();
-
-        for (S state : states) {
-            if (state.id() == id) {
-                return state;
-            }
-
+        if (states == null) {
+            states = getDefaultState().getDeclaringClass().getEnumConstants();
         }
 
-        return getDefaultState();
+        final int ordinal = this.getEntityData().get(CURRENT_STATE);
+        return ordinal >= 0 && ordinal < states.length ? states[ordinal] : getDefaultState();
     }
 
     protected void computeYawRotation() {
@@ -141,9 +132,6 @@ public abstract class StatefulHostileEntity<E extends StatefulHostileEntity<E, S
 
     @NotNull
     protected abstract Automaton<E, S> buildAutomaton();
-
-    @NotNull
-    protected abstract S[] getStateValues();
 
     @NotNull
     protected abstract S getDefaultState();

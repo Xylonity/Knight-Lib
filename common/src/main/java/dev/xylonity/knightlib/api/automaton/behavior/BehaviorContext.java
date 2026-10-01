@@ -2,6 +2,7 @@ package dev.xylonity.knightlib.api.automaton.behavior;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
@@ -15,13 +16,14 @@ import java.util.Map;
  *
  * <p>When reading via {@link #get}, transient data takes priority over persistent.</p>
  */
-public class BehaviorContext {
+public class BehaviorContext<S extends Enum<S>> {
 
     private final Map<String, Object> data = new Object2ObjectOpenHashMap<>();
     private final Map<String, Object> transientData = new Object2ObjectOpenHashMap<>();
 
     private int ticksInState;
-    private int previousState = -1;
+    @Nullable
+    private S previousState;
     private boolean interrupted = false;
 
     /**
@@ -95,7 +97,7 @@ public class BehaviorContext {
         this.ticksInState = ticks;
     }
 
-    public void setPreviousState(int state) {
+    public void setPreviousState(@Nullable S state) {
         this.previousState = state;
     }
 
@@ -107,7 +109,8 @@ public class BehaviorContext {
         return ticksInState;
     }
 
-    public int previousState() {
+    @Nullable
+    public S previousState() {
         return previousState;
     }
 
