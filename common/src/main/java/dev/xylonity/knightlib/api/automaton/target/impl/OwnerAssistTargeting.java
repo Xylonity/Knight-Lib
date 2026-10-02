@@ -3,13 +3,16 @@ package dev.xylonity.knightlib.api.automaton.target.impl;
 import dev.xylonity.knightlib.api.automaton.target.TargetSelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nullable;
 import java.util.function.Function;
 
 /**
- * Companion targeting that forwards the owner's combat state onto the host.
+ * Companion targeting that forwards the owner's combat state onto the host. It defends the owner first, then joins
+ * whatever the owner hits, keeping each fight until its target is no longer valid.
  *
  * Ownership is resolved via the supplied {@link Function}, decoupling this class from any specific taming system
  *
@@ -25,9 +28,12 @@ public class OwnerAssistTargeting<E extends Mob> implements TargetSelector<E> {
     private final int retargetInterval;
 
     private int tickCounter;
+    private int lastHurtByTimestamp;
+    private int lastHurtTimestamp;
 
     @Nullable
     private LivingEntity assisted;
+    private boolean defending;
 
     public OwnerAssistTargeting(Function<E, LivingEntity> ownerResolver) {
         this(ownerResolver, 5);
@@ -40,47 +46,65 @@ public class OwnerAssistTargeting<E extends Mob> implements TargetSelector<E> {
 
     @Override
     public void onStart(E entity) {
-        tickCounter = 0;
+        tickCounter = entity.getRandom().nextInt(retargetInterval);
         assisted = null;
+        defending = false;
     }
 
     @Nullable
     @Override
     public LivingEntity select(E entity, @Nullable LivingEntity current) {
-        if (tickCounter++ % retargetInterval == 0) {
-            final LivingEntity candidate = findCandidate(entity);
-            if (candidate != null) {
-                assisted = candidate;
-            }
-
-        }
-
         if (assisted != null && !CONDITIONS.test(entity, assisted)) {
             assisted = null;
+            defending = false;
+        }
+
+        if (tickCounter++ % retargetInterval == 0) {
+            retarget(entity);
         }
 
         return assisted;
     }
 
-    @Nullable
-    private LivingEntity findCandidate(E entity) {
+    private void retarget(E entity) {
         final LivingEntity owner = ownerResolver.apply(entity);
         if (owner == null || !owner.isAlive()) {
-            return null;
+            return;
         }
 
-        // The owner is already attacking something, so the host joins in
-        if (owner instanceof Mob ownerMob && isValidCandidate(entity, owner, ownerMob.getTarget())) {
-            return ownerMob.getTarget();
+        // Timestamps make the host react to new hits only
+        if (!defending && owner.getLastHurtByMobTimestamp() != lastHurtByTimestamp && isValidCandidate(entity, owner, owner.getLastHurtByMob())) {
+            lastHurtByTimestamp = owner.getLastHurtByMobTimestamp();
+            assisted = owner.getLastHurtByMob();
+            defending = true;
+            return;
         }
 
-        // Otherwise the host retaliates against whoever last hit the owner
-        final LivingEntity hurtBy = owner.getLastHurtByMob();
-        return isValidCandidate(entity, owner, hurtBy) ? hurtBy : null;
+        // Otherwise the current fight is kept until it ends
+        if (assisted != null) {
+            return;
+        }
+
+        if (owner.getLastHurtMobTimestamp() != lastHurtTimestamp && isValidCandidate(entity, owner, owner.getLastHurtMob())) {
+            lastHurtTimestamp = owner.getLastHurtMobTimestamp();
+            assisted = owner.getLastHurtMob();
+        }
+        else if (owner instanceof Mob ownerMob && isValidCandidate(entity, owner, ownerMob.getTarget())) {
+            assisted = ownerMob.getTarget();
+        }
+
     }
 
     private boolean isValidCandidate(E entity, LivingEntity owner, @Nullable LivingEntity candidate) {
-        return candidate != null && candidate != owner && CONDITIONS.test(entity, candidate);
+        if (candidate == null || candidate == owner || !CONDITIONS.test(entity, candidate)) {
+            return false;
+        }
+
+        if (candidate instanceof OwnableEntity ownable && owner.getUUID().equals(ownable.getOwnerUUID())) {
+            return false;
+        }
+
+        return !(candidate instanceof Player player && owner instanceof Player ownerPlayer && !ownerPlayer.canHarmPlayer(player));
     }
 
 }

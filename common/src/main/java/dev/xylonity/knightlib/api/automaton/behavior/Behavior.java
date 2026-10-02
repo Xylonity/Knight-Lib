@@ -1,5 +1,6 @@
 package dev.xylonity.knightlib.api.automaton.behavior;
 
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -14,8 +15,8 @@ import javax.annotation.Nullable;
  * <h4>Lifecycle</h4>
  * <ol>
  *   <li>{@link #canStart} is checked before transitioning into this state</li>
- *   <li>{@link #onEnter} is called once when the state becomes active</li>
- *   <li>{@link #onFirstTick} is called on the first tick after entering</li>
+ *   <li>{@link #onEnter} is called once when the state becomes active, during the transition (inside the previous state's tick or the event that caused it)</li>
+ *   <li>{@link #onFirstTick} is called at the start of the first tick this state runs</li>
  *   <li>{@link #tick} is called every tick</li>
  *   <li>{@link #onTickEnd} is called after tick processing</li>
  *   <li>{@link #onExit} is called when leaving this state</li>
@@ -74,7 +75,7 @@ public interface Behavior<E, S extends Enum<S>> {
     }
 
     @Nullable
-    default S onDamaged(E entity, BehaviorContext<S> context, float amount) {
+    default S onDamaged(E entity, BehaviorContext<S> context, @Nullable DamageSource source, float amount) {
         return null;
     }
 

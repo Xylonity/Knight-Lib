@@ -2,6 +2,7 @@
 - Refactor internal automaton into a modular way to implement it easier
 - Internal automaton no longer searches for creative/spectator players
 - Internal automaton now uses plain states instead of literal ids
+- Internal Automaton behaviors now receive the damage source when damaged
 - Fixed internal automaton forced exits freezing behaviors
 
 # 2.0.3
