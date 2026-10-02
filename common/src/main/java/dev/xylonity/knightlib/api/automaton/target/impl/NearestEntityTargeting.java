@@ -50,7 +50,7 @@ public class NearestEntityTargeting<E extends Mob, T extends LivingEntity> imple
 
     @Override
     public void onStart(E entity) {
-        tickCounter = 0;
+        tickCounter = entity.getRandom().nextInt(retargetInterval);
         selected = null;
     }
 

@@ -46,7 +46,6 @@ public class Automaton<E, S extends Enum<S>> {
     private S currentState;
     private int ticksInState;
     private boolean firstTick;
-    private float lastDamageAmount;
 
     @Nullable
     private final Targeting<? super E> targeting;
@@ -95,7 +94,8 @@ public class Automaton<E, S extends Enum<S>> {
      */
     public void stop(E entity) {
         if (currentBehavior != null) {
-            currentBehavior.onExit(entity, context, false);
+            context.setInterrupted(true);
+            currentBehavior.onExit(entity, context, true);
         }
 
         if (targeting != null) {
@@ -165,13 +165,11 @@ public class Automaton<E, S extends Enum<S>> {
             return;
         }
 
-        lastDamageAmount = amount;
-
         if (targeting != null) {
             targeting.onDamaged(entity, source, amount);
         }
 
-        final S nextState = currentBehavior.onDamaged(entity, context, amount);
+        final S nextState = currentBehavior.onDamaged(entity, context, source, amount);
         if (nextState != null && nextState != currentState) {
             transitionQueue.add(new StateTransition<>(nextState, true, TransitionPriority.HIGH));
         }
@@ -211,7 +209,7 @@ public class Automaton<E, S extends Enum<S>> {
     /**
      * Enqueues a transition request with a given priority
      */
-    public void requestTransition(E entity, S targetState, TransitionPriority priority) {
+    public void requestTransition(S targetState, TransitionPriority priority) {
         if (targetState != currentState) {
             transitionQueue.add(new StateTransition<>(targetState, true, priority));
         }
@@ -332,10 +330,6 @@ public class Automaton<E, S extends Enum<S>> {
 
     public boolean isInState(S state) {
         return currentState == state;
-    }
-
-    public float getLastDamageAmount() {
-        return lastDamageAmount;
     }
 
     /**
