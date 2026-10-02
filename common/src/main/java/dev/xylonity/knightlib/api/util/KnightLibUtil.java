@@ -5,6 +5,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.FloatTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
@@ -32,6 +33,18 @@ public class KnightLibUtil {
         Vec3 toTarget = new Vec3(to.getX(), from.getY(), to.getZ()).subtract(from.position()).normalize();
         double angle = Math.acos(from.getLookAngle().normalize().dot(toTarget)) * (180.0 / Math.PI);
         return angle >= (fov / 2f);
+    }
+
+    /**
+     * Smoothly turns the body and head of the entity towards its yaw
+     */
+    public static void smoothAlignToYaw(LivingEntity entity) {
+        smoothAlignToYaw(entity, 6.0f, 12.0f);
+    }
+
+    public static void smoothAlignToYaw(LivingEntity entity, float bodySpeed, float headSpeed) {
+        entity.yBodyRot = Mth.approachDegrees(entity.yBodyRot, entity.getYRot(), bodySpeed);
+        entity.setYHeadRot(Mth.approachDegrees(entity.getYHeadRot(), entity.getYRot(), headSpeed));
     }
 
     public static @Nullable Entity raycastEntity(Entity exception, Level level, Vec3 start, Vec3 end) {
