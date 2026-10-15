@@ -9,8 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.SimpleTexture;
-import net.minecraft.client.renderer.texture.SpriteContents;
-import net.minecraft.client.renderer.texture.SpriteTicker;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.renderer.texture.Tickable;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
@@ -28,7 +26,9 @@ import org.lwjgl.opengl.GL12;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -198,14 +198,14 @@ public final class KnightLibAnimatedTextures {
     }
 
     /**
-     * A standalone texture whose frames and interpolation are delegated to vanilla {@link SpriteContents}
+     * A standalone texture that plays its own frames. Vanilla ticker is avoided on purpose because Sodium/Embeddium cancel
+     * its {@code tickAndUpload} for every sprite they didn't see rendered, and nothing ever marks a texture outside an
+     * atlas as visible, so it would stay frozen on its first frame
      */
     private static final class KnightLibAnimatedTexture extends SimpleTexture implements Tickable {
 
         @Nullable
-        private SpriteContents contents;
-        @Nullable
-        private SpriteTicker ticker;
+        private Animation animation;
         private boolean uploaded;
         private boolean blur;
         private boolean clamp;
@@ -272,27 +272,26 @@ public final class KnightLibAnimatedTextures {
                 return;
             }
 
-            final SpriteContents nextContents;
+            final Animation nextAnimation;
             try {
-                nextContents = new SpriteContents(location, frameSize, image, animationMetadata);
+                nextAnimation = Animation.create(location, image, frameSize, animationMetadata);
             }
             catch (RuntimeException exception) {
                 image.close();
-                KnightLib.LOGGER.warn("Failed creating animated frames for {}; loading it as a static texture", location, exception);
+                KnightLib.LOGGER.warn("Failed creating animated frames for {}, loading it as a static texture", location, exception);
                 super.load(resourceManager);
                 return;
             }
 
             this.blur = textureMetadata != null && textureMetadata.isBlur();
             this.clamp = textureMetadata != null && textureMetadata.isClamp();
-            this.contents = nextContents;
-            this.ticker = nextContents.createTicker();
+            this.animation = nextAnimation;
 
-            scheduleFirstFrameUpload(nextContents, frameSize);
+            scheduleFirstFrameUpload(nextAnimation);
         }
 
-        private void scheduleFirstFrameUpload(SpriteContents expectedContents, FrameSize frameSize) {
-            final Runnable upload = () -> uploadFirstFrame(expectedContents, frameSize.width(), frameSize.height());
+        private void scheduleFirstFrameUpload(Animation expectedAnimation) {
+            final Runnable upload = () -> uploadFirstFrame(expectedAnimation);
             if (RenderSystem.isOnRenderThreadOrInit()) {
                 upload.run();
             }
@@ -302,13 +301,13 @@ public final class KnightLibAnimatedTextures {
 
         }
 
-        private synchronized void uploadFirstFrame(SpriteContents expectedContents, int width, int height) {
-            if (contents != expectedContents) {
+        private synchronized void uploadFirstFrame(Animation expectedAnimation) {
+            if (animation != expectedAnimation) {
                 return;
             }
 
-            TextureUtil.prepareImage(getId(), 0, width, height);
-            expectedContents.uploadFirstFrame(0, 0);
+            TextureUtil.prepareImage(getId(), 0, expectedAnimation.frameWidth, expectedAnimation.frameHeight);
+            expectedAnimation.uploadFirstFrame();
 
             applyTextureParameters();
 
@@ -317,32 +316,32 @@ public final class KnightLibAnimatedTextures {
 
         @Override
         public void tick() {
-            final SpriteTicker expectedTicker;
+            final Animation expectedAnimation;
             synchronized (this) {
-                if (!uploaded || ticker == null) {
+                if (!uploaded || animation == null || !animation.isAnimated()) {
                     return;
                 }
 
-                expectedTicker = ticker;
+                expectedAnimation = animation;
             }
 
             if (RenderSystem.isOnRenderThread()) {
-                tickOnRenderThread(expectedTicker);
+                tickOnRenderThread(expectedAnimation);
             }
             else {
-                RenderSystem.recordRenderCall(() -> tickOnRenderThread(expectedTicker));
+                RenderSystem.recordRenderCall(() -> tickOnRenderThread(expectedAnimation));
             }
 
         }
 
-        private synchronized void tickOnRenderThread(SpriteTicker expectedTicker) {
-            if (!uploaded || ticker != expectedTicker) {
+        private synchronized void tickOnRenderThread(Animation expectedAnimation) {
+            if (!uploaded || animation != expectedAnimation) {
                 return;
             }
 
             bind();
 
-            expectedTicker.tickAndUpload(0, 0);
+            expectedAnimation.tickAndUpload();
             applyTextureParameters();
         }
 
@@ -355,13 +354,9 @@ public final class KnightLibAnimatedTextures {
 
         private void closeAnimationData() {
             uploaded = false;
-            if (ticker != null) {
-                ticker.close();
-                ticker = null;
-            }
-            if (contents != null) {
-                contents.close();
-                contents = null;
+            if (animation != null) {
+                animation.close();
+                animation = null;
             }
 
         }
@@ -370,6 +365,156 @@ public final class KnightLibAnimatedTextures {
         public synchronized void close() {
             closeAnimationData();
             super.close();
+        }
+
+    }
+
+    /**
+     * Copy of vanilla's sprite animation ticker, keeps a pointer for the current rendered frame
+     */
+    private static final class Animation implements AutoCloseable {
+
+        private final NativeImage sheet;
+        private final int frameWidth;
+        private final int frameHeight;
+        private final int framesPerRow;
+        private final List<Frame> frames;
+        @Nullable
+        private final NativeImage interpolatedFrame;
+
+        private int frame;
+        private int subFrame;
+
+        private Animation(NativeImage sheet, FrameSize frameSize, List<Frame> frames, boolean interpolate) {
+            this.sheet = sheet;
+            this.frameWidth = frameSize.width();
+            this.frameHeight = frameSize.height();
+            this.framesPerRow = sheet.getWidth() / frameWidth;
+            this.frames = frames;
+            this.interpolatedFrame = interpolate && frames.size() > 1 ? new NativeImage(frameWidth, frameHeight, false) : null;
+        }
+
+        private static Animation create(ResourceLocation location, NativeImage sheet, FrameSize frameSize, AnimationMetadataSection metadata) {
+            final int frameCount = (sheet.getWidth() / frameSize.width()) * (sheet.getHeight() / frameSize.height());
+
+            final List<Frame> declaredFrames = new ArrayList<>();
+            metadata.forEachFrame((index, time) -> declaredFrames.add(new Frame(index, time)));
+
+            final List<Frame> frames = new ArrayList<>();
+            if (declaredFrames.isEmpty()) {
+                for (int i = 0; i < frameCount; i++) {
+                    frames.add(new Frame(i, metadata.getDefaultFrameTime()));
+                }
+
+            }
+            else {
+                for (final Frame frame : declaredFrames) {
+                    if (frame.time() > 0 && frame.index() >= 0 && frame.index() < frameCount) {
+                        frames.add(frame);
+                    }
+                    else {
+                        KnightLib.LOGGER.warn("Ignoring invalid frame {} (time {}) in animated texture {}", frame.index(), frame.time(), location);
+                    }
+
+                }
+
+            }
+
+            // Same as vanilla, a sheet with no usable frames shows the first one
+            if (frames.isEmpty()) {
+                frames.add(new Frame(0, metadata.getDefaultFrameTime()));
+            }
+
+            return new Animation(sheet, frameSize, List.copyOf(frames), metadata.isInterpolatedFrames());
+        }
+
+        private boolean isAnimated() {
+            return frames.size() > 1;
+        }
+
+        private void uploadFirstFrame() {
+            uploadFrame(frames.get(0).index());
+        }
+
+        /**
+         * Advances one client tick
+         */
+        private void tickAndUpload() {
+            final Frame current = frames.get(frame);
+            if (++subFrame >= current.time()) {
+                frame = (frame + 1) % frames.size();
+                subFrame = 0;
+
+                final int nextIndex = frames.get(frame).index();
+                if (nextIndex != current.index()) {
+                    uploadFrame(nextIndex);
+                }
+
+            }
+            else if (interpolatedFrame != null) {
+                uploadInterpolatedFrame(current, interpolatedFrame);
+            }
+
+        }
+
+        private void uploadFrame(int index) {
+            sheet.upload(0, 0, 0, frameX(index), frameY(index), frameWidth, frameHeight, false, false);
+        }
+
+        private void uploadInterpolatedFrame(Frame current, NativeImage target) {
+            final int nextIndex = frames.get((frame + 1) % frames.size()).index();
+            if (nextIndex == current.index()) {
+                return;
+            }
+
+            final double delta = 1D - (double) subFrame / current.time();
+            final int fromX = frameX(current.index());
+            final int fromY = frameY(current.index());
+            final int toX = frameX(nextIndex);
+            final int toY = frameY(nextIndex);
+
+            for (int y = 0; y < frameHeight; y++) {
+                for (int x = 0; x < frameWidth; x++) {
+                    final int from = sheet.getPixelRGBA(fromX + x, fromY + y);
+                    final int to = sheet.getPixelRGBA(toX + x, toY + y);
+                    final int c0 = mix(delta, from >> 16 & 255, to >> 16 & 255);
+                    final int c1 = mix(delta, from >> 8 & 255, to >> 8 & 255);
+                    final int c2 = mix(delta, from & 255, to & 255);
+
+                    target.setPixelRGBA(x, y, from & 0xFF000000 | c0 << 16 | c1 << 8 | c2);
+                }
+
+            }
+
+            target.upload(0, 0, 0, 0, 0, frameWidth, frameHeight, false, false);
+        }
+
+        private static int mix(double delta, int from, int to) {
+            return (int) (delta * from + (1.0D - delta) * to);
+        }
+
+        private int frameX(int index) {
+            return index % framesPerRow * frameWidth;
+        }
+
+        private int frameY(int index) {
+            return index / framesPerRow * frameHeight;
+        }
+
+        @Override
+        public void close() {
+            sheet.close();
+            if (interpolatedFrame != null) {
+                interpolatedFrame.close();
+            }
+
+        }
+
+        private record Frame(
+                int index,
+                int time
+        ) {
+            ;;
         }
 
     }

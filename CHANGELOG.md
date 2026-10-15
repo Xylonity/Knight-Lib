@@ -1,3 +1,6 @@
+# 2.0.5
+- Fixed sodium freezing knightlib animated textures on their first frame
+
 # 2.0.4
 - Refactor internal automaton into a modular way to implement it easier
 - Internal automaton no longer searches for creative/spectator players
