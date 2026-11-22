@@ -101,6 +101,23 @@ public abstract class KnightLibBlockEntityRenderer<T extends BlockEntity & Knigh
         return false;
     }
 
+    /**
+     * Orients the model inside its block. Called once per render with the pose already moved to the block's
+     * bottom centre, before the scale is applied
+     */
+    protected void rotateBlock(T blockEntity, PoseStack poseStack) {
+        if (!rotateByBlockFacing()) {
+            return;
+        }
+
+        final BlockState state = blockEntity.getBlockState();
+        if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            final Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
+        }
+
+    }
+
     protected final void addEmissiveLayer(Function<T, ResourceLocation> texture) {
         addRenderLayer(new KnightLibEmissiveLayer<>(texture));
     }
@@ -161,15 +178,7 @@ public abstract class KnightLibBlockEntityRenderer<T extends BlockEntity & Knigh
 
         poseStack.pushPose();
         poseStack.translate(0.5, 0.0, 0.5);
-
-        if (rotateByBlockFacing()) {
-            final BlockState state = blockEntity.getBlockState();
-            if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
-                final Direction facing = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-                poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
-            }
-
-        }
+        rotateBlock(blockEntity, poseStack);
 
         final float scale = renderState.scale();
         if (scale != 1f) {

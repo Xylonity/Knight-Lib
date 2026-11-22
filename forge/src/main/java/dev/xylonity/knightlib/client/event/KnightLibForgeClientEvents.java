@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
@@ -37,6 +39,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
+import java.util.Map;
 import java.util.Optional;
 
 public class KnightLibForgeClientEvents {
@@ -148,6 +151,20 @@ public class KnightLibForgeClientEvents {
     @Mod.EventBusSubscriber(modid = KnightLib.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
     public static class KnightLibClientForgeBus {
 
+        private static final Map<ResourceLocation, ClientRenderHudElementEvent.Element> HUD_ELEMENTS = Map.ofEntries(
+                Map.entry(VanillaGuiOverlay.CROSSHAIR.id(), ClientRenderHudElementEvent.Element.CROSSHAIR),
+                Map.entry(VanillaGuiOverlay.HOTBAR.id(), ClientRenderHudElementEvent.Element.HOTBAR),
+                Map.entry(VanillaGuiOverlay.PLAYER_HEALTH.id(), ClientRenderHudElementEvent.Element.STATUS_BARS),
+                Map.entry(VanillaGuiOverlay.ARMOR_LEVEL.id(), ClientRenderHudElementEvent.Element.STATUS_BARS),
+                Map.entry(VanillaGuiOverlay.FOOD_LEVEL.id(), ClientRenderHudElementEvent.Element.STATUS_BARS),
+                Map.entry(VanillaGuiOverlay.AIR_LEVEL.id(), ClientRenderHudElementEvent.Element.STATUS_BARS),
+                Map.entry(VanillaGuiOverlay.MOUNT_HEALTH.id(), ClientRenderHudElementEvent.Element.VEHICLE_HEALTH),
+                Map.entry(VanillaGuiOverlay.EXPERIENCE_BAR.id(), ClientRenderHudElementEvent.Element.EXPERIENCE_BAR),
+                Map.entry(VanillaGuiOverlay.JUMP_BAR.id(), ClientRenderHudElementEvent.Element.JUMP_METER),
+                Map.entry(VanillaGuiOverlay.ITEM_NAME.id(), ClientRenderHudElementEvent.Element.SELECTED_ITEM_NAME),
+                Map.entry(VanillaGuiOverlay.POTION_ICONS.id(), ClientRenderHudElementEvent.Element.EFFECTS)
+        );
+
         @SubscribeEvent(priority = EventPriority.LOW)
         public static void onClientTick(TickEvent.ClientTickEvent event) {
             final Minecraft minecraft = Minecraft.getInstance();
@@ -188,6 +205,24 @@ public class KnightLibForgeClientEvents {
             KnightLibEvents.CLIENT.dispatch(new ItemStackTooltipEvent(
                     event.getItemStack(), event.getToolTip(), event.getFlags()
             ));
+
+        }
+
+        @SubscribeEvent
+        public static void onRenderGuiOverlay(RenderGuiOverlayEvent.Pre event) {
+            final ResourceLocation overlay = event.getOverlay().id();
+            final boolean modded = !ResourceLocation.DEFAULT_NAMESPACE.equals(overlay.getNamespace());
+            final ClientRenderHudElementEvent.Element element = modded ? ClientRenderHudElementEvent.Element.OTHER : HUD_ELEMENTS.get(overlay);
+            if (element == null) {
+                return;
+            }
+
+            final ClientRenderHudElementEvent hudEvent = new ClientRenderHudElementEvent(Minecraft.getInstance(), event.getGuiGraphics(), element, modded ? overlay : null);
+            KnightLibEvents.CLIENT.dispatch(hudEvent);
+
+            if (hudEvent.isCancelled()) {
+                event.setCanceled(true);
+            }
 
         }
 

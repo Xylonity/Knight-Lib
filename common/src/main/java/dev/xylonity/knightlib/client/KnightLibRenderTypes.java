@@ -35,10 +35,8 @@ public final class KnightLibRenderTypes extends RenderType {
                 .setWriteMaskState(writeDepth ? COLOR_DEPTH_WRITE : COLOR_WRITE)
                 .createCompositeState(false);
 
-        return create(
-                writeDepth ? "knightlib_entity_emissive_depth" : "knightlib_entity_emissive",
-                DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, false, true, state
-        );
+        return create(writeDepth ? "knightlib_entity_emissive_depth" : "knightlib_entity_emissive",
+                DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, false, true, state);
     }
 
     /**
@@ -81,6 +79,13 @@ public final class KnightLibRenderTypes extends RenderType {
     ) {
         ;;
     };
+
+    /**
+     * Public access to vanilla's composite rendertype factory, instead of relying on dedicated accessors
+     */
+    public static RenderType createComposite(String name, VertexFormat format, VertexFormat.Mode mode, int bufferSize, boolean affectsCrumbling, boolean sortOnUpload, RenderType.CompositeState state) {
+        return create(name, format, mode, bufferSize, affectsCrumbling, sortOnUpload, state);
+    }
 
     public static RenderType entityEmissive(ResourceLocation texture) {
         return entityEmissive(texture, true);

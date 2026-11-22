@@ -1,15 +1,22 @@
 package dev.xylonity.knightlib.config.interop;
 
+import com.electronwill.nightconfig.core.CommentedConfig;
+import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.ParsingException;
 import com.electronwill.nightconfig.toml.TomlFormat;
 import dev.xylonity.knightlib.KnightLib;
 import dev.xylonity.knightlib.api.config.AutoConfig;
 import dev.xylonity.knightlib.api.config.ConfigEntry;
+import dev.xylonity.knightlib.api.config.ConfigRange;
 import dev.xylonity.knightlib.api.config.DecorationType;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.RecordComponent;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -64,7 +71,9 @@ public final class ConfigManager {
         synchronized (lock) {
             try (CommentedFileConfig fileConfig = buildConfig(tomlPath)) {
                 safeLoad(fileConfig, tomlPath);
-                writeFields(clazz, fileConfig, meta);
+
+                // The in-memory values are what the player just set, so they win over whatever the file holds
+                writeFields(clazz, fileConfig, meta, true);
 
                 fileConfig.save();
             }
@@ -130,7 +139,7 @@ public final class ConfigManager {
                     safeLoad(fileConfig, tomlPath);
 
                     readFields(clazz, fileConfig, meta);
-                    writeFields(clazz, fileConfig, meta);
+                    writeFields(clazz, fileConfig, meta, false);
 
                     fileConfig.save();
                 }
@@ -154,7 +163,9 @@ public final class ConfigManager {
             field.setAccessible(true);
 
             try {
-                DEFAULT_VALUES.putIfAbsent(field, field.get(null));
+                // Lists are copied, the field may later point at a list that gets edited
+                final Object value = field.get(null);
+                DEFAULT_VALUES.putIfAbsent(field, value instanceof List<?> list ? Collections.unmodifiableList(new ArrayList<>(list)) : value);
             }
             catch (Exception ignored) {
                 ;;
@@ -232,7 +243,7 @@ public final class ConfigManager {
             }
 
             try {
-                Object value = coerce(rawEntry, field.getType(), entry);
+                Object value = coerceField(rawEntry, field, entry);
                 if (value != null) {
                     setPrimitive(field, value);
                 }
@@ -247,10 +258,9 @@ public final class ConfigManager {
     }
 
     /**
-     * Writes all annotated fields into the config, grouped by category to avoid duplicate
-     * TOML table headers.
+     * Writes all annotated fields into the config, grouped by category to avoid duplicate TOML table headers
      */
-    private static void writeFields(Class<?> clazz, CommentedFileConfig fileConfig, AutoConfig meta) {
+    private static void writeFields(Class<?> clazz, CommentedFileConfig fileConfig, AutoConfig meta, boolean fromMemory) {
         final DecorationType style = meta.style();
 
         final LinkedHashMap<String, List<Field>> fieldsByCategory = new LinkedHashMap<>();
@@ -292,7 +302,8 @@ public final class ConfigManager {
                 final Object diskValue = fileConfig.get(path);
                 final Object oldDefault = parseDefaultFromComment(fileConfig.getComment(path), field.getType());
 
-                if (diskValue != null && oldDefault != null && !valuesEqual(diskValue, oldDefault)) {
+                // Lists always go through the in-memory value, it's the file's one already parsed (an old comma string becomes an array)
+                if (!fromMemory && !(currentValue instanceof List) && !(currentValue instanceof Record) && diskValue != null && oldDefault != null && !valuesEqual(diskValue, oldDefault)) {
                     final Object clampedValue = clamp(diskValue, configEntry, field.getType());
                     if (clampedValue != null) {
                         fileConfig.set(path, toTomlValue(clampedValue, field.getType()));
@@ -301,11 +312,11 @@ public final class ConfigManager {
                 }
                 else {
                     // Using the in-memory value if there is no user edit, or if it's the first-time write
-                    fileConfig.set(path, toTomlValue(currentValue, field.getType()));
+                    fileConfig.set(path, currentValue instanceof Record record ? recordTable(fileConfig, record) : toTomlValue(currentValue, field.getType()));
                 }
 
                 // Updates the entry comment to reflect new changes (mainly for the default value, if it changed in code)
-                final String entryComment = buildEntryComment(configEntry, currentValue, style);
+                final String entryComment = buildEntryComment(configEntry, DEFAULT_VALUES.getOrDefault(field, currentValue), style);
                 fileConfig.setComment(path, wrapAndIndent(entryComment));
             }
 
@@ -320,11 +331,169 @@ public final class ConfigManager {
     }
 
     private static Object toTomlValue(Object value, Class<?> type) {
+        if (value instanceof List<?> list) {
+            final List<Object> converted = new ArrayList<>(list.size());
+            for (Object element : list) {
+                converted.add(element instanceof Enum<?> constant ? constant.name() : element);
+            }
+
+            return converted;
+        }
+
         if (type.isEnum()) {
             return ((Enum<?>) value).name();
         }
 
         return value;
+    }
+
+    public static Class<?> listElementType(Field field) {
+        if (field.getGenericType() instanceof ParameterizedType parameterized && parameterized.getActualTypeArguments().length == 1 && parameterized.getActualTypeArguments()[0] instanceof Class<?> element) {
+            return element;
+        }
+
+        return String.class;
+    }
+
+    /**
+     * Converts a single raw value to the entry bounds
+     */
+    public static Object coerceElement(Object raw, Class<?> type, ConfigEntry entry) {
+        return coerce(raw, type, entry);
+    }
+
+    private static Object coerceField(Object raw, Field field, ConfigEntry entry) throws IllegalAccessException {
+        if (List.class.isAssignableFrom(field.getType())) {
+            final List<Object> list = coerceList(raw, listElementType(field), entry);
+            return list.size() < entry.minSize() ? null : list;
+        }
+
+        if (field.getType().isRecord()) {
+            return coerceRecord(raw, field.getType(), field.get(null));
+        }
+
+        return coerce(raw, field.getType(), entry);
+    }
+
+    private static Object coerceRecord(Object raw, Class<?> type, Object fallback) {
+        if (!(raw instanceof UnmodifiableConfig table)) {
+            return null;
+        }
+
+        final RecordComponent[] components = type.getRecordComponents();
+        final List<Object> fallbackValues = fallback instanceof Record record ? recordValues(record) : null;
+        final List<Object> values = new ArrayList<>(components.length);
+        for (int i = 0; i < components.length; i++) {
+            final Object value = table.get(components[i].getName());
+            values.add(value != null || fallbackValues == null ? value : fallbackValues.get(i));
+        }
+
+        return buildRecord(type, values);
+    }
+
+    public static List<Object> recordValues(Record record) {
+        final RecordComponent[] components = record.getClass().getRecordComponents();
+        final List<Object> values = new ArrayList<>(components.length);
+        for (RecordComponent component : components) {
+            try {
+                final Method accessor = component.getAccessor();
+                accessor.setAccessible(true);
+                values.add(accessor.invoke(record));
+            }
+            catch (Exception exception) {
+                values.add(null);
+            }
+
+        }
+
+        return values;
+    }
+
+    public static Object buildRecord(Class<?> type, List<Object> values) {
+        try {
+            final RecordComponent[] components = type.getRecordComponents();
+            final Class<?>[] types = new Class<?>[components.length];
+            final Object[] arguments = new Object[components.length];
+            for (int i = 0; i < components.length; i++) {
+                types[i] = components[i].getType();
+
+                final ConfigRange range = components[i].getAnnotation(ConfigRange.class);
+                final double value = range == null ? toDouble(values.get(i)) : clampDouble(toDouble(values.get(i)), range.min(), range.max());
+                arguments[i] = switch (types[i].getName()) {
+                    case "int", "java.lang.Integer" -> (int) value;
+                    case "long", "java.lang.Long" -> (long) value;
+                    case "float", "java.lang.Float" -> (float) value;
+                    case "double", "java.lang.Double" -> value;
+                    default -> throw new IllegalArgumentException("Unsupported record component type " + types[i].getName());
+                };
+            }
+
+            final Constructor<?> constructor = type.getDeclaredConstructor(types);
+            constructor.setAccessible(true);
+            return constructor.newInstance(arguments);
+        }
+        catch (Exception exception) {
+            return null;
+        }
+
+    }
+
+    private static CommentedConfig recordTable(CommentedFileConfig fileConfig, Record record) {
+        final CommentedConfig table = fileConfig.createSubConfig();
+        final RecordComponent[] components = record.getClass().getRecordComponents();
+        final List<Object> values = recordValues(record);
+        for (int i = 0; i < components.length; i++) {
+            final String name = components[i].getName();
+            table.set(name, values.get(i));
+
+            final ConfigRange range = components[i].getAnnotation(ConfigRange.class);
+            if (range != null && (Double.isFinite(range.min()) || Double.isFinite(range.max()))) {
+                final boolean decimal = values.get(i) instanceof Double || values.get(i) instanceof Float;
+                table.setComment(name, wrapAndIndent("Range: " + formatNum(range.min(), decimal) + " ~ " + formatNum(range.max(), decimal)));
+            }
+
+        }
+
+        return table;
+    }
+
+    private static String formatRecord(Record record) {
+        final RecordComponent[] components = record.getClass().getRecordComponents();
+        final List<Object> values = recordValues(record);
+        final List<String> parts = new ArrayList<>(components.length);
+        for (int i = 0; i < components.length; i++) {
+            final Object value = values.get(i);
+            final boolean decimal = value instanceof Double || value instanceof Float;
+            parts.add(components[i].getName() + " = " + (decimal ? formatDecimal(((Number) value).doubleValue()) : value));
+        }
+
+        return String.join(", ", parts);
+    }
+
+    private static List<Object> coerceList(Object raw, Class<?> elementType, ConfigEntry entry) {
+        final List<?> items;
+        if (raw instanceof List<?> list) {
+            items = list;
+        }
+        else {
+            final String text = raw.toString().trim();
+            items = text.isEmpty() ? List.of() : Arrays.stream(text.split(",")).map(String::trim).filter(part -> !part.isEmpty()).toList();
+        }
+
+        final List<Object> result = new ArrayList<>(items.size());
+        for (Object item : items) {
+            if (entry.maxSize() > 0 && result.size() >= entry.maxSize()) {
+                break;
+            }
+
+            final Object value = coerce(item, elementType, entry);
+            if (value != null) {
+                result.add(value);
+            }
+
+        }
+
+        return result;
     }
 
     @SuppressWarnings(
@@ -369,6 +538,16 @@ public final class ConfigManager {
             }
 
             if (type == String.class) {
+                // A list read into what is now a plain string field keeps its values (comma separated)
+                if (raw instanceof List<?> list) {
+                    final List<String> parts = new ArrayList<>(list.size());
+                    for (Object element : list) {
+                        parts.add(String.valueOf(element));
+                    }
+
+                    return String.join(",", parts);
+                }
+
                 return raw.toString();
             }
 
@@ -433,7 +612,7 @@ public final class ConfigManager {
             case "float" -> field.setFloat(null, ((Number) value).floatValue());
             case "double" -> field.setDouble(null, ((Number) value).doubleValue());
             case "boolean" -> field.setBoolean(null, (Boolean) value);
-            default -> field.set(null, value);
+            default -> field.set(null, value instanceof List<?> list ? new ArrayList<>(list) : value);
         }
 
     }
@@ -501,11 +680,27 @@ public final class ConfigManager {
         final boolean needsRestart = entry.requiresRestart();
 
         final boolean isDecimal = defaultValue instanceof Double || defaultValue instanceof Float;
-        final String defaultString = isDecimal ? formatDecimal(((Number) defaultValue).doubleValue()) : String.valueOf(defaultValue);
+        final String defaultString = isDecimal ? formatDecimal(((Number) defaultValue).doubleValue()) : defaultValue instanceof Record record ? formatRecord(record) : String.valueOf(defaultValue);
         final String minString = formatNum(entry.min(), isDecimal);
         final String maxString = formatNum(entry.max(), isDecimal);
 
-        final boolean showRange = !(defaultValue instanceof Boolean) && !(defaultValue instanceof Enum) && !(defaultValue instanceof String);
+        // On lists the range applies to each element so it's only worth mentioning when there is one
+        final boolean showRange = defaultValue instanceof List<?> ? Double.isFinite(entry.min()) || Double.isFinite(entry.max())
+                : !(defaultValue instanceof Boolean) && !(defaultValue instanceof Enum) && !(defaultValue instanceof String) && !(defaultValue instanceof Record);
+
+        final List<String> allowed = new ArrayList<>();
+        if (entry.options().length > 0) {
+            allowed.add("Options: " + String.join(", ", entry.options()));
+        }
+        else if (!entry.registry().isEmpty()) {
+            allowed.add((entry.tags() ? "Values: ids or #tags from " : "Values: ids from ") + entry.registry());
+        }
+        if (entry.minSize() > 0) {
+            allowed.add("Min entries: " + entry.minSize());
+        }
+        if (entry.maxSize() > 0) {
+            allowed.add("Max entries: " + entry.maxSize());
+        }
 
         return switch (style) {
             case VERBOSE -> {
@@ -519,6 +714,9 @@ public final class ConfigManager {
 
                 if (showRange) {
                     stringBuilder.append("\n- Range: ").append(minString).append(" ~ ").append(maxString);
+                }
+                for (String line : allowed) {
+                    stringBuilder.append("\n- ").append(line);
                 }
                 if (needsRestart) {
                     stringBuilder.append("\n- [!] Requires game restart to take effect.");
@@ -535,6 +733,10 @@ public final class ConfigManager {
 
                 if (showRange) {
                     stringBuilder.append(" | Min: ").append(minString).append(" ~ Max: ").append(maxString);
+                }
+
+                for (String line : allowed) {
+                    stringBuilder.append("\n$> ").append(line);
                 }
 
                 if (!note.isEmpty()) {
@@ -556,6 +758,10 @@ public final class ConfigManager {
                     stringBuilder.append(" | Range: ").append(minString).append(" -~- ").append(maxString);
                 }
 
+                for (String line : allowed) {
+                    stringBuilder.append("\n✦ ").append(line);
+                }
+
                 if (!note.isEmpty()) {
                     stringBuilder.append("\n✦ Note: ").append(note);
                 }
@@ -571,6 +777,9 @@ public final class ConfigManager {
 
                 if (showRange) {
                     stringBuilder.append("\nRange: ").append(minString).append(" ~ ").append(maxString);
+                }
+                for (String line : allowed) {
+                    stringBuilder.append("\n").append(line);
                 }
                 if (!note.isEmpty()) {
                     stringBuilder.append("\n\nNote: ").append(note);

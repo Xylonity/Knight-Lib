@@ -11,6 +11,7 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraftforge.data.event.GatherDataEvent;
@@ -21,6 +22,7 @@ import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
+import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -254,6 +256,24 @@ public class KnightLibForgeServerEvents {
         public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
             if (event.getEntity() instanceof ServerPlayer serverPlayer) {
                 KnightLibEvents.SERVER.dispatch(new ServerPlayerRespawnEvent(serverPlayer, event.isEndConquered()));
+            }
+
+        }
+
+        @SubscribeEvent
+        public static void onLivingChangeTarget(LivingChangeTargetEvent event) {
+            if (event.getTargetType() != LivingChangeTargetEvent.LivingTargetType.MOB_TARGET || !(event.getEntity() instanceof Mob mob) || mob.level().isClientSide()) {
+                return;
+            }
+
+            final MobChangeTargetEvent targetEvent = new MobChangeTargetEvent(mob, event.getNewTarget());
+            KnightLibEvents.SERVER.dispatch(targetEvent);
+
+            if (targetEvent.isCancelled()) {
+                event.setCanceled(true);
+            }
+            else {
+                event.setNewTarget(targetEvent.getNewTarget());
             }
 
         }

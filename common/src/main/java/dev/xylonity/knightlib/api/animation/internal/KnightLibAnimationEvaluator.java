@@ -121,9 +121,26 @@ public final class KnightLibAnimationEvaluator {
 
                 clock.seen = frame;
                 if (clock.sequence != controller.sequence()) {
-                    // Captures the outgoing operation without including any future sequence step
-                    evaluateLayer(clock, controller.commandGameTime());
-                    clock.from.copyFrom(layer);
+                    final double commanded = controller.commandGameTime();
+                    // The outgoing sequence keeps playing underneath the blend, so its motion fades out instead of halting on the frame it was left at (a sequence that ended is frozen instead)
+                    final boolean interrupted = clock.blending && commanded - clock.blendStart < clock.blendTicks;
+                    if (!interrupted && !clock.finished && !clock.steps.isEmpty()) {
+                        clock.fromSteps = clock.steps;
+                        clock.fromOrigin = clock.origin;
+                        clock.fromOffset = clock.offset;
+                        clock.fromSpeed = clock.speed;
+                        clock.fromWeight = clock.weight;
+                        clock.fromBlendMode = clock.blendMode;
+                        clock.fromMask = clock.mask;
+                        clock.fromLive = true;
+                    }
+                    else {
+                        // Captures the outgoing operation without including any future sequence step
+                        evaluateLayer(clock, commanded);
+                        clock.from.copyFrom(layer);
+                        clock.fromLive = false;
+                    }
+
                     clock.blending = controller.transitionTicks() > 0;
                     clock.blendStart = controller.commandGameTime();
                     clock.blendTicks = controller.transitionTicks();
@@ -157,6 +174,7 @@ public final class KnightLibAnimationEvaluator {
                         final double end = clock.origin + (clock.playback.endTick() - clock.offset) / clock.speed;
                         evaluateLayer(clock, end);
                         clock.from.copyFrom(layer);
+                        clock.fromLive = false;
                         clock.blendStart = end;
                         clock.blending = clock.blendTicks > 0;
                         clock.steps = List.of();
@@ -229,7 +247,7 @@ public final class KnightLibAnimationEvaluator {
             final float tick = forceLoop || animation.loopMode() == KnightLibAnimation.LoopMode.LOOP ? animation.wrapLoopTick(elapsed) : (float) Math.min(elapsed, animation.lengthTicks());
             if (forceLoop || animation.loopMode() != KnightLibAnimation.LoopMode.ONCE || elapsed <= animation.lengthTicks()) {
                 context.setControllerSpeed(speed);
-                applyChannels(binding(animation), tick, elapsed, false, KnightLibAnimationMask.ALL);
+                applyChannels(layer, binding(animation), tick, elapsed, false, KnightLibAnimationMask.ALL);
                 layer.compose(pose);
             }
 
@@ -258,7 +276,7 @@ public final class KnightLibAnimationEvaluator {
                 case OVERRIDE -> true;
             };
 
-            applyChannels(binding(playback.animation()), playback.sampleTick(), playback.rawTick(), override, clock.mask);
+            applyChannels(layer, binding(playback.animation()), playback.sampleTick(), playback.rawTick(), override, clock.mask);
 
             layer.weight(clock.weight);
         }
@@ -267,14 +285,44 @@ public final class KnightLibAnimationEvaluator {
             final double elapsed = time - clock.blendStart;
             if (elapsed >= clock.blendTicks) {
                 clock.blending = false;
+                clock.fromLive = false;
             }
             else {
+                if (clock.fromLive) {
+                    evaluateOutgoing(clock, time);
+                }
+
                 final float progress = Mth.clamp((float) (elapsed / clock.blendTicks), 0f, 1f);
                 layer.blendFrom(clock.from, Mth.clamp(clock.easing.apply(progress), 0f, 1f), pose);
             }
 
         }
 
+    }
+
+    /**
+     * Samples the sequence being blended out at a certain time into the clock's blend source, on its own playback clock
+     */
+    private void evaluateOutgoing(Clock clock, double time) {
+        clock.from.reset();
+        if (clock.fromWeight == 0f) {
+            return;
+        }
+
+        final KnightLibAnimationSequence.Playback playback = KnightLibAnimationSequence.sample(clock.fromSteps, cachedResolver, Math.max(0.0, clock.fromOffset + (time - clock.fromOrigin) * clock.fromSpeed));
+        if (playback.animation() == null) {
+            return;
+        }
+
+        final boolean override = switch (clock.fromBlendMode) {
+            case AUTHORED -> playback.animation().overridePreviousAnimation();
+            case ADDITIVE -> false;
+            case OVERRIDE -> true;
+        };
+
+        context.setControllerSpeed(clock.fromSpeed);
+        applyChannels(clock.from, binding(playback.animation()), playback.sampleTick(), playback.rawTick(), override, clock.fromMask);
+        clock.from.weight(clock.fromWeight);
     }
 
     private KnightLibAnimation resolveAnimation(String name) {
@@ -331,7 +379,7 @@ public final class KnightLibAnimationEvaluator {
         return new BoundAnimation(bones, channels);
     }
 
-    private void applyChannels(BoundAnimation animation, float tick, double rawTick, boolean override, KnightLibAnimationMask mask) {
+    private void applyChannels(AnimationLayer layer, BoundAnimation animation, float tick, double rawTick, boolean override, KnightLibAnimationMask mask) {
         context.setAnimTime(tick / 20f);
         context.setTotalAnimTime((float) (rawTick / 20.0));
 
@@ -387,6 +435,7 @@ public final class KnightLibAnimationEvaluator {
     }
 
     private static final class Clock {
+
         final KnightLibAnimationHandler.Controller controller;
         final AnimationEventHistory events = new AnimationEventHistory();
         AnimationLayer from;
@@ -405,6 +454,15 @@ public final class KnightLibAnimationEvaluator {
         KnightLibAnimationBlendMode blendMode = KnightLibAnimationBlendMode.AUTHORED;
         KnightLibAnimationMask mask = KnightLibAnimationMask.ALL;
         float weight = 1f;
+        // The sequence being blended out while it still plays (the from layer is a frozen pose otherwise)
+        boolean fromLive;
+        List<Step> fromSteps = List.of();
+        double fromOrigin;
+        double fromOffset;
+        float fromSpeed = 1f;
+        float fromWeight = 1f;
+        KnightLibAnimationBlendMode fromBlendMode = KnightLibAnimationBlendMode.AUTHORED;
+        KnightLibAnimationMask fromMask = KnightLibAnimationMask.ALL;
 
         Clock(KnightLibAnimationHandler.Controller controller, int bones) {
             this.controller = controller;
