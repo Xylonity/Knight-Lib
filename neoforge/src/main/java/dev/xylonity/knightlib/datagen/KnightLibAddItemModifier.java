@@ -11,7 +11,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
@@ -57,7 +56,7 @@ public class KnightLibAddItemModifier extends LootModifier {
 
         }
 
-        if (context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof Mob mob && mob.getType().getCategory() == MobCategory.MONSTER
+        if (context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof Mob mob
                 && KnightLibConfig.isEntityAllowedForEssence(mob.getType())
                 && KnightLib.isEnabled(KnightLib.Usage.GREEN_ESSENCES)) {
 

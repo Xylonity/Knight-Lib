@@ -57,7 +57,7 @@ public @interface AutoConfig {
     int order() default 0;
 
     /**
-     * Accent color for the config screen UI elements (left bar, hover glow, scrollbar, toggle, slider, etc.),
+     * Accent color for the config screen (toggles, sliders, focused fields, the selected category, edited values and the done button),
      * specified as an ARGB int.
      */
     int accentColor() default 0xFF4A9EFF;

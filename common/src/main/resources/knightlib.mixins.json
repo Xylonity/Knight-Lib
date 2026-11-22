@@ -12,7 +12,8 @@
     "LootTableResourcesMixin",
     "ProjectileUtilMixin",
     "RecipeManagerMixin",
-    "SmithingMenuMixin"
+    "SmithingMenuMixin",
+    "LivingEntityWeaponMixin"
   ],
   "client": [
     "AbstractTickableSoundInstanceAccessor",
@@ -23,7 +24,13 @@
     "ModelPartAccessor",
     "MultiPlayerGameModeMixin",
     "PostChainAccessor",
-    "PostPassAccessor"
+    "PostPassAccessor",
+    "HumanoidModelWeaponMixin",
+    "ItemInHandLayerMixin",
+    "ItemInHandRendererWeaponMixin",
+    "LevelRendererPassengerMixin",
+    "MinecraftInputMixin",
+    "MultiPlayerGameModeAccessor"
   ],
   "server": [
   ],

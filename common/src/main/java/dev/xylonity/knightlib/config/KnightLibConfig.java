@@ -2,13 +2,14 @@ package dev.xylonity.knightlib.config;
 
 import dev.xylonity.knightlib.api.config.AutoConfig;
 import dev.xylonity.knightlib.api.config.ConfigEntry;
-import dev.xylonity.knightlib.api.util.KnightLibUtil;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 @AutoConfig(
         file = "knightlib",
@@ -38,15 +39,19 @@ public final class KnightLibConfig {
 
     @ConfigEntry(
             category = "Essence Drop Probabilities",
-            comment = "Comma-separated list of entity IDs that should never drop essence (e.g. \"minecraft:silverfish,minecraft:endermite\")"
+            comment = "Entities that never drop essence",
+            registry = "minecraft:entity_type",
+            tags = true
     )
-    public static String ESSENCE_ENTITY_BLACKLIST = "";
+    public static List<String> ESSENCE_ENTITY_BLACKLIST = new ArrayList<>();
 
     @ConfigEntry(
             category = "Essence Drop Probabilities",
-            comment = "Comma-separated list of entity IDs that are the only ones allowed to drop essence. Leave empty to allow all monsters (except blacklisted ones)"
+            comment = "Entities that are the only ones allowed to drop essence. Leave empty to allow all monsters (except blacklisted ones)",
+            registry = "minecraft:entity_type",
+            tags = true
     )
-    public static String ESSENCE_ENTITY_WHITELIST = "";
+    public static List<String> ESSENCE_ENTITY_WHITELIST = new ArrayList<>();
 
     @ConfigEntry(
             category = "Great Chalice",
@@ -56,19 +61,35 @@ public final class KnightLibConfig {
 
     public static boolean isEntityAllowedForEssence(EntityType<?> entityType) {
         final ResourceLocation id = EntityType.getKey(entityType);
-        final String entityId = id.toString();
 
-        final Set<String> blacklist = KnightLibUtil.parseList(ESSENCE_ENTITY_BLACKLIST);
-        if (blacklist.contains(entityId)) {
+        if (contains(ESSENCE_ENTITY_BLACKLIST, entityType, id)) {
             return false;
         }
 
-        final Set<String> whitelist = KnightLibUtil.parseList(ESSENCE_ENTITY_WHITELIST);
-        if (!whitelist.isEmpty()) {
-            return whitelist.contains(entityId);
+        final List<String> whitelist = ESSENCE_ENTITY_WHITELIST;
+        return whitelist.isEmpty() ? entityType.getCategory() == MobCategory.MONSTER : contains(whitelist, entityType, id);
+    }
+
+    /**
+     * Ids typed without a namespace count as vanilla ones (the same way the game reads them)
+     */
+    private static boolean contains(List<String> ids, EntityType<?> entityType, ResourceLocation id) {
+        for (final String entry : ids) {
+            final String trimmed = entry.trim();
+            if (trimmed.startsWith("#")) {
+                final ResourceLocation tag = ResourceLocation.tryParse(trimmed.substring(1));
+                if (tag != null && entityType.is(TagKey.create(Registries.ENTITY_TYPE, tag))) {
+                    return true;
+                }
+
+            }
+            else if (id.equals(ResourceLocation.tryParse(trimmed))) {
+                return true;
+            }
+
         }
 
-        return true;
+        return false;
     }
 
 }

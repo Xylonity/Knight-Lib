@@ -23,6 +23,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallbac
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.client.Minecraft;
@@ -47,6 +48,7 @@ public final class KnightLibFabricClientEvents {
     private static final Map<Item, BlockEntityWithoutLevelRenderer> ITEM_RENDERERS = new IdentityHashMap<>();
 
     private static Level lastLevel = null;
+    private static boolean hidingModHud = false;
 
     public static void init() {
         onShaderRegistrationEvents();
@@ -204,7 +206,30 @@ public final class KnightLibFabricClientEvents {
     }
 
     private static void onRenderGuiEvents() {
-        HudRenderCallback.EVENT.register((guiGraphics, tickDelta) -> {
+        // Other mods draw (or should) their HUD from HudRenderCallback's default phase, these two phases run before and after them
+        final ResourceLocation beforeModHud = ResourceLocation.fromNamespaceAndPath(KnightLib.MOD_ID, "before_mod_hud");
+        final ResourceLocation afterModHud = ResourceLocation.fromNamespaceAndPath(KnightLib.MOD_ID, "after_mod_hud");
+        HudRenderCallback.EVENT.addPhaseOrdering(beforeModHud, Event.DEFAULT_PHASE);
+        HudRenderCallback.EVENT.addPhaseOrdering(Event.DEFAULT_PHASE, afterModHud);
+
+        // A listener can't be skipped, so a cancelled mod HUD is drawn into an empty scissor instead, which nested scissors can't widen
+        HudRenderCallback.EVENT.register(beforeModHud, (guiGraphics, tickDelta) -> {
+            final ClientRenderHudElementEvent event = new ClientRenderHudElementEvent(Minecraft.getInstance(), guiGraphics, ClientRenderHudElementEvent.Element.OTHER);
+            KnightLibEvents.CLIENT.dispatch(event);
+
+            hidingModHud = event.isCancelled();
+            if (hidingModHud) {
+                guiGraphics.enableScissor(0, 0, 0, 0);
+            }
+
+        });
+
+        HudRenderCallback.EVENT.register(afterModHud, (guiGraphics, tickDelta) -> {
+            if (hidingModHud) {
+                guiGraphics.disableScissor();
+                hidingModHud = false;
+            }
+
             final Minecraft minecraft = Minecraft.getInstance();
             KnightLibEvents.CLIENT.dispatch(new ClientRenderGuiEvent(minecraft, guiGraphics, tickDelta.getGameTimeDeltaPartialTick(false)));
         });

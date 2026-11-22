@@ -11,13 +11,15 @@
     "LivingEntityHurtMixin",
     "LivingEntityUseItemMixin",
     "ResultSlotMixin",
-    "ServerPlayerChangeDimensionMixin"
+    "ServerPlayerChangeDimensionMixin",
+    "MobSetTargetMixin"
   ],
   "client": [
     "BossHealthOverlayMixin",
     "CameraMixin",
     "MouseHandlerMixin",
-    "KeyboardHandlerMixin"
+    "KeyboardHandlerMixin",
+    "GuiHudElementMixin"
   ],
   "server": [],
   "injectors": {

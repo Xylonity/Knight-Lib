@@ -11,6 +11,7 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -22,6 +23,7 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -264,6 +266,24 @@ public class KnightLibNeoForgeServerEvents {
         public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
             if (event.getEntity() instanceof ServerPlayer serverPlayer) {
                 KnightLibEvents.SERVER.dispatch(new ServerPlayerRespawnEvent(serverPlayer, event.isEndConquered()));
+            }
+
+        }
+
+        @SubscribeEvent
+        public static void onLivingChangeTarget(LivingChangeTargetEvent event) {
+            if (event.getTargetType() != LivingChangeTargetEvent.LivingTargetType.MOB_TARGET || !(event.getEntity() instanceof Mob mob) || mob.level().isClientSide()) {
+                return;
+            }
+
+            final MobChangeTargetEvent targetEvent = new MobChangeTargetEvent(mob, event.getNewAboutToBeSetTarget());
+            KnightLibEvents.SERVER.dispatch(targetEvent);
+
+            if (targetEvent.isCancelled()) {
+                event.setCanceled(true);
+            }
+            else {
+                event.setNewAboutToBeSetTarget(targetEvent.getNewTarget());
             }
 
         }

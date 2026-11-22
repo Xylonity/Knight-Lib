@@ -16,6 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.LerpingBossEvent;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -39,6 +40,8 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
@@ -48,6 +51,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
+import java.util.Map;
 import java.util.Optional;
 
 public class KnightLibNeoForgeClientEvents {
@@ -147,6 +151,21 @@ public class KnightLibNeoForgeClientEvents {
     @EventBusSubscriber(modid = KnightLib.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
     public static class KnightLibClientForgeBus {
 
+        private static final Map<ResourceLocation, ClientRenderHudElementEvent.Element> HUD_ELEMENTS = Map.ofEntries(
+                Map.entry(VanillaGuiLayers.CROSSHAIR, ClientRenderHudElementEvent.Element.CROSSHAIR),
+                Map.entry(VanillaGuiLayers.HOTBAR, ClientRenderHudElementEvent.Element.HOTBAR),
+                Map.entry(VanillaGuiLayers.PLAYER_HEALTH, ClientRenderHudElementEvent.Element.STATUS_BARS),
+                Map.entry(VanillaGuiLayers.ARMOR_LEVEL, ClientRenderHudElementEvent.Element.STATUS_BARS),
+                Map.entry(VanillaGuiLayers.FOOD_LEVEL, ClientRenderHudElementEvent.Element.STATUS_BARS),
+                Map.entry(VanillaGuiLayers.AIR_LEVEL, ClientRenderHudElementEvent.Element.STATUS_BARS),
+                Map.entry(VanillaGuiLayers.VEHICLE_HEALTH, ClientRenderHudElementEvent.Element.VEHICLE_HEALTH),
+                Map.entry(VanillaGuiLayers.EXPERIENCE_BAR, ClientRenderHudElementEvent.Element.EXPERIENCE_BAR),
+                Map.entry(VanillaGuiLayers.EXPERIENCE_LEVEL, ClientRenderHudElementEvent.Element.EXPERIENCE_BAR),
+                Map.entry(VanillaGuiLayers.JUMP_METER, ClientRenderHudElementEvent.Element.JUMP_METER),
+                Map.entry(VanillaGuiLayers.SELECTED_ITEM_NAME, ClientRenderHudElementEvent.Element.SELECTED_ITEM_NAME),
+                Map.entry(VanillaGuiLayers.EFFECTS, ClientRenderHudElementEvent.Element.EFFECTS)
+        );
+
         @SubscribeEvent(priority = EventPriority.LOW)
         public static void onClientTickPre(ClientTickEvent.Pre event) {
             KnightLibEvents.CLIENT.dispatch(new dev.xylonity.knightlib.api.event.impl.client.ClientTickEvent(Minecraft.getInstance(), TickPhase.START));
@@ -192,6 +211,24 @@ public class KnightLibNeoForgeClientEvents {
             KnightLibEvents.CLIENT.dispatch(new ItemStackTooltipEvent(
                     event.getItemStack(), event.getToolTip(), event.getFlags()
             ));
+
+        }
+
+        @SubscribeEvent
+        public static void onRenderGuiLayer(RenderGuiLayerEvent.Pre event) {
+            final ResourceLocation layer = event.getName();
+            final boolean modded = !ResourceLocation.DEFAULT_NAMESPACE.equals(layer.getNamespace());
+            final ClientRenderHudElementEvent.Element element = modded ? ClientRenderHudElementEvent.Element.OTHER : HUD_ELEMENTS.get(layer);
+            if (element == null) {
+                return;
+            }
+
+            final ClientRenderHudElementEvent hudEvent = new ClientRenderHudElementEvent(Minecraft.getInstance(), event.getGuiGraphics(), element, modded ? layer : null);
+            KnightLibEvents.CLIENT.dispatch(hudEvent);
+
+            if (hudEvent.isCancelled()) {
+                event.setCanceled(true);
+            }
 
         }
 

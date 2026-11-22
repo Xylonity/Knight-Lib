@@ -448,7 +448,8 @@ public final class KnightLibAnimationHandler {
         }
 
         for (final Controller controller : controllers.values()) {
-            if (controller.animation() != null && !restored.containsKey(controller.name())) {
+            // Client-declared controllers are driven locally by their selectors and the server never saves them, so a snapshot that does not mention them must not stop them
+            if (controller.animation() != null && !controller.reserved && !restored.containsKey(controller.name())) {
                 controller.command(List.of(), KnightLibAnimatable.DEFAULT_TRANSITION_TICKS, KnightLibAnimatable.DEFAULT_TRANSITION_EASING, 1f, gameTime(), 0, controller.blendMode());
             }
 

@@ -1,3 +1,13 @@
+# 2.1.0
+- Added multiple client sided events for passenger rendering and weapon custom swing animations
+- The essence entity blacklist and whitelist accept entity tags (like #minecraft:skeletons), and whitelisted entities drop essence even when they aren't monsters
+- Polished the config screen and added list config entries
+- Fixed config screen edits to a value that was already changed not being written to disk
+- Fixed config file comments showing the current value as the default once it was changed
+- Fixed server update tags and block entity data packets stopping client animation controllers
+- Fixed the GAME_RENDERER_TAIL post shader stage handing out a broken projection matrix
+- Fixed cutscene camera inheriting movement bobbing from the player
+
 # 2.0.5
 - Fixed sodium freezing knightlib animated textures on their first frame
 
